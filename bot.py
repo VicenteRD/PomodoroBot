@@ -10,6 +10,7 @@ import re
 
 ADMIN_ID = "87387330037448704"
 
+TOKEN = ""
 COMMAND_PREFIX = '!'
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
@@ -179,7 +180,7 @@ class MarinaraBot(commands.Bot) :
 			else :
 				return
 
-bot = MarinaraBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help=true)
+bot = MarinaraBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
 
 @bot.event
 async def on_ready():
@@ -450,17 +451,23 @@ async def shutdown(ctx) :
 
 if __name__ == '__main__':
 
-	if (len(sys.argv) < 2) :
-		print("No arguments received, keeping command prefix at default " + COMMAND_PREFIX)
+	if len(sys.argv) < 2 :
+		print("Not enough arguments received!\nUsage: " + argv[0] + " <token> [prefix] [admin_id]")
+		exit(0)
 
-	elif len(sys.argv[1]) == 1 and not (sys.argv[1][0] > 'A' and sys.argv[1][0] < 'z') :
-		print("Command prefix set to " + sys.argv[1] +"\n")
-		COMMAND_PREFIX = sys.argv[1]
+	elif len(sys.argv) == 2 :
+		TOKEN = argv[1]
+
+	elif len(sys.argv) == 3 and (len(sys.argv[2]) == 1 and not (sys.argv[2][0] > 'A' and sys.argv[2][0] < 'z')) :
+		print("Command prefix set to " + sys.argv[2] +"\n")
+		COMMAND_PREFIX = sys.argv[2]
+
+	elif len(sys.argv) == 4 :
+		print("Admin set to ID: " + sys.argv[3])
+		ADMIN_ID = sys.argv[3]
 
 	bot.command_prefix = COMMAND_PREFIX
 
 	#TODO : logging
 
-	#bot.run('token')
-
-	bot.run('MjQ3MjQyMjk4ODU5OTc4NzUz.CwmliA.rC4MQSVcPGHux4hDFLbNhYPwu4A')
+	bot.run(TOKEN)

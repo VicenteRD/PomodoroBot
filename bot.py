@@ -195,9 +195,11 @@ async def setup(timerFormat : str, repeat = True, tts = False):
 		repeat	: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
 		tts 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
 
-	if timerFormat == 'help' :
+	if timerFormat == "help" :
 		await bot.say("**Example:**\n\t" + COMMAND_PREFIX + "setup (2xStudy:32,Break:8),Study:32,Long_Break:15\n\t_This will give you a sequence of 32, 8, 32, 8, 32, 15_")
 		return
+	if timerFormat == "default" :
+		timerFormat = "(2xStudy:32,Break:8),Study:32,Long_Break:15"
 
 	bot.onRepeat = repeat
 

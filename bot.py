@@ -180,7 +180,7 @@ class PomodoroBot(commands.Bot) :
 			else :
 				return
 
-bot = MarinaraBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
+bot = PomodoroBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
 
 @bot.event
 async def on_ready():
@@ -460,11 +460,11 @@ async def shutdown(ctx) :
 if __name__ == '__main__':
 
 	if len(sys.argv) < 2 :
-		print("Not enough arguments received!\nUsage: " + argv[0] + " <token> [prefix] [admin_id]")
+		print("Not enough arguments received!\nUsage: " + sys.argv[0] + " <token> [prefix] [admin_id]")
 		exit(0)
 
 	elif len(sys.argv) == 2 :
-		TOKEN = argv[1]
+		TOKEN = sys.argv[1]
 
 	elif len(sys.argv) == 3 and (len(sys.argv[2]) == 1 and not (sys.argv[2][0] > 'A' and sys.argv[2][0] < 'z')) :
 		print("Command prefix set to " + sys.argv[2] +"\n")

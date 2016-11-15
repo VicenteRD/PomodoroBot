@@ -30,7 +30,7 @@ class TAction(Enum) :
 	PAUSE = 1
 	STOP = 2
 
-class MarinaraBot(commands.Bot) :
+class PomodoroBot(commands.Bot) :
 	""" An extension of the Bot class, that contains the necessary attributes and methods to run a Marinara Timer. """
 	
 	# The times for the different periods the timer has been setup with
@@ -205,6 +205,10 @@ async def setup(timerFormat : str, repeat = True, tts = False):
 		print("Someone tried to modify the timer while it was already running!")
 		await bot.say("Please stop the timer completely before modifying it.")
 		return
+
+	if len(bot.pTimes) > 0 :
+		print("Rejecting setup command, there is a period set already established")
+		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.")
 
 	rawSections = re.sub(r",(?=[^()]*\))", '.', timerFormat).split(',')
 

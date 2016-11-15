@@ -180,7 +180,7 @@ class PomodoroBot(commands.Bot) :
 			else :
 				return
 
-bot = MarinaraBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
+bot = PomodoroBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
 
 @bot.event
 async def on_ready():

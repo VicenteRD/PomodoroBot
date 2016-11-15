@@ -33,27 +33,27 @@ class TAction(Enum) :
 class PomodoroBot(commands.Bot) :
 	""" An extension of the Bot class, that contains the necessary attributes and methods to run a Marinara Timer. """
 	
-	# The times for the different periods the timer has been setup with
+	# The times for the different periods the timer has been setup with **
 	pTimes = []
-	# The labels or names for each of the set periods
+	# The labels or names for each of the set periods **
 	pNames = []
 
-	# The period the timer is currently at.
+	# The period the timer is currently at. **
 	currentPeriod = -1
-	# The current time within the period. 
+	# The current time within the period. **
 	currentTime = 0
 	
-	# Whether the period list should loop or not
+	# Whether the period list should loop or not. **
 	onRepeat = True
 	# Whether the bot should send TTS messages on a change of periods
 	tts = False
 
-	# The current timer's status
+	# The current timer's status **
 	timerState = TState.STOPPED
-	# The action the timer should react to on the next iteration of the loop
+	# The action the timer should react to on the next iteration of the loop **
 	nextAction = TAction.NONE
 
-	# The message that gets pinned, containing the current timer and its status 
+	# The message that gets pinned, containing the current timer and its status *~*
 	statusMessage = None
 
 	def __init__(self, command_prefix, formatter=None, description=None, pm_help=False, **options):

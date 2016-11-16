@@ -145,7 +145,7 @@ async def on_ready():
     print('------')
 
     for server in bot.servers :
-    	await bot.send_message(server, "Beep boop. Im back online, ready to ~~take over the world~~ help your productivity!")
+    	await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
 
 @bot.command(pass_context = True)
 async def setup(ctx, timerFormat = "default", repeat = True, countDown = True): # TODO : Test thoroughly !

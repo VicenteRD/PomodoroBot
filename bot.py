@@ -3,6 +3,7 @@ import sys
 import discord
 from discord.ext import commands
 
+from datetime import datetime
 import timer as Timer
 
 import asyncio
@@ -38,23 +39,18 @@ class PomodoroBot(commands.Bot) :
 		super().__init__(command_prefix, formatter, description, pm_help, **options)
 
 	@asyncio.coroutine
-	async def tick(self) :
-		""" Ticks all timers. """
+	async def runTimer(self, channelId) :
+		""" Makes a timer run. """
+
+		timer = bot.pomodoroTimer[channelId]
 
 		await bot.wait_until_ready()
 
 		while not bot.is_closed :
+			iterStart = datetime.now()
+			iterStartMicro = iterStart.second * 1000000 + iterStart.microsecond
 
-			if len(bot.pomodoroTimer) == 0 :
-				bot.ticking = False
-				return
-
-			for channelId, timer in bot.newTimer.items() :
-				pomodoroTimer[channelId] = timer
-
-			for channelId, timer in bot.pomodoroTimer.items() :
-
-				if timer.state == Timer.State.RUNNING :
+			if timer.state == Timer.State.RUNNING :
 					timer.currentTime += 1
 
 					if timer.currentTime >= timer.pTimes[timer.currentPeriod] * 60 :
@@ -66,77 +62,75 @@ class PomodoroBot(commands.Bot) :
 						if timer.currentPeriod >= len(timer.pTimes) :
 							if timer.onRepeat :
 								if len(timer.pTimes) == 1:
-									timer.currentPeriod = 0
+									rimwe.currentPeriod = 0
 								else:
 									timer.currentPeriod = timer.currentPeriod % len(timer.pTimes)
 							else :
+								timer.action = Timer.Action.STOP
 								toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
-								
-								print(toSay + "[channel: " + channelId + "]")
+								print(toSay)
 								await bot.send_message(asObject(channelId), toSay)
-								
-								timer.state = Timer.State.STOPPED
-								await bot.unpin_message(bot.statusMessage[channelId])
-								await bot.delete_message(bot.statusMessage[channelId])
-								del bot.statusMessage[channelId]
-
-								continue
+								return
 
 						if timer.action == Timer.Action.NONE :
 							toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
 						
-						print(toSay + "[channel: " + channelId + "]")
+						print(toSay)
 						await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 
-				if timer.action == Timer.Action.STOP :
-					timer.action = Timer.Action.NONE
-					
-					timer.currentPeriod = -1
-					timer.currentTime = 0
-					timer.state = Timer.State.STOPPED
+			if timer.action == Timer.Action.STOP :
+				timer.action = Timer.Action.NONE
+				
+				timer.currentPeriod = -1
+				timer.currentTime = 0
+				timer.state = Timer.State.STOPPED
 
-					print("Timer on channel " + channelId + " has stopped.")
-					await bot.send_message(asObject(channelId), "Timer has stopped.")
+				print("Timer has stopped.")
+				await bot.send_message(asObject(channelId), "Timer has stopped.")
 
-					await bot.unpin_message(bot.statusMessage[channelId])
-					await bot.delete_message(bot.statusMessage[channelId])
-					del bot.statusMessage[channelId]
-					continue
-
-				elif timer.action == Timer.Action.PAUSE :
-					timer.action = Timer.Action.NONE
-					timer.state = Timer.State.PAUSED
-
-					print("Timer on channel " + channelId + " has paused.")
-					await bot.send_message(asObject(channelId), "Timer has paused.")
-
-				elif timer.action == Timer.Action.RUN :
-					if timer.state == Timer.State.STOPPED :
-						timer.currentPeriod = 0
-
-					statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
-					print(statusAlert + " [channel: " + channelId + "]")
-					await bot.send_message(asObject(channelId), statusAlert)
-
-					if bot.statusMessage[channelId] == None :
-						bot.statusMessage[channelId] = await bot.send_message(asObject(channelId), "Generating status...")
-						try :
-							await bot.pin_message(bot.statusMessage[channelId])
-						except discord.Forbidden:
-							print("No permission to pin messages on channel " + channelId + ".")
-							await bot.send_message(asObject(channelId), "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s")
-
-					timer.action = Timer.Action.NONE
-					timer.state = Timer.State.RUNNING
-					
-				await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
-
-			if len(bot.pomodoroTimer) == 0 :
-				print("No timers left, will stop ticking." + ("There seems to be messages that weren't deleted" if len(statusMessage) else ""))
-				bot.ticking = False
+				await bot.unpin_message(bot.statusMessage[channelId])
+				await bot.delete_message(bot.statusMessage[channelId])
+				bot.statusMessage[channelId] = None
 				return
+
+			elif timer.action == Timer.Action.PAUSE :
+				timer.action = Timer.Action.NONE
+				timer.state = Timer.State.PAUSED
+
+				print("Timer has paused.")
+				await bot.send_message(asObject(channelId),"Timer has paused.")
+
+
+			elif timer.action == Timer.Action.RUN :
+				timer.action = Timer.Action.NONE
+
+				if timer.state == Timer.State.STOPPED :
+					timer.currentPeriod = 0
+
+				statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
+				print(statusAlert)
+				await bot.send_message(asObject(channelId), statusAlert)
+
+				if bot.statusMessage[channelId] == None :
+					bot.statusMessage[channelId] = await bot.send_message(asObject(channelId), "Generating status...")
+					try :
+						await bot.pin_message(bot.statusMessage[channelId])
+					except discord.Forbidden:
+						print("No permission to pin.")
+						await bot.send_message(asObject(channelId), "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s")
+
+				timer.state = Timer.State.RUNNING
+				
+			await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
+
+			if timer.state == Timer.State.RUNNING :
+				iterEnd = datetime.now()
+				iterEndMicro = iterEnd.second * 1000000 + iterEnd.microsecond
+				sleepTime = ((TIMER_STEP * 1000000.0) - ((iterEndMicro - iterStartMicro) % 1000000.0)) / 1000000.0
+				#print(str(sleepTime))
+				await asyncio.sleep(sleepTime)
 			else :
-				await asyncio.sleep(TIMER_STEP)
+				return
 
 				
 bot = PomodoroBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm_help = True)
@@ -163,27 +157,17 @@ async def setup(ctx, timerFormat = "default", repeat = True):
 
 	channelId = getChannelId(ctx)
 
-	try :
-		if bot.pomodoroTimer[channelId] != None or bot.newTimer[channelId] != None :
-			result = -1
-		else :
-			nTimer = None
-			nTimer = Timer.PomodoroTimer(len(bot.pomodoroTimer))
+	if channelId in bot.pomodoroTimer.keys() :
+		result = -1
+	else :
+		bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
+		bot.statusMessage[channelId] = None
+		
+		result, times = bot.pomodoroTimer[channelId].setup(timerFormat, repeat)
 
-			result, times = nTimer.setup(timerFormat, repeat)
-
-	except KeyError :
-		result -1
-
-	
 	if result == 0 and times != None :
 		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN)
 
-		if bot.ticking :
-			bot.newTimer[channelId] = nTimer
-		else :
-			bot.pomodoroTimer[channelId] = nTimer
-		bot.statusMessage[channelId] = None
 
 	elif result == -1 : # len(pTimes) > 0
 		print("Rejecting setup command, there is a period set already established")
@@ -197,8 +181,6 @@ async def setup(ctx, timerFormat = "default", repeat = True):
 		print("Could not set the periods correctly, command 'setup' failed")
 		await bot.say("I did not understand what you wanted, please try again!") 
 
-	del nTimer
-
 @bot.command(pass_context = True)
 async def starttimer(ctx) :
 	""" Starts the timer with the recorded setup. If none present, or if it's already running, it simply gives an error message."""
@@ -208,16 +190,13 @@ async def starttimer(ctx) :
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
-				if not bot.ticking :
-					ticking = True
-					await bot.tick()
+				await bot.runTimer(channelId)
 			else : 
 				print(getAuthorName(ctx) + " tried to start a timer that was already running [Channel: " + channelId + "]")
 				await bot.say("This channel's timer is already running", delete_after = RESPONSE_LIFESPAN)
 		else :
 			print(getAuthorName(ctx) + " tried to start a timer without set periods [Channel: " + channelId + "]")
 			await bot.say("Timer is not set up. Please use the command 'setup'. Use 'halp' or 'setup help' for further explanation", delete_after = RESPONSE_LIFESPAN)
-			return
 
 	except KeyError :
 		print(getAuthorName(ctx) + " tried to start an inexistant timer [Channel: " + channelId + "]")
@@ -260,8 +239,8 @@ async def stop(ctx) :
 			print(stop)
 			await bot.say(stop)
 
-			await bot.unpin_message(bot.statusMessage)
-			await bot.delete_message(bot.statusMessage)
+			await bot.unpin_message(bot.statusMessage[channelId])
+			await bot.delete_message(bot.statusMessage[channelId])
 
 	except KeyError :
 		print(getAuthorName(ctx) + " tried to stop an inexistant timer [Channel: " + channelId + "]")
@@ -410,11 +389,13 @@ async def shutdown(ctx) :
 
 	if getAuthorId(ctx) == ADMIN_ID :
 		print("Shutting down...")
-		await bot.say("Hope I did well, bye!", delete_after = RESPONSE_LIFESPAN / 2)
-		await asyncio.sleep(RESPONSE_LIFESPAN / 2)
-		
+		await bot.say("Hope I did well, bye!")
+
 		for channelId, pinnedMessage in bot.statusMessage.items() :
-			await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
+			if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :
+				bot.pomodoroTimer[channelId].stop()
+				if getChannelId(ctx) != channelId :
+					await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
 
 			if (pinnedMessage != None) :
 				await bot.unpin_message(pinnedMessage)

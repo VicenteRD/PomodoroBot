@@ -39,8 +39,7 @@ class PomodoroTimer :
 
 	#idx = -1
 
-	def __init__(self, n) :
-		self.idx = n
+	def __init__(self) :
 		self.pTimes = []
 		self.pNames = []
 
@@ -90,7 +89,6 @@ class PomodoroTimer :
 
 					for i in range(0, int(splits[0]) * len(subSections)) :
 						idx = i % len(subSections)
-						print("Adding period '" + subSections[idx][0] + "' of length " + str(subSections[idx][1]) + " at position " + str(len(self.pTimes)))
 
 						self.pNames.append(subSections[i % len(subSections)][0].replace('_', ' '))
 						self.pTimes.append(int(subSections[i % len(subSections)][1]))
@@ -99,12 +97,12 @@ class PomodoroTimer :
 					if len(splitsB) != 2 :
 						fmtErr = True
 						break
+
 					self.pNames.append(splitsB[0].replace('_', ' '))
 					self.pTimes.append(int(splitsB[1]))
 
 		if not fmtErr :
 			for i in range(0, len(self.pTimes)) :
-				print("Period n." + str(i) + " (" + self.pNames[i] + "):\t" + str(self.pTimes[i]) + (" minute" if self.pTimes == 1 else " minutes"))
 				if i > 0 :
 					concat += ", " + str(self.pTimes[i])
 				else :
@@ -173,10 +171,10 @@ class PomodoroTimer :
 		""" Skips to the (n-1)th period. 
 			If successful, returns the name of the period that it jumped to. If not, returns None"""
 
-		if idx > 0 and idx < len(self.pTimes) :
+		if idx > 0 and idx <= len(self.pTimes) :
 			self.currentPeriod = idx - 1
 			self.currentTime = 0
-			return self.pNames[currentPeriod]
+			return self.pNames[selfcurrentPeriod]
 		return None
 
 	def isSet(self) :
@@ -215,7 +213,7 @@ class PomodoroTimer :
 		
 		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")\n\t"
 		
-		m, s = divmod(self.currentTime, 60)
+		m, s = divmod((self.pTimes[self.currentPeriod] *60) - self.currentTime, 60)
 		h, m = divmod(m, 60)
 
 		time += "%02d:%02d:%02d" % (h, m, s)

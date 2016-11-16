@@ -69,7 +69,7 @@ class PomodoroBot(commands.Bot) :
 		
 		ret = "**On " + bot.pNames[bot.currentPeriod] + " period** (Duration: " + str(bot.pTimes[bot.currentPeriod]) + (" minute" if bot.pTimes[bot.currentPeriod] == 1 else " minutes") + ")\n\t"
 		
-		m, s = divmod(bot.currentTime, 60)
+		m, s = divmod((bot.pTimes[bot.currentPeriod] * 60) - bot.currentTime, 60)
 		h, m = divmod(m, 60)
 
 		ret += "%02d:%02d:%02d" % (h, m, s)

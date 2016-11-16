@@ -32,10 +32,17 @@ class PomodoroTimer :
 	# The current timer's status
 	state = State.STOPPED
 	# The action the timer should react to on the next iteration of the loop
-	nextAction = Action.NONE
+	action = Action.NONE
 
 	# Whether the period list should loop or not.
 	onRepeat = True
+
+	#idx = -1
+
+	def __init__(self, n) :
+		self.idx = n
+		self.pTimes = []
+		self.pNames = []
 
 	def setup(self, pFormat, onRepeat) :
 		""" Sets the marinara timer. """
@@ -114,24 +121,24 @@ class PomodoroTimer :
 
 	def getNextAction(self) :
 		""" Returns the next action to be executed. """
-		return self.nextAction
+		return self.action
 
-	async def start(self) :
+	def start(self) :
 		""" Starts the timer.
 			Returns True if successful, False if it was already running """
 
 		if self.state == State.RUNNING :
 			return False
 
-		self.state = State.RUNNING
-		return True;
+		self.action = Action.RUN
+		return True
 
 	def pause(self) :
 		""" Pauses the timer, if it's running. Keeps all settings and current period / time. 
 			Returns True if the timer was running and got paused, False otherwise (No need to pause then). """
 
 		if self.state == State.RUNNING :
- 			nextAction = Action.PAUSE
+ 			self.action = Action.PAUSE
  			return True
 		return False
 
@@ -150,11 +157,11 @@ class PomodoroTimer :
 			False if the timer was paused or about to be (Timer actually gets stopped, cancelling the pause state/action). """
 
 		if self.state == State.RUNNING :
-			self.nextAction = Action.STOP
+			self.action = Action.STOP
 			return True
 
-		elif self.state == State.PAUSED or self.nextAction == Action.PAUSED :
-			self.nextAction = Action.NONE
+		elif self.state == State.PAUSED or self.action == Action.PAUSED :
+			self.action = Action.NONE
 			self.state = State.STOPPED
 
 			self.currentTime = 0
@@ -175,11 +182,11 @@ class PomodoroTimer :
 	def isSet(self) :
 		""" Tells whether the timer is already set up or not. Also does a precheck to see if the setup is actually well done. """
 
-		if len(pTimes) != len(pNames) :
+		if len(self.pTimes) != len(self.pNames) :
 			# should go on a 'reset' function
 			self.reset()
 
-		return len(pTimes) > 0
+		return len(self.pTimes) > 0
 
 	def status(self) :
 		""" Tells the user whether the timer is stopped, running or paused. """
@@ -194,8 +201,8 @@ class PomodoroTimer :
 		else :
 			status += "."
 
-		if not nextAction == Action.NONE :
-			status += " Will soon " + ("pause" if self.nextAction == Action.PAUSE else "stop") + "."
+		if not action == Action.NONE :
+			status += " Will soon " + ("pause" if self.action == Action.PAUSE else "stop") + "."
 
 		return status
 

@@ -230,4 +230,3 @@ class PomodoroTimer :
 					time += "\t-> _You are here!_"
 
 		return time
-

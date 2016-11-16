@@ -398,8 +398,12 @@ async def shutdown(ctx) :
 					await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
 
 			if (pinnedMessage != None) :
-				await bot.unpin_message(pinnedMessage)
-				await bot.delete_message(pinnedMessage)
+				try :
+					await bot.unpin_message(pinnedMessage)
+					await bot.delete_message(pinnedMessage)
+				except discord.NotFound :
+					print("boop")
+					
 		await bot.logout()
 	else :
 		print(getAuthorName(ctx) + "attempted to stop the bot and failed (No permission to shut down).")

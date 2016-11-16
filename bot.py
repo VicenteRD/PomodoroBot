@@ -68,14 +68,14 @@ class PomodoroBot(commands.Bot) :
 						else :
 							timer.action = Timer.Action.STOP
 							toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
-							print(toSay)
+							print("<" + channelId + "> " + toSay)
 							await bot.send_message(asObject(channelId), toSay)
 							return
 
 					if timer.action == Timer.Action.NONE :
 						toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
 
-					print(toSay)
+					print("<" + channelId + "> " + toSay)
 					await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 
 			if timer.action == Timer.Action.STOP :
@@ -85,7 +85,7 @@ class PomodoroBot(commands.Bot) :
 				timer.currentTime = 0
 				timer.state = Timer.State.STOPPED
 
-				print("Timer has stopped.")
+				print("<" + channelId + "> Timer has stopped.")
 				await bot.send_message(asObject(channelId), "Timer has stopped.")
 
 				await bot.unpin_message(bot.statusMessage[channelId])
@@ -97,7 +97,7 @@ class PomodoroBot(commands.Bot) :
 				timer.action = Timer.Action.NONE
 				timer.state = Timer.State.PAUSED
 
-				print("Timer has paused.")
+				print("<" + channelId + "> Timer has paused.")
 				await bot.send_message(asObject(channelId),"Timer has paused.")
 
 
@@ -108,7 +108,7 @@ class PomodoroBot(commands.Bot) :
 					timer.currentPeriod = 0
 
 				statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
-				print(statusAlert)
+				print("<" + channelId + "> " + statusAlert)
 				await bot.send_message(asObject(channelId), statusAlert)
 
 				if bot.statusMessage[channelId] == None :
@@ -116,7 +116,7 @@ class PomodoroBot(commands.Bot) :
 					try :
 						await bot.pin_message(bot.statusMessage[channelId])
 					except discord.Forbidden:
-						print("No permission to pin.")
+						print("<" + channelId + "> No permission to pin.")
 						await bot.send_message(asObject(channelId), "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s")
 
 				timer.state = Timer.State.RUNNING
@@ -339,7 +339,7 @@ async def status(ctx) :
 		print(getAuthorName(ctx) + " tried to check the status of an inexistant timer [Channel: " + channelId + "]")
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
 
-@bot.command(pass_context = True)
+@bot.command()
 async def tts(toggle : str) :
 	""" Sets the tts option on or off. """
 

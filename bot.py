@@ -142,6 +142,9 @@ async def on_ready():
     print(bot.user.id)
     print('------')
 
+    for server in bot.servers :
+    	await bot.send_message(server, "Beep boop. Im back online, ready to ~~take over the world~~ help your productivity!")
+
 @bot.command(pass_context = True)
 async def setup(ctx, timerFormat = "default", repeat = True): # TODO : Test thoroughly !
 	""" Sets a marinara timer on the channel in which this message was sent.
@@ -452,3 +455,4 @@ if __name__ == '__main__':
 	#TODO : logging
 
 	bot.run(TOKEN)
+

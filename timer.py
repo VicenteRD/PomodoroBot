@@ -199,7 +199,7 @@ class PomodoroTimer :
 		else :
 			status += "."
 
-		if not action == Action.NONE :
+		if not self.action == Action.NONE :
 			status += " Will soon " + ("pause" if self.action == Action.PAUSE else "stop") + "."
 
 		return status

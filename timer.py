@@ -174,7 +174,7 @@ class PomodoroTimer :
 		if idx > 0 and idx <= len(self.pTimes) :
 			self.currentPeriod = idx - 1
 			self.currentTime = 0
-			return self.pNames[selfcurrentPeriod]
+			return self.pNames[self.currentPeriod]
 		return None
 
 	def isSet(self) :

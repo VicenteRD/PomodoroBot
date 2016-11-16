@@ -62,7 +62,7 @@ class PomodoroBot(commands.Bot) :
 						if timer.currentPeriod >= len(timer.pTimes) :
 							if timer.onRepeat :
 								if len(timer.pTimes) == 1:
-									rimwe.currentPeriod = 0
+									timer.currentPeriod = 0
 								else:
 									timer.currentPeriod = timer.currentPeriod % len(timer.pTimes)
 							else :

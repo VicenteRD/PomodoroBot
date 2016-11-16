@@ -51,32 +51,32 @@ class PomodoroBot(commands.Bot) :
 			iterStartMicro = iterStart.second * 1000000 + iterStart.microsecond
 
 			if timer.state == Timer.State.RUNNING :
-					timer.currentTime += 1
+				timer.currentTime += 1
 
-					if timer.currentTime >= timer.pTimes[timer.currentPeriod] * 60 :
-						toSay = "@here | '" + timer.pNames[timer.currentPeriod] + "' period over!"
+				if timer.currentTime >= timer.pTimes[timer.currentPeriod] * 60 :
+					toSay = "@here | '" + timer.pNames[timer.currentPeriod] + "' period over!"
 
-						timer.currentTime = 0
-						timer.currentPeriod += 1
+					timer.currentTime = 0
+					timer.currentPeriod += 1
 
-						if timer.currentPeriod >= len(timer.pTimes) :
-							if timer.onRepeat :
-								if len(timer.pTimes) == 1:
-									timer.currentPeriod = 0
-								else:
-									timer.currentPeriod = timer.currentPeriod % len(timer.pTimes)
-							else :
-								timer.action = Timer.Action.STOP
-								toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
-								print(toSay)
-								await bot.send_message(asObject(channelId), toSay)
-								return
+					if timer.currentPeriod >= len(timer.pTimes) :
+						if timer.onRepeat :
+							if len(timer.pTimes) == 1:
+								timer.currentPeriod = 0
+							else:
+								timer.currentPeriod = timer.currentPeriod % len(timer.pTimes)
+						else :
+							timer.action = Timer.Action.STOP
+							toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
+							print(toSay)
+							await bot.send_message(asObject(channelId), toSay)
+							return
 
-						if timer.action == Timer.Action.NONE :
-							toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
-						
-						print(toSay)
-						await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
+					if timer.action == Timer.Action.NONE :
+						toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
+
+					print(toSay)
+					await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 
 			if timer.action == Timer.Action.STOP :
 				timer.action = Timer.Action.NONE
@@ -143,7 +143,7 @@ async def on_ready():
     print('------')
 
 @bot.command(pass_context = True)
-async def setup(ctx, timerFormat = "default", repeat = True):
+async def setup(ctx, timerFormat = "default", repeat = True): # TODO : Test thoroughly !
 	""" Sets a marinara timer on the channel in which this message was sent.
 		repeat	: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
 		tts 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
@@ -179,7 +179,7 @@ async def setup(ctx, timerFormat = "default", repeat = True):
 
 	elif result == -3 : # format error
 		print("Could not set the periods correctly, command 'setup' failed")
-		await bot.say("I did not understand what you wanted, please try again!") 
+		await bot.say("I did not understand what you wanted, please try again!")
 
 @bot.command(pass_context = True)
 async def starttimer(ctx) :
@@ -253,7 +253,9 @@ async def resume(ctx) :
 	channelId = getChannelId(ctx)
 
 	try :
-		if not bot.pomodoroTimer[channelId].resume() :
+		if bot.pomodoroTimer[channelId].resume() :
+			await bot.runTimer(channelId)
+		else :
 			if getAuthorId(ctx) == "244720666018840576" :
 				await bot.say("No grumbles for you, " + getAuthorName(ctx, True) + "!", delete_after = RESPONSE_LIFESPAN)
 			else :

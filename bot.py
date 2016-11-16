@@ -39,7 +39,7 @@ class PomodoroBot(commands.Bot) :
 		super().__init__(command_prefix, formatter, description, pm_help, **options)
 
 	@asyncio.coroutine
-	async def runTimer(self, channelId) :
+	async def runTimer(self, channelId, startIdx = 0) :
 		""" Makes a timer run. """
 
 		timer = bot.pomodoroTimer[channelId]
@@ -73,8 +73,10 @@ class PomodoroBot(commands.Bot) :
 							return
 
 					if timer.action == Timer.Action.NONE :
-						toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
-
+						toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting" 
+						toSay += " (" + str(timer.pTimes[timer.currentPeriod])
+						toSay += (" minute)." if timer.pTimes[timer.currentPeriod] == 1 else " minutes).")
+					
 					print("<" + channelId + "> " + toSay)
 					await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 
@@ -105,7 +107,7 @@ class PomodoroBot(commands.Bot) :
 				timer.action = Timer.Action.NONE
 
 				if timer.state == Timer.State.STOPPED :
-					timer.currentPeriod = 0
+					timer.currentPeriod = startIdx
 
 				statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
 				print("<" + channelId + "> " + statusAlert)
@@ -146,7 +148,7 @@ async def on_ready():
     	await bot.send_message(server, "Beep boop. Im back online, ready to ~~take over the world~~ help your productivity!")
 
 @bot.command(pass_context = True)
-async def setup(ctx, timerFormat = "default", repeat = True): # TODO : Test thoroughly !
+async def setup(ctx, timerFormat = "default", repeat = True, countDown = True): # TODO : Test thoroughly !
 	""" Sets a marinara timer on the channel in which this message was sent.
 		repeat	: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
 		tts 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
@@ -166,26 +168,28 @@ async def setup(ctx, timerFormat = "default", repeat = True): # TODO : Test thor
 		bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
 		bot.statusMessage[channelId] = None
 		
-		result, times = bot.pomodoroTimer[channelId].setup(timerFormat, repeat)
+		result, times = bot.pomodoroTimer[channelId].setup(timerFormat, repeat, countDown)
 
 	if result == 0 and times != None :
-		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN)
+		settings = times + ".\nLooping is **" + ("ON" if repeat else "OFF") + "**\nCountdown is **" + ("ON" if countDown else "OFF") + "**"
 
+		print("Successfully set up a timer configuration. [Channel: " + channelId + "]\n" + settings)
+		await bot.say("Correctly set up timer config: " + settings, delete_after = RESPONSE_LIFESPAN * 2)
 
 	elif result == -1 : # len(pTimes) > 0
-		print("Rejecting setup command, there is a period set already established")
-		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.")
+		print("Rejecting setup command, there is a period set already established. [Channel: " + channelId + "]")
+		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.", delete_after = RESPONSE_LIFESPAN)
 		
 	elif result == -2 : # state == RUNNING or PAUSED
-		print("Someone tried to modify the timer while it was already running!")
-		await bot.say("Please stop the timer completely before modifying it.")
+		print("Someone tried to modify the timer while it was already running! [Channel: " + channelId + "]")
+		await bot.say("Please stop the timer completely before modifying it.", delete_after = RESPONSE_LIFESPAN)
 
 	elif result == -3 : # format error
-		print("Could not set the periods correctly, command 'setup' failed")
-		await bot.say("I did not understand what you wanted, please try again!")
+		print("Could not set the periods correctly, command 'setup' failed. [Channel: " + channelId + "]")
+		await bot.say("I did not understand what you wanted, please try again!", delete_after = RESPONSE_LIFESPAN)
 
 @bot.command(pass_context = True)
-async def starttimer(ctx) :
+async def starttimer(ctx, periodIdx = 0) :
 	""" Starts the timer with the recorded setup. If none present, or if it's already running, it simply gives an error message."""
 	
 	channelId = getChannelId(ctx)
@@ -193,7 +197,7 @@ async def starttimer(ctx) :
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
-				await bot.runTimer(channelId)
+				await bot.runTimer(channelId, periodIdx)
 			else : 
 				print(getAuthorName(ctx) + " tried to start a timer that was already running [Channel: " + channelId + "]")
 				await bot.say("This channel's timer is already running", delete_after = RESPONSE_LIFESPAN)
@@ -300,7 +304,7 @@ async def reset(ctx) :
 		if bot.pomodoroTimer[channelId].isStopped() :
 			del bot.pomodoroTimer[channelId]
 
-			print(getAuthorName(ctx) + " tried reset a timer [Channel: " + channelId + "]")
+			print(getAuthorName(ctx) + " reset a timer [Channel: " + channelId + "]")
 			await bot.say("Succesfully reset session configuration.", delete_after = RESPONSE_LIFESPAN)		
 		else :
 			print(getAuthorName(ctx) + " tried resetting a timer that was running or paused [Channel: " + channelId + "]")
@@ -402,7 +406,7 @@ async def shutdown(ctx) :
 				if getChannelId(ctx) != channelId :
 					await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
 
-			if (pinnedMessage != None) :
+			if pinnedMessage != None :
 				try :
 					await bot.unpin_message(pinnedMessage)
 					await bot.delete_message(pinnedMessage)

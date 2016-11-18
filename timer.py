@@ -36,7 +36,9 @@ class PomodoroTimer :
 
 	# Whether the period list should loop or not.
 	onRepeat = True
-	countDown = True
+	# Whether the timer should count from 0 and show the "elapsed" time,
+	# or count back from the period's time and show the remaining time.
+	countdown = True
 
 	#idx = -1
 
@@ -110,7 +112,8 @@ class PomodoroTimer :
 					concat = str(self.pTimes[0])
 
 			self.onRepeat = onRepeat
-			self.countDown = reverse
+			self.countdown = reverse
+
 			return 0, concat
 		
 		else :
@@ -203,7 +206,14 @@ class PomodoroTimer :
 			status += "."
 
 		if not self.action == Action.NONE :
-			status += " Will soon " + ("pause" if self.action == Action.PAUSE else "stop") + "."
+			status += " Will soon "
+			if self.action == Action.RUN :
+				status += "start running."
+			elif self.action == Action.PAUSE :
+				status += "pause."
+			elif self.action == Action.STOP :
+				status += "stop."
+
 
 		return status
 
@@ -215,10 +225,10 @@ class PomodoroTimer :
 			return "Currently not running."
 		
 		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")"
-		
-		if self.countDown :
+
+		if self.countdown :
 			time += "\nRemaining:\t"
-			m, s = divmod((self.pTimes[self.currentPeriod] *60) - self.currentTime, 60)
+			m, s = divmod((self.pTimes[self.currentPeriod] * 60) - self.currentTime, 60)
 			h, m = divmod(m, 60)
 		else :
 			time += "\nElapsed:\t"

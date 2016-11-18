@@ -144,15 +144,7 @@ async def on_ready():
     print('------')
 
 @bot.command(pass_context = True)
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-async def setup(ctx, timerFormat = "default", repeat = True):
-=======
 async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True"): # TODO : Test thoroughly !
->>>>>>> Stashed changes
-=======
-async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True"): # TODO : Test thoroughly !
->>>>>>> Stashed changes
 	""" Sets a marinara timer on the channel in which this message was sent.
 		repeat		: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
 		countback 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
@@ -176,41 +168,15 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 
 			bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
 			bot.statusMessage[channelId] = None
-		
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-		result, times = bot.pomodoroTimer[channelId].setup(timerFormat, repeat)
-=======
+
 			result, times = bot.pomodoroTimer[channelId].setup(timerFormat, loop, countdown)
 		except err.BadArgument :
 			result = -4
->>>>>>> Stashed changes
-=======
-			result, times = bot.pomodoroTimer[channelId].setup(timerFormat, loop, countdown)
-		except err.BadArgument :
-			result = -4
->>>>>>> Stashed changes
+
 
 	if result == 0 and times != None :
 		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN)
 
-<<<<<<< Updated upstream
-
-<<<<<<< Updated upstream
-	elif result == -1 : # len(pTimes) > 0
-		print("Rejecting setup command, there is a period set already established")
-		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.")
-		
-	elif result == -2 : # state == RUNNING or PAUSED
-		print("Someone tried to modify the timer while it was already running!")
-		await bot.say("Please stop the timer completely before modifying it.")
-
-	elif result == -3 : # format error
-		print("Could not set the periods correctly, command 'setup' failed")
-		await bot.say("I did not understand what you wanted, please try again!") 
-=======
-=======
->>>>>>> Stashed changes
 		setup = "Successfully set up a timer configuration.\n" + settings
 		await bot.say("Correctly set up timer config: " + settings, delete_after = RESPONSE_LIFESPAN * 2)
 
@@ -231,10 +197,6 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 		await bot.say("Invalid arguments received, please try again.", delete_after = RESPONSE_LIFESPAN)
 
 	print("<" + channelId + "> " + setup)
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 @bot.command(pass_context = True)
 async def starttimer(ctx) :
@@ -245,15 +207,8 @@ async def starttimer(ctx) :
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-				await bot.runTimer(channelId)
-=======
-=======
->>>>>>> Stashed changes
 				starttimer = "Starting timer."
 				await bot.runTimer(channelId, periodIdx)
->>>>>>> Stashed changes
 			else : 
 				starttimer = getAuthorName(ctx) + " tried to start a timer that was already running."
 				await bot.say("This channel's timer is already running", delete_after = RESPONSE_LIFESPAN)
@@ -370,15 +325,7 @@ async def reset(ctx) :
 		if bot.pomodoroTimer[channelId].isStopped() :
 			del bot.pomodoroTimer[channelId]
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-			print(getAuthorName(ctx) + " tried reset a timer [Channel: " + channelId + "]")
-=======
 			reset = getAuthorName(ctx) + " reset a timer."
->>>>>>> Stashed changes
-=======
-			reset = getAuthorName(ctx) + " reset a timer."
->>>>>>> Stashed changes
 			await bot.say("Succesfully reset session configuration.", delete_after = RESPONSE_LIFESPAN)		
 		else :
 			reset = getAuthorName(ctx) + " tried resetting a timer that was running or paused."
@@ -429,17 +376,10 @@ async def tts(toggle : str) :
 
 	try :
 		bot.tts = toBoolean(toggle)
-<<<<<<< Updated upstream
 
 		print("<Global> TTS now " + ("on." if bot.tts else "off."))
 		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
 
-=======
-
-		print("<Global> TTS now " + ("on." if bot.tts else "off."))
-		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
-
->>>>>>> Stashed changes
 	except err.BadArgument :
 		print("<Global> TTS command failed, bad argument.")
 		await bot.say("I could not understand if you wanted to turn TTS on or off, sorry.")

@@ -204,8 +204,14 @@ class PomodoroTimer :
 		else :
 			status += "."
 
-		if not action == Action.NONE :
-			status += " Will soon " + ("pause" if self.action == Action.PAUSE else "stop") + "."
+		if not self.action == Action.NONE :
+			status += " Will soon "
+			if self.action == Action.RUN :
+				status += "start running."
+			elif self.action == Action.PAUSE :
+				status += "pause."
+			elif self.action == Action.STOP :
+				status += "stop."
 
 		return status
 
@@ -218,9 +224,9 @@ class PomodoroTimer :
 		
 		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")"
 
-		if self.countDown :
+		if self.countdown :
 			time += "\nRemaining:\t"
-			m, s = divmod((self.pTimes[self.currentPeriod] *60) - self.currentTime, 60)
+			m, s = divmod((self.pTimes[self.currentPeriod] * 60) - self.currentTime, 60)
 			h, m = divmod(m, 60)
 		else :
 			time += "\nElapsed:\t"

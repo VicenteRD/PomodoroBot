@@ -75,8 +75,8 @@ class PomodoroBot(commands.Bot) :
 
 						if timer.action == Timer.Action.NONE :
 							toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting"
- 							toSay += " (" + str(timer.pTimes[timer.currentPeriod])
- 							toSay += (" minute)." if timer.pTimes[timer.currentPeriod] == 1 else " minutes).")
+							toSay += " (" + str(timer.pTimes[timer.currentPeriod])
+							toSay += (" minute)." if timer.pTimes[timer.currentPeriod] == 1 else " minutes).")
 						
 						print("<" + channelId + "> " + toSay)
 						await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
@@ -110,7 +110,7 @@ class PomodoroBot(commands.Bot) :
 				if timer.state == Timer.State.STOPPED :
 					timer.currentPeriod = startIdx
 
-				statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
+					statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Resuming!")
 				print("<" + channelId + "> " + statusAlert)
 				await bot.send_message(asObject(channelId), statusAlert)
 
@@ -143,13 +143,13 @@ bot = PomodoroBot(command_prefix = COMMAND_PREFIX, description = DESCRIPTION, pm
 
 @bot.event
 async def on_ready():
-    print('Logged in as')
-    print(bot.user.name)
-    print(bot.user.id)
-    print('------')
+	print('Logged in as')
+	print(bot.user.name)
+	print(bot.user.id)
+	print('------')
 
 	for server in bot.servers :
-    	await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
+		await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
 
 @bot.command(pass_context = True)
 async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True") :
@@ -206,7 +206,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 	print("<" + channelId + "> " + setup)
 
 @bot.command(pass_context = True)
-async def starttimer(ctx) :
+async def starttimer(ctx, periodIdx = 0) :
 	""" Starts the timer with the recorded setup. If none present, or if it's already running, it simply gives an error message."""
 	
 	channelId = getChannelId(ctx)
@@ -214,7 +214,7 @@ async def starttimer(ctx) :
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
-				starttimer = "Starting timer."
+				starttimer = None
 				await bot.runTimer(channelId, periodIdx)
 			else : 
 				starttimer = getAuthorName(ctx) + " tried to start a timer that was already running."
@@ -227,7 +227,8 @@ async def starttimer(ctx) :
 		starttimer = getAuthorName(ctx) + " tried to start an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
 
-	print("<" + channelId + "> " + starttimer)
+	if starttimer != None :
+		print("<" + channelId + "> " + starttimer)
 
 
 @bot.command(pass_context = True)
@@ -283,7 +284,7 @@ async def resume(ctx) :
 
 	try :
 		if bot.pomodoroTimer[channelId].resume() :
-			resume = "Resuming timer."
+			resume = None
 			await bot.runTimer(channelId)
 		else :
 			resume = "Unable to resume timer, stopped or already running."
@@ -297,7 +298,8 @@ async def resume(ctx) :
 		resume = getAuthorName(ctx) + " tried to resume an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
 	
-	print("<" + channelId + "> " + resume)
+	if resume != None :
+		print("<" + channelId + "> " + resume)
 
 
 @bot.command(pass_context = True)

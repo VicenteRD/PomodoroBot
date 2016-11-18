@@ -2,8 +2,9 @@ import sys
 
 import discord
 from discord.enums import Status as discordStatus
+from discord import errors as dErr 
 from discord.ext import commands
-from discord.ext.commands import errors as err
+from discord.ext.commands import errors as cmdErr
 
 from datetime import datetime
 import timer as Timer
@@ -145,7 +146,7 @@ class PomodoroBot(commands.Bot) :
 			try :
 				if bot.statusMessage[channelId] != None :
 					await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
-			except discord.errors.NotFound :
+			except dErr.NotFound :
 				pass
 
 			if timer.state == Timer.State.RUNNING :
@@ -200,7 +201,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 			bot.statusMessage[channelId] = None
 
 			result, times = bot.pomodoroTimer[channelId].setup(timerFormat, loop, countdown)
-		except err.BadArgument :
+		except cmdErr.BadArgument :
 			result = -4
 
 	if result == 0 and times != None :
@@ -411,7 +412,7 @@ async def tts(toggle : str) :
 		print("<------Global-----> TTS now " + ("on." if bot.tts else "off."))
 		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
 
-	except err.BadArgument :
+	except cmdErr.BadArgument :
 		print("<------Global-----> TTS command failed, bad argument.")
 		await bot.say("I could not understand if you wanted to turn TTS on or off, sorry.")
 
@@ -453,18 +454,18 @@ async def shutdown(ctx) :
 		await bot.say("Hope I did well, bye!")
 
 		for channelId, pinnedMessage in bot.statusMessage.items() :
-			if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :
-				bot.pomodoroTimer[channelId].stop()
-				if getChannelId(ctx) != channelId :
-					await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
+			try :
+				if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :
+					bot.pomodoroTimer[channelId].stop()
+					if getChannelId(ctx) != channelId :
+						await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
 
-			if pinnedMessage != None :
-				try :
+				if pinnedMessage != None :
 					await bot.unpin_message(pinnedMessage)
 					await bot.delete_message(pinnedMessage)
-				except discord.NotFound :
-					print("boop")
-					
+			except (KeyError, dErr.NotFound) as wht :
+				pass
+
 		await bot.logout()
 	else :
 		print(getAuthorName(ctx) + "attempted to stop the bot and failed (No permission to shut down).")
@@ -497,7 +498,7 @@ def toBoolean(value : str) :
 	elif value == 'false' or value == 'off' or value == 'no' or value == 'n' :
 		return False
 	else :
-		raise err.BadArgument
+		raise cmdErr.BadArgument
 
 if __name__ == '__main__':
 

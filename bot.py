@@ -1,6 +1,7 @@
 import sys
 
 import discord
+from discord.enums import Status as discordStatus
 from discord.ext import commands
 from discord.ext.commands import errors as err
 
@@ -35,9 +36,20 @@ class PomodoroBot(commands.Bot) :
 
 	# Whether the bot is ticking, thus making all timers run.
 	ticking = False
+	# The amount of timers running.
+	timersRunning = 0
 
 	def __init__(self, command_prefix, formatter=None, description=None, pm_help=False, **options):
 		super().__init__(command_prefix, formatter, description, pm_help, **options)
+
+	@asyncio.coroutine
+	async def updateStatus(self) :
+		if bot.timersRunning == 0 :
+			await bot.change_presence(game = None, status = discordStatus.idle)
+		else :
+			game = discord.Game()
+			game.name = " on " + str(bot.timersRunning) + (" channel." if bot.timersRunning == 1 else " channels.")
+			await bot.change_presence(game = game, status = discordStatus.online)
 
 	@asyncio.coroutine
 	async def runTimer(self, channelId, startIdx = 0) :
@@ -47,6 +59,8 @@ class PomodoroBot(commands.Bot) :
 
 		await bot.wait_until_ready()
 
+		bot.timersRunning += 1
+		await bot.updateStatus()
 		while not bot.is_closed :
 			iterStart = datetime.now()
 			iterStartMicro = iterStart.second * 1000000 + iterStart.microsecond
@@ -71,6 +85,9 @@ class PomodoroBot(commands.Bot) :
 								toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
 								print("<" + channelId + "> " + toSay)
 								await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
+
+								bot.timersRunning -= 1
+								await bot.updateStatus()
 								return
 
 						if timer.action == Timer.Action.NONE :
@@ -94,7 +111,6 @@ class PomodoroBot(commands.Bot) :
 				await bot.unpin_message(bot.statusMessage[channelId])
 				await bot.delete_message(bot.statusMessage[channelId])
 				bot.statusMessage[channelId] = None
-				return
 
 			elif timer.action == Timer.Action.PAUSE :
 				timer.action = Timer.Action.NONE
@@ -125,7 +141,8 @@ class PomodoroBot(commands.Bot) :
 				timer.state = Timer.State.RUNNING
 			
 			try :
-				await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
+				if bot.statusMessage[channelId] != None :
+					await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
 			except discord.errors.NotFound :
 				pass
 
@@ -136,6 +153,8 @@ class PomodoroBot(commands.Bot) :
 
 				await asyncio.sleep(sleepTime)
 			else :
+				bot.timersRunning -= 1
+				await bot.updateStatus()
 				return
 
 				
@@ -148,6 +167,7 @@ async def on_ready():
 	print(bot.user.id)
 	print('------')
 
+	await bot.updateStatus()
 	for server in bot.servers :
 		await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
 
@@ -184,8 +204,8 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 	if result == 0 and times != None :
 		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN)
 
-		setup = "Successfully set up a timer configuration.\n" + settings
-		await bot.say("Correctly set up timer config: " + settings, delete_after = RESPONSE_LIFESPAN * 2)
+		setup = "Successfully set up a timer configuration.\n" + result
+		await bot.say("Correctly set up timer config: " + result, delete_after = RESPONSE_LIFESPAN * 2)
 
 	elif result == -1 : # len(pTimes) > 0
 		setup = "Rejecting setup command, there is a period set already established."
@@ -215,6 +235,7 @@ async def starttimer(ctx, periodIdx = 0) :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
 				starttimer = None
+
 				await bot.runTimer(channelId, periodIdx)
 			else : 
 				starttimer = getAuthorName(ctx) + " tried to start a timer that was already running."

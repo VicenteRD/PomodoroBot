@@ -40,7 +40,7 @@ class PomodoroBot(commands.Bot) :
 		super().__init__(command_prefix, formatter, description, pm_help, **options)
 
 	@asyncio.coroutine
-	async def runTimer(self, channelId) :
+	async def runTimer(self, channelId, startIdx = 0) :
 		""" Makes a timer run. """
 
 		timer = bot.pomodoroTimer[channelId]
@@ -69,14 +69,16 @@ class PomodoroBot(commands.Bot) :
 							else :
 								timer.action = Timer.Action.STOP
 								toSay += "\n...I have ran out of periods, and looping is off. Time to procrastinate?"
-								print(toSay)
-								await bot.send_message(asObject(channelId), toSay)
+								print("<" + channelId + "> " + toSay)
+								await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 								return
 
 						if timer.action == Timer.Action.NONE :
-							toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting." #TODO also print, all prints to log
+							toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting"
+ 							toSay += " (" + str(timer.pTimes[timer.currentPeriod])
+ 							toSay += (" minute)." if timer.pTimes[timer.currentPeriod] == 1 else " minutes).")
 						
-						print(toSay)
+						print("<" + channelId + "> " + toSay)
 						await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
 
 			if timer.action == Timer.Action.STOP :
@@ -86,7 +88,7 @@ class PomodoroBot(commands.Bot) :
 				timer.currentTime = 0
 				timer.state = Timer.State.STOPPED
 
-				print("Timer has stopped.")
+				print("<" + channelId + "> Timer has stopped.")
 				await bot.send_message(asObject(channelId), "Timer has stopped.")
 
 				await bot.unpin_message(bot.statusMessage[channelId])
@@ -98,7 +100,7 @@ class PomodoroBot(commands.Bot) :
 				timer.action = Timer.Action.NONE
 				timer.state = Timer.State.PAUSED
 
-				print("Timer has paused.")
+				print("<" + channelId + "> Timer has paused.")
 				await bot.send_message(asObject(channelId),"Timer has paused.")
 
 
@@ -106,10 +108,10 @@ class PomodoroBot(commands.Bot) :
 				timer.action = Timer.Action.NONE
 
 				if timer.state == Timer.State.STOPPED :
-					timer.currentPeriod = 0
+					timer.currentPeriod = startIdx
 
 				statusAlert = ("Starting!" if timer.state == Timer.State.STOPPED else "Restarting!")
-				print(statusAlert)
+				print("<" + channelId + "> " + statusAlert)
 				await bot.send_message(asObject(channelId), statusAlert)
 
 				if bot.statusMessage[channelId] == None :
@@ -117,7 +119,7 @@ class PomodoroBot(commands.Bot) :
 					try :
 						await bot.pin_message(bot.statusMessage[channelId])
 					except discord.Forbidden:
-						print("No permission to pin.")
+						print("<" + channelId + "> No permission to pin.")
 						await bot.send_message(asObject(channelId), "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s")
 
 				timer.state = Timer.State.RUNNING
@@ -146,8 +148,11 @@ async def on_ready():
     print(bot.user.id)
     print('------')
 
+	for server in bot.servers :
+    	await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
+
 @bot.command(pass_context = True)
-async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True"): # TODO : Test thoroughly !
+async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True") :
 	""" Sets a marinara timer on the channel in which this message was sent.
 		repeat		: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
 		countback 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
@@ -165,7 +170,6 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 		result = -1
 	else :
 		try :
-
 			loop = toBoolean(repeat)
 			countdown = toBoolean(countback)
 
@@ -373,7 +377,7 @@ async def status(ctx) :
 	
 	print("<" + channelId + "> " + status)
 
-@bot.command(pass_context = True)
+@bot.command()
 async def tts(toggle : str) :
 	""" Sets the tts option on or off. """
 

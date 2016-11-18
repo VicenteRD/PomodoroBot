@@ -36,6 +36,9 @@ class PomodoroTimer :
 
 	# Whether the period list should loop or not.
 	onRepeat = True
+	# Whether the timer should count from 0 and show the "elapsed" time,
+	# or count back from the period's time and show the remaining time.
+	countdown = True
 
 	#idx = -1
 
@@ -43,7 +46,7 @@ class PomodoroTimer :
 		self.pTimes = []
 		self.pNames = []
 
-	def setup(self, pFormat, onRepeat) :
+	def setup(self, pFormat, onRepeat, reverse) :
 		""" Sets the marinara timer. """
 
 		if len(self.pTimes) > 0 :
@@ -108,6 +111,8 @@ class PomodoroTimer :
 				else :
 					concat = str(self.pTimes[0])
 
+			self.onRepeat = onRepeat
+			self.countdown = reverse
 			return 0, concat
 		
 		else :
@@ -211,10 +216,16 @@ class PomodoroTimer :
 		if self.state == State.STOPPED :
 			return "Currently not running."
 		
-		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")\n\t"
-		
-		m, s = divmod((self.pTimes[self.currentPeriod] *60) - self.currentTime, 60)
-		h, m = divmod(m, 60)
+		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")"
+
+		if self.countDown :
+			time += "\nRemaining:\t"
+			m, s = divmod((self.pTimes[self.currentPeriod] *60) - self.currentTime, 60)
+			h, m = divmod(m, 60)
+		else :
+			time += "\nElapsed:\t"
+			m, s = divmod(self.currentTime, 60)
+			h, m = divmod(m, 60)
 
 		time += "%02d:%02d:%02d" % (h, m, s)
 		del h,m,s

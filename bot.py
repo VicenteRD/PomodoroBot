@@ -173,9 +173,6 @@ async def on_ready():
 	for server in bot.servers :
 		await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
 
-    for server in bot.servers :
-    	await bot.send_message(server, "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!")
-
 @bot.command(pass_context = True)
 
 async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True") :
@@ -207,9 +204,9 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 			result = -4
 
 	if result == 0 and times != None :
-		settings = times + ".\nLooping is **" + ("ON" if repeat else "OFF") + "**\nCountdown is **" + ("ON" if countDown else "OFF") + "**"
+		settings = times + ".\nLooping is **" + ("ON" if repeat else "OFF") + "**\nCountdown is **" + ("ON" if countdown else "OFF") + "**"
 
-		setup = "Successfully set up a timer configuration.\n" + times
+		setup = "Successfully set up a timer configuration.\n\t\t" + times
 		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN * 2)
 
 	elif result == -1 : # len(pTimes) > 0
@@ -411,11 +408,11 @@ async def tts(toggle : str) :
 	try :
 		bot.tts = toBoolean(toggle)
 
-		print("<Global> TTS now " + ("on." if bot.tts else "off."))
+		print("<------Global-----> TTS now " + ("on." if bot.tts else "off."))
 		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
 
 	except err.BadArgument :
-		print("<Global> TTS command failed, bad argument.")
+		print("<------Global-----> TTS command failed, bad argument.")
 		await bot.say("I could not understand if you wanted to turn TTS on or off, sorry.")
 
 @bot.command(pass_context = True)

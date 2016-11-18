@@ -2,6 +2,7 @@ import sys
 
 import discord
 from discord.ext import commands
+from discord.ext.commands import errors as err
 
 from datetime import datetime
 import timer as Timer
@@ -120,14 +121,14 @@ class PomodoroBot(commands.Bot) :
 						await bot.send_message(asObject(channelId), "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s")
 
 				timer.state = Timer.State.RUNNING
-				
+			
 			await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
 
 			if timer.state == Timer.State.RUNNING :
 				iterEnd = datetime.now()
 				iterEndMicro = iterEnd.second * 1000000 + iterEnd.microsecond
 				sleepTime = ((TIMER_STEP * 1000000.0) - ((iterEndMicro - iterStartMicro) % 1000000.0)) / 1000000.0
-				#print(str(sleepTime))
+
 				await asyncio.sleep(sleepTime)
 			else :
 				return
@@ -143,10 +144,18 @@ async def on_ready():
     print('------')
 
 @bot.command(pass_context = True)
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 async def setup(ctx, timerFormat = "default", repeat = True):
+=======
+async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True"): # TODO : Test thoroughly !
+>>>>>>> Stashed changes
+=======
+async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True"): # TODO : Test thoroughly !
+>>>>>>> Stashed changes
 	""" Sets a marinara timer on the channel in which this message was sent.
-		repeat	: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
-		tts 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
+		repeat		: Indicates whether the timer should start over when it's done with the list of periods or simply stop. (Default: True)
+		countback 	: Indicates whether the timer should send a TTS message or a normal one whenever the period finishes or changes. (Default: False)"""
 
 	if timerFormat == "help" :
 		await bot.say("**Example:**\n\t" + COMMAND_PREFIX + "setup (2xStudy:32,Break:8),Study:32,Long_Break:15\n\t_This will give you a sequence of 32, 8, 32, 8, 32, 15_")
@@ -160,15 +169,34 @@ async def setup(ctx, timerFormat = "default", repeat = True):
 	if channelId in bot.pomodoroTimer.keys() :
 		result = -1
 	else :
-		bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
-		bot.statusMessage[channelId] = None
+		try :
+
+			loop = toBoolean(repeat)
+			countdown = toBoolean(countback)
+
+			bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
+			bot.statusMessage[channelId] = None
 		
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 		result, times = bot.pomodoroTimer[channelId].setup(timerFormat, repeat)
+=======
+			result, times = bot.pomodoroTimer[channelId].setup(timerFormat, loop, countdown)
+		except err.BadArgument :
+			result = -4
+>>>>>>> Stashed changes
+=======
+			result, times = bot.pomodoroTimer[channelId].setup(timerFormat, loop, countdown)
+		except err.BadArgument :
+			result = -4
+>>>>>>> Stashed changes
 
 	if result == 0 and times != None :
 		await bot.say("Correctly set up timer config: " + times, delete_after = RESPONSE_LIFESPAN)
 
+<<<<<<< Updated upstream
 
+<<<<<<< Updated upstream
 	elif result == -1 : # len(pTimes) > 0
 		print("Rejecting setup command, there is a period set already established")
 		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.")
@@ -180,6 +208,33 @@ async def setup(ctx, timerFormat = "default", repeat = True):
 	elif result == -3 : # format error
 		print("Could not set the periods correctly, command 'setup' failed")
 		await bot.say("I did not understand what you wanted, please try again!") 
+=======
+=======
+>>>>>>> Stashed changes
+		setup = "Successfully set up a timer configuration.\n" + settings
+		await bot.say("Correctly set up timer config: " + settings, delete_after = RESPONSE_LIFESPAN * 2)
+
+	elif result == -1 : # len(pTimes) > 0
+		setup = "Rejecting setup command, there is a period set already established."
+		await bot.say("I'm already set and ready to go, please use the reset command if you want to change the timer configuration.", delete_after = RESPONSE_LIFESPAN)
+		
+	elif result == -2 : # state == RUNNING or PAUSED
+		setup = "Someone tried to modify the timer while it was already running."
+		await bot.say("Please stop the timer completely before modifying it.", delete_after = RESPONSE_LIFESPAN)
+
+	elif result == -3 : # format error
+		setup = "Could not set the periods correctly, command 'setup' failed."
+		await bot.say("I did not understand what you wanted, please try again!", delete_after = RESPONSE_LIFESPAN)
+	
+	elif result == -4 : # repeat or countback (given arguments) are not valid booleans
+		setup = "Could not parse boolean arguments '" + repeat + "' and '" + countback + "'"
+		await bot.say("Invalid arguments received, please try again.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + setup)
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 @bot.command(pass_context = True)
 async def starttimer(ctx) :
@@ -190,17 +245,27 @@ async def starttimer(ctx) :
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
 			if bot.pomodoroTimer[channelId].start() :
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 				await bot.runTimer(channelId)
+=======
+=======
+>>>>>>> Stashed changes
+				starttimer = "Starting timer."
+				await bot.runTimer(channelId, periodIdx)
+>>>>>>> Stashed changes
 			else : 
-				print(getAuthorName(ctx) + " tried to start a timer that was already running [Channel: " + channelId + "]")
+				starttimer = getAuthorName(ctx) + " tried to start a timer that was already running."
 				await bot.say("This channel's timer is already running", delete_after = RESPONSE_LIFESPAN)
 		else :
-			print(getAuthorName(ctx) + " tried to start a timer without set periods [Channel: " + channelId + "]")
+			starttimer = getAuthorName(ctx) + " tried to start a timer without set periods."
 			await bot.say("Timer is not set up. Please use the command 'setup'. Use 'halp' or 'setup help' for further explanation", delete_after = RESPONSE_LIFESPAN)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to start an inexistant timer [Channel: " + channelId + "]")
+		starttimer = getAuthorName(ctx) + " tried to start an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + starttimer)
 
 
 @bot.command(pass_context = True)
@@ -211,16 +276,18 @@ async def pause(ctx) :
 
 	try :
 		if bot.pomodoroTimer[channelId].pause() :
-			alert = "Timer will be paused soon."
-			print(alert)
-			await bot.say(alert, delete_after = 1)
+			pause = "Timer will be paused soon."
+			await bot.say(pause, delete_after = 1)
 
 		else :
+			pause = "Could not pause timer, stopped or already running."
 			await bot.say("Bruh, I cannot stop something that isn't moving.", delete_after = RESPONSE_LIFESPAN)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to pause an inexistant timer [Channel: " + channelId + "]")
+		pause = getAuthorName(ctx) + " tried to pause an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + pause)
 
 @bot.command(pass_context = True)
 async def stop(ctx) :
@@ -230,21 +297,21 @@ async def stop(ctx) :
 
 	try :
 		if bot.pomodoroTimer[channelId].stop() :
-			alert = "Timer will stop soon."
-			print(alert)
-			await bot.say(alert, delete_after = 1)
+			stop = "Timer will stop soon."
+			await bot.say(stop, delete_after = 1)
 
 		else :
 			stop = "Timer has stopped." 
-			print(stop)
 			await bot.say(stop)
 
 			await bot.unpin_message(bot.statusMessage[channelId])
 			await bot.delete_message(bot.statusMessage[channelId])
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to stop an inexistant timer [Channel: " + channelId + "]")
+		stop = getAuthorName(ctx) + " tried to stop an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + stop)
 
 @bot.command(pass_context = True)
 async def resume(ctx) :
@@ -253,15 +320,22 @@ async def resume(ctx) :
 	channelId = getChannelId(ctx)
 
 	try :
-		if not bot.pomodoroTimer[channelId].resume() :
+		if bot.pomodoroTimer[channelId].resume() :
+			resume = "Resuming timer."
+			await bot.runTimer(channelId)
+		else :
+			resume = "Unable to resume timer, stopped or already running."
+			
 			if getAuthorId(ctx) == "244720666018840576" :
 				await bot.say("No grumbles for you, " + getAuthorName(ctx, True) + "!", delete_after = RESPONSE_LIFESPAN)
 			else :
 				await bot.say("**grumble grumble.** The timer is stopped or already running, I can't resume that!", delete_after = RESPONSE_LIFESPAN)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to resume an inexistant timer [Channel: " + channelId + "]")
+		resume = getAuthorName(ctx) + " tried to resume an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+	
+	print("<" + channelId + "> " + resume)
 
 
 @bot.command(pass_context = True)
@@ -274,16 +348,17 @@ async def goto(ctx, nPeriod : int) :
 		label = bot.pomodoroTimer[channelId].goto(nPeriod)
 
 		if label != None :
-			success = "Moved to period number " + str(nPeriod) + " (" + label + ")"
-			print(success)
-			await bot.say(success)
+			goto = "Moved to period number " + str(nPeriod) + " (" + label + ")"
+			await bot.say(goto)
 		else :
-			print("Invalid period number entered when trying goto command")
+			goto = "Invalid period number entered when trying goto command."
 			await bot.say("Invalid period number.")
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried changing periods in an inexistant timer [Channel: " + channelId + "]")
+		goto = getAuthorName(ctx) + " tried changing periods in an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+	
+	print("<" + channelId + "> " + goto)
 
 @bot.command(pass_context = True)
 async def reset(ctx) :
@@ -295,15 +370,25 @@ async def reset(ctx) :
 		if bot.pomodoroTimer[channelId].isStopped() :
 			del bot.pomodoroTimer[channelId]
 
+<<<<<<< Updated upstream
+<<<<<<< Updated upstream
 			print(getAuthorName(ctx) + " tried reset a timer [Channel: " + channelId + "]")
+=======
+			reset = getAuthorName(ctx) + " reset a timer."
+>>>>>>> Stashed changes
+=======
+			reset = getAuthorName(ctx) + " reset a timer."
+>>>>>>> Stashed changes
 			await bot.say("Succesfully reset session configuration.", delete_after = RESPONSE_LIFESPAN)		
 		else :
-			print(getAuthorName(ctx) + " tried resetting a timer that was running or paused [Channel: " + channelId + "]")
+			reset = getAuthorName(ctx) + " tried resetting a timer that was running or paused."
 			await bot.say("Cannot do that while the timer is not stopped. Please stop it first", delete_after = RESPONSE_LIFESPAN)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried resetting an inexistant timer setup [Channel: " + channelId + "]")
+		reset = getAuthorName(ctx) + " tried resetting an inexistant timer setup."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + reset)
 
 @bot.command(pass_context = True)
 async def time(ctx) :
@@ -313,13 +398,14 @@ async def time(ctx) :
 
 	try :
 		time = bot.pomodoroTimer[channelId].time()
-	
-		print(time)
+
 		await bot.say(time, delete_after = RESPONSE_LIFESPAN * 2)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to get the current time of an inexistant timer [Channel: " + channelId + "]")
+		time = getAuthorName(ctx) + " tried to get the current time of an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + time)
 
 @bot.command(pass_context = True)
 async def status(ctx) :
@@ -329,34 +415,40 @@ async def status(ctx) :
 
 	try :
 		status = bot.pomodoroTimer[channelId].status()
-
-		print(status)
 		await bot.say(status, delete_after = RESPONSE_LIFESPAN * 2)
 
 	except KeyError :
-		print(getAuthorName(ctx) + " tried to check the status of an inexistant timer [Channel: " + channelId + "]")
+		status = getAuthorName(ctx) + " tried to check the status of an inexistant timer."
 		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+	
+	print("<" + channelId + "> " + status)
 
 @bot.command(pass_context = True)
 async def tts(toggle : str) :
 	""" Sets the tts option on or off. """
 
-	toggle = toggle.lower()
+	try :
+		bot.tts = toBoolean(toggle)
+<<<<<<< Updated upstream
 
-	if toggle == "on" or toggle == "true" or toggle == "yes" or toggle == "y" :
-		bot.tts = True
-		print("TTS now on.")
-		await bot.say("Text-to-speech now on.", tts = True, delete_after = RESPONSE_LIFESPAN)
-	else :
-		bot.tts = False 
-		print("TTS now off.")
-		await bot.say("Text-to-speech now off.", delete_after = RESPONSE_LIFESPAN)
+		print("<Global> TTS now " + ("on." if bot.tts else "off."))
+		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
+
+=======
+
+		print("<Global> TTS now " + ("on." if bot.tts else "off."))
+		await bot.say("Text-to-speech now " + ("on." if bot.tts else "off."), tts = bot.tts, delete_after = RESPONSE_LIFESPAN)
+
+>>>>>>> Stashed changes
+	except err.BadArgument :
+		print("<Global> TTS command failed, bad argument.")
+		await bot.say("I could not understand if you wanted to turn TTS on or off, sorry.")
 
 @bot.command(pass_context = True)
 async def halp(ctx) :
 	""" Tells the user how to use the bot. """
 
-	helpStr ="""
+	await bot.send_message(ctx.message.author, content = """
 **!setup _<format> [loop tts]_**
 \tSets the marinara timer up.
 \t\tformat    : The periods format. Each period is a set of <name>:<time>, where time is in minutes, and periods are separated by commas. 
@@ -379,9 +471,7 @@ async def halp(ctx) :
 **!status**
 \tShows whether the timer is stopped, running or paused.
 **!halp**
-\tShows this message."""
-
-	await bot.send_message(ctx.message.author, content = helpStr)
+\tShows this message.""")
 
 @bot.command(pass_context = True)
 async def shutdown(ctx) :
@@ -427,6 +517,16 @@ def authorHasRole(context : commands.Context, roleId : str) :
 
 def asObject(id : str) :
 	return discord.Object(id)
+
+def toBoolean(value : str) :
+	value = value.lower()
+
+	if value == 'true' or value == 'on' or value == 'yes' or value == 'y' :
+		return True
+	elif value == 'false' or value == 'off' or value == 'no' or value == 'n' :
+		return False
+	else :
+		raise err.BadArgument
 
 if __name__ == '__main__':
 

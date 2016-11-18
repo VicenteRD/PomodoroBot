@@ -122,7 +122,10 @@ class PomodoroBot(commands.Bot) :
 
 				timer.state = Timer.State.RUNNING
 			
-			await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
+			try :
+				await bot.edit_message(bot.statusMessage[channelId], timer.time(True))
+			except discord.errors.NotFound :
+				pass
 
 			if timer.state == Timer.State.RUNNING :
 				iterEnd = datetime.now()

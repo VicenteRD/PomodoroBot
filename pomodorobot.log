@@ -1,0 +1,3 @@
+[11/18 | 03:51:31] [INFO] logging in using static token
+[11/18 | 03:51:32] [INFO] Created websocket connected to wss://gateway.discord.gg?encoding=json&v=6
+[11/18 | 03:51:32] [INFO] sent the identify payload to create the websocket

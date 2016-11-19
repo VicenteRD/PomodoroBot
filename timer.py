@@ -217,9 +217,8 @@ class PomodoroTimer :
 
 		return status
 
-	def time(self, fullInfo = False) :
-		""" Generates a string containing the timer's current period and time. 
-			If fullInfo is True, then it also shows the complete list of periods. """
+	def time(self) :
+		""" Generates a string containing the timer's current period and time. """
 
 		if self.state == State.STOPPED :
 			return "Currently not running."
@@ -241,11 +240,15 @@ class PomodoroTimer :
 		if self.state == State.PAUSED :
 			time += "\t**(PAUSED)**"
 
-		if fullInfo :
-			time += "\n\n**Period list (Loop is " + ("ON" if self.onRepeat else "OFF")  + "):**"
-			for i in range(0, len(self.pTimes)) :
-				time += "\n" + self.pNames[i] + ": " + str(self.pTimes[i]) + (" minute" if self.pTimes[i] == 1 else " minutes")
-				if (i == self.currentPeriod) :
-					time += "\t-> _You are here!_"
-
 		return time
+
+	def periodList(self) :
+		""" Generates a list of the periods as a string, that also indicates the current period. """
+
+		pList = "**Period list (Loop is " + ("ON" if self.onRepeat else "OFF")  + "):**"
+			for i in range(0, len(self.pTimes)) :
+				pList += "\n" + self.pNames[i] + ": " + str(self.pTimes[i]) + (" minute" if self.pTimes[i] == 1 else " minutes")
+				if (i == self.currentPeriod) :
+					pList += "\t-> _You are here!_"
+
+		return pList

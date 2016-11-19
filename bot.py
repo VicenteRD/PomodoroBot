@@ -10,6 +10,7 @@ from discord import errors as dErr
 from discord.ext import commands
 from discord.ext.commands import errors as cmdErr
 
+import pomodoroLib as lib
 import timer as Timer
 
 USAGE = sys.argv[0] + " <token> [prefix] [admin_id]"
@@ -58,11 +59,11 @@ class PomodoroBot(commands.Bot) :
 			await bot.change_presence(game = None, status = discordStatus.idle)
 		else :
 			game = discord.Game()
-			game.name = " on " + pluralize(bot.timersRunning, "channel", append = "s")
+			game.name = " on " + lib.pluralize(bot.timersRunning, "channel", append = "s")
 			await bot.change_presence(game = game, status = discordStatus.online)
 
 	@asyncio.coroutine
-	async def deleteMessagesFor(self, channelId) :
+	async def deleteMessagesFor(self, channelId : str) :
 		""" Deletes the time and periods list messages in the channel with the ID given
 			channelId : The ID of the channel in which the messages should be deleted. """
 
@@ -109,7 +110,7 @@ class PomodoroBot(commands.Bot) :
 							timer.action = Timer.Action.STOP
 							toSay += "\n...I have ran out of periods, and looping is off."
 							print("<" + channelId + "> " + toSay)
-							await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
+							await bot.send_message(lib.asObject(channelId), toSay, tts = bot.tts)
 	
 							bot.timersRunning -= 1
 							await bot.updateStatus()
@@ -117,10 +118,10 @@ class PomodoroBot(commands.Bot) :
 
 					if timer.action == Timer.Action.NONE :
 						toSay += " '" + timer.pNames[timer.currentPeriod] + "' period now starting "
-						toSay += "(" + pluralize(timer.pTimes[timer.currentPeriod], "minute", append = "s") + ")."
+						toSay += "(" + lib.pluralize(timer.pTimes[timer.currentPeriod], "minute", append = "s") + ")."
 						
 					print("<" + channelId + "> " + toSay)
-					await bot.send_message(asObject(channelId), toSay, tts = bot.tts)
+					await bot.send_message(lib.asObject(channelId), toSay, tts = bot.tts)
 
 					await bot.edit_message(bot.listMessage[channelId], timer.periodList())
 
@@ -132,7 +133,7 @@ class PomodoroBot(commands.Bot) :
 				timer.state = Timer.State.STOPPED
 
 				print("<" + channelId + "> Timer has stopped.")
-				await bot.send_message(asObject(channelId), "Timer has stopped.")
+				await bot.send_message(lib.asObject(channelId), "Timer has stopped.")
 
 				await bot.deleteMessagesFor(channelId)
 
@@ -144,7 +145,7 @@ class PomodoroBot(commands.Bot) :
 				timer.state = Timer.State.PAUSED
 
 				print("<" + channelId + "> Timer has paused.")
-				await bot.send_message(asObject(channelId),"Timer has paused.")
+				await bot.send_message(lib.asObject(channelId),"Timer has paused.")
 
 
 			elif timer.action == Timer.Action.RUN :
@@ -159,18 +160,19 @@ class PomodoroBot(commands.Bot) :
 
 				statusAlert += "..."
 				print("<" + channelId + "> " + statusAlert )
-				await bot.send_message(asObject(channelId), statusAlert)
+				await bot.send_message(lib.asObject(channelId), statusAlert)
 
 				if bot.timeMessage[channelId] == None :
-					bot.timeMessage[channelId] = await bot.send_message(asObject(channelId), "Generating status...")
-					bot.listMessage[channelId] = await bot.send_message(asObject(channelId), timer.periodList())
+					bot.timeMessage[channelId] = await bot.send_message(lib.asObject(channelId), "Generating status...")
+					bot.listMessage[channelId] = await bot.send_message(lib.asObject(channelId), timer.periodList())
 					try :
-						await bot.pin_message(bot.timeMessage[channelId])
+						# The last message pinned ends up in the top, so the time status goes 2nd
 						await bot.pin_message(bot.listMessage[channelId])
+						await bot.pin_message(bot.timeMessage[channelId])
 					except discord.Forbidden:
 						print("<" + channelId + "> No permission to pin.")
 						kitty = "I tried to pin a message and failed. Can I haz permission to pin messages? https://goo.gl/tYYD7s" #shorten
-						await bot.send_message(asObject(channelId), kitty) 
+						await bot.send_message(lib.asObject(channelId), kitty) 
 				timer.state = Timer.State.RUNNING
 			
 			try :
@@ -206,7 +208,6 @@ async def on_ready():
 		await bot.send_message(server, STARTUP_MSG)
 
 @bot.command(pass_context = True)
-
 async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True") :
 	""" Sets a marinara timer on the channel in which this message was sent.
 		repeat		: Indicates whether the timer should start over when it's done with the list
@@ -222,14 +223,14 @@ async def setup(ctx, timerFormat = "default", repeat = "True", countback = "True
 	if timerFormat == "default" :
 		timerFormat = DEFAULT_TIMER
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	if channelId in bot.pomodoroTimer.keys() :
 		result = -1
 	else :
 		try :
-			loop = toBoolean(repeat)
-			countdown = toBoolean(countback)
+			loop = lib.toBoolean(repeat)
+			countdown = lib.toBoolean(countback)
 
 			bot.pomodoroTimer[channelId] = Timer.PomodoroTimer()
 			bot.timeMessage[channelId] = None
@@ -272,7 +273,7 @@ async def starttimer(ctx, periodIdx = 1) :
 	""" Starts the timer with the recorded setup. 
 		If none present, or if it's already running, it simply gives an error message."""
 	
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		if bot.pomodoroTimer[channelId].isSet() :
@@ -302,7 +303,7 @@ async def starttimer(ctx, periodIdx = 1) :
 async def pause(ctx) :
 	""" Pauses the timer, if it's running. Keeps all settings and current period / time. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		if bot.pomodoroTimer[channelId].pause() :
@@ -324,7 +325,7 @@ async def stop(ctx) :
 	""" Stops the timer, if it's running.
 		Resets the current period and time, but keeps the setup. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		if bot.pomodoroTimer[channelId].stop() :
@@ -347,7 +348,7 @@ async def stop(ctx) :
 async def resume(ctx) :
 	""" Resumes a paused timer. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		if bot.pomodoroTimer[channelId].resume() :
@@ -356,7 +357,7 @@ async def resume(ctx) :
 		else :
 			resume = "Unable to resume timer, stopped or already running."
 
-			if getAuthorId(ctx) == "244720666018840576" :
+			if lib.getAuthorId(ctx) == "244720666018840576" :
 				await bot.say("No grumbles for you, " + getAuthorName(ctx, True) + "!", delete_after=RESPONSE_LIFESPAN)
 			else :
 				await bot.say("**grumble grumble.** The timer is stopped or already running, I can't resume that!", delete_after = RESPONSE_LIFESPAN) #shorten
@@ -373,7 +374,7 @@ async def resume(ctx) :
 async def goto(ctx, nPeriod : int) :
 	""" Skips to the (n-1)th period. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		label = bot.pomodoroTimer[channelId].goto(nPeriod)
@@ -395,13 +396,16 @@ async def goto(ctx, nPeriod : int) :
 async def reset(ctx) :
 	""" Resets the timer setup. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		if bot.pomodoroTimer[channelId].isStopped() :
 			del bot.pomodoroTimer[channelId]
 
-			reset = getAuthorName(ctx) + " reset a timer."
+			del bot.timeMessage[channelId]
+			del bot.listMessage[channelId]
+
+			reset = getAuthorName(ctx) + " reset the timer."
 			await bot.say("Succesfully reset session configuration.", delete_after = RESPONSE_LIFESPAN)
 		else :
 			reset = getAuthorName(ctx) + " tried resetting a timer that was running or paused."
@@ -414,13 +418,43 @@ async def reset(ctx) :
 	print("<" + channelId + "> " + reset)
 
 @bot.command(pass_context = True)
+async def superreset(ctx) :
+	""" Ignores all conditions and resets the channel's timer.	"""
+
+	if lib.getAuthorId(ctx) != ADMIN_ID :
+		print(getAuthorName(ctx) + "attempted to stop the bot and failed (No permission to shut down).")
+		await bot.say("You're not my real dad!")
+		return
+
+	channelId = lib.getChannelId(ctx)
+
+	try :
+		if bot.pomodoroTimer[channelId].state == State.RUNNING :
+			bot.timersRunning -= 1
+
+		deleteMessagesFor(channelId)
+
+		del bot.timeMessage[channelId]
+		del bot.listMessage[channelId]
+
+		del bot.pomodoroTimer[channelId]
+
+		superreset = "Successfully forced a reset on this channel's timer."
+		await bot.say("Timer has been force-reset", delete_after = RESPONSE_LIFESPAN)
+	except KeyError :
+		superreset = getAuthorName(ctx) + " tried to force-reset the timer, but no timer was found."
+		await bot.say("No timer found for this channel.", delete_after = RESPONSE_LIFESPAN)
+
+	print("<" + channelId + "> " + reset)
+
+@bot.command(pass_context = True)
 async def time(ctx) :
 	""" Gives the user the current period and time of the timer. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
-		time = bot.pomodoroTimer[channelId].time()
+		time = bot.pomodoroTimer[channelId].time(True)
 
 		await bot.say(time, delete_after = RESPONSE_LIFESPAN * 2)
 
@@ -434,7 +468,7 @@ async def time(ctx) :
 async def status(ctx) :
 	""" Tells the user whether the timer is stopped, running or paused. """
 
-	channelId = getChannelId(ctx)
+	channelId = lib.getChannelId(ctx)
 
 	try :
 		status = bot.pomodoroTimer[channelId].status()
@@ -451,7 +485,7 @@ async def tts(toggle : str) :
 	""" Sets the tts option on or off. """
 
 	try :
-		bot.tts = toBoolean(toggle)
+		bot.tts = lib.toBoolean(toggle)
 		ttsStatus = ("on." if bot.tts else "off.")
 
 		print("<------Global------> TTS now " + ttsStatus)
@@ -497,7 +531,7 @@ async def halp(ctx) :
 async def shutdown(ctx) :
 	""" Exits the program. """
 
-	if getAuthorId(ctx) == ADMIN_ID :
+	if lib.getAuthorId(ctx) == ADMIN_ID :
 		print("Shutting down...")
 		await bot.say("Hope I did well, bye!")
 
@@ -505,8 +539,8 @@ async def shutdown(ctx) :
 			try :
 				if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :
 					bot.pomodoroTimer[channelId].stop()
-					if getChannelId(ctx) != channelId :
-						await bot.send_message(asObject(channelId), "I'm sorry, I have to go. See you later!")
+					if lib.getChannelId(ctx) != channelId :
+						await bot.send_message(lib.asObject(channelId), "I'm sorry, I have to go. See you later!")
 
 				if pinnedMessage != None :
 					await bot.deleteMessagesFor(channelId)
@@ -519,47 +553,6 @@ async def shutdown(ctx) :
 
 # Helper functions
 
-def getChannelId(context : commands.Context) :
-	return context.message.channel.id
-
-def getAuthorId(context : commands.Context) :
-	return context.message.author.id
-
-def getAuthorName(context : commands.Context, nick = False) :
-	condition = nick and context.message.author.nick != None
-	return (context.message.author.nick if condition else context.message.author.name)
-
-def authorHasRole(context : commands.Context, roleId : str) :
-	for role in context.message.author.roles :
-		if role.id == roleId :
-			return True
-	return False
-
-def asObject(id : str) :
-	return discord.Object(id)
-
-def toBoolean(value : str) :
-	value = value.lower()
-
-	if value == 'true' or value == 'on' or value == 'yes' or value == 'y' :
-		return True
-	elif value == 'false' or value == 'off' or value == 'no' or value == 'n' :
-		return False
-	else :
-		raise cmdErr.BadArgument
-
-def pluralize(amnt : int, sName : str, append = "", pName = "") :
-
-	if append != "" and pName != "" :
-		return None
-	if append == "" and pName == "" :
-		return None
-
-	if append != "" :
-		return str(amnt) + " " + (name if amnt == 1 else name + append)
-	if pName != "" :
-		return str(amnt) + " " + (name if amnt == 1 else pName)
-
 if __name__ == '__main__':
 
 	if len(sys.argv) < 2 :
@@ -569,7 +562,7 @@ if __name__ == '__main__':
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
-	elif len(sys.argv) == 3 and (len(sys.argv[2]) == 1 and not sys.argv[2][0].isAlpha() :
+	elif len(sys.argv) == 3 and (len(sys.argv[2]) == 1 and not sys.argv[2][0].isAlpha()) :
 		print("Command prefix set to " + sys.argv[2] +"\n")
 		COMMAND_PREFIX = sys.argv[2]
 

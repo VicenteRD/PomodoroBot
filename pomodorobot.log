@@ -1,3 +1,2 @@
-[11/18 | 03:51:31] [INFO] logging in using static token
-[11/18 | 03:51:32] [INFO] Created websocket connected to wss://gateway.discord.gg?encoding=json&v=6
-[11/18 | 03:51:32] [INFO] sent the identify payload to create the websocket
+[11/19 | 02:07:53] [ERROR] Task was destroyed but it is pending!
+task: <Task pending coro=<_run_event() running at C:\Users\Vicente\AppData\Local\Programs\Python\Python35\lib\site-packages\discord\client.py:307> wait_for=<Future pending cb=[Task._wakeup()]>>

@@ -7,6 +7,8 @@ class State(Enum):
 	STOPPED = -1
 	RUNNING = 1
 	PAUSED = 2
+import pomodoroLib as lib
+
 
 class Action(Enum) :
 	""" Represents the actions that can affect the timer. """
@@ -217,13 +219,16 @@ class PomodoroTimer :
 
 		return status
 
-	def time(self) :
+	def time(self, extended = False) :
 		""" Generates a string containing the timer's current period and time. """
 
 		if self.state == State.STOPPED :
 			return "Currently not running."
 		
-		time = "**On " + self.pNames[self.currentPeriod] + " period** (Duration: " + str(self.pTimes[self.currentPeriod]) + (" minute" if self.pTimes[self.currentPeriod] == 1 else " minutes") + ")"
+		time = "**On " + self.pNames[self.currentPeriod] + " period** "
+
+		if extended :
+			time += "(Duration: " + lib.pluralize(self.pTimes[self.currentPeriod], "minute", append='s') + ")"
 
 		if self.countdown :
 			time += "\nRemaining:\t"
@@ -246,9 +251,9 @@ class PomodoroTimer :
 		""" Generates a list of the periods as a string, that also indicates the current period. """
 
 		pList = "**Period list (Loop is " + ("ON" if self.onRepeat else "OFF")  + "):**"
-			for i in range(0, len(self.pTimes)) :
-				pList += "\n" + self.pNames[i] + ": " + str(self.pTimes[i]) + (" minute" if self.pTimes[i] == 1 else " minutes")
-				if (i == self.currentPeriod) :
-					pList += "\t-> _You are here!_"
+		for i in range(0, len(self.pTimes)) :
+			pList += "\n" + self.pNames[i] + ": " + str(self.pTimes[i]) + (" minute" if self.pTimes[i] == 1 else " minutes")
+			if (i == self.currentPeriod) :
+				pList += "\t-> _You are here!_"
 
 		return pList

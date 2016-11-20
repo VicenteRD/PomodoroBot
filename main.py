@@ -427,7 +427,10 @@ async def shutdown(ctx) :
 
 		# debug
 		for role in ctx.message.author.roles :
-			print (role.id + ":" + role.name)
+			try :
+				print (role.id + ":" + role.name)
+			except UnicodeDecodeError :
+				pass
 
 		for channelId, pinnedMessage in bot.timeMessage.items() :
 			try :

@@ -9,6 +9,9 @@ class Config :
 		file = open(fileName, 'r')
 
 		for line in file :
+			if line.startswith('#') :
+				continue
+
 			if not ':' in line :
 				print("Could not read line '" + line + "'. Wrong format")
 			else :
@@ -19,6 +22,8 @@ class Config :
 				val = ':'.join(key_val)
 
 				_config_map[key_val.pop(0).strip()] = val
+
+				#TODO list/dictionary support and multiline support
 
 	def get_str(self, key : str) :
 		""" Returns the value corresponding to the given key. """

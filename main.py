@@ -16,6 +16,7 @@ TOKEN = "" # can I delete this
 ADMIN_ID = ""
 STARTUP_MSG = ""
 DEFAULT_TIMER = ""
+BOT_ROLE_ID = ""
 
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
@@ -415,7 +416,7 @@ has passed.
 async def shutdown(ctx) :
 	""" Exits the program. """
 
-	if lib.getAuthorId(ctx) == ADMIN_ID :
+	if lib.getAuthorId(ctx) == ADMIN_ID or authorHasRole(ctx, BOT_ROLE_ID):
 		print("Shutting down...")
 		await bot.say("Hope I did well, bye!")
 
@@ -423,7 +424,7 @@ async def shutdown(ctx) :
 		for role in ctx.message.author.roles :
 			try :
 				print (role.id + ":" + role.name)
-			except UnicodeDecodeError :
+			except UnicodeEncodeError :
 				pass
 
 		for channelId, pinnedMessage in bot.timeMessage.items() :
@@ -472,6 +473,7 @@ if __name__ == '__main__':
 	ADMIN_ID = config.get_str('admin_id')
 	STARTUP_MSG = config.get_str('startup_msg')
 	DEFAULT_TIMER = config.get_str('default_timer')
+	BOT_ROLE_ID = config.get_str('bot_friend_role_id')
 
 	# Logging stuff
 

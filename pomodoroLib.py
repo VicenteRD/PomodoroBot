@@ -24,9 +24,9 @@ def asObject(id : str) :
 def toBoolean(value : str) :
 	value = value.lower()
 
-	if value == 'true' or value == 'on' or value == 'yes' or value == 'y' :
+	if value in ['true', 'on', 'yes', 'y'] :
 		return True
-	elif value == 'false' or value == 'off' or value == 'no' or value == 'n' :
+	elif value in ['false', 'off', 'no', 'n'] :
 		return False
 	else :
 		raise cmdErr.BadArgument

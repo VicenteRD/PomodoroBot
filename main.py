@@ -215,7 +215,8 @@ async def resume(ctx) :
 		else :
 			resume = "Unable to resume timer, stopped or already running."
 
-			if lib.getAuthorId(ctx) == "244720666018840576" :
+			if lib.getAuthorId(ctx) in\
+				["244720666018840576", "231948019325468672"] :
 				await bot.say(("No grumbles for you, " + 
 						lib.getAuthorName(ctx, True) + "!"),
 					delete_after = bot.response_lifespan)

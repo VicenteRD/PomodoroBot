@@ -420,14 +420,6 @@ async def shutdown(ctx) :
 		print("Shutting down...")
 		await bot.say("Hope I did well, bye!")
 
-		# debug
-		for role in ctx.message.author.roles :
-			try :
-				print (role.id + ":" + role.name)
-			except UnicodeEncodeError :
-				pass
-
-		x = input()
 		for channelId, pinnedMessage in bot.timeMessage.items() :
 			try :
 				if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :

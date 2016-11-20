@@ -12,19 +12,13 @@ import config
 
 USAGE = sys.argv[0] + " <token> [prefix] [admin_id]"
 
-TOKEN = ""
-COMMAND_PREFIX = '!'
-ADMIN_ID = "87387330037448704"
-
-STARTUP_MSG = ("Beep boop. I'm back online, ready to ~~take over the world~~ " + 
-"help your productivity!")
+TOKEN = "" # can I delete this
+ADMIN_ID = ""
+STARTUP_MSG = ""
+DEFAULT_TIMER = ""
 
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
-DEFAULT_TIMER = "(2xStudy:32,Break:8),Study:32,Long_Break:15"
-
-#RESPONSE_LIFESPAN
-#TIMER_STEP
 #BOT_FRIEND_ROLE_ID
 
 logger = logging.getLogger()
@@ -455,23 +449,29 @@ async def shutdown(ctx) :
 
 if __name__ == '__main__':
 
+
 	if len(sys.argv) < 2 :
-		print("Not enough arguments received!\nUsage: " + USAGE)
+		print("Not enough arguments received!\nUsage: " + sys.argv[0] +
+			" <token>")
 		exit(-1)
 
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
-	elif len(sys.argv) == 3 and (len(sys.argv[2]) == 1 and\
-			not sys.argv[2][0].isAlpha()) :
-		print("Command prefix set to " + sys.argv[2] +"\n")
-		COMMAND_PREFIX = sys.argv[2]
+	# config
 
-	elif len(sys.argv) == 4 :
-		print("Admin set to ID: " + sys.argv[3])
-		ADMIN_ID = sys.argv[3]
+	config = config.Config("bot.cfg")
+	
+	command_prefix = config.get_str('command_prefix')
+	if command_prefix == None :
+		print("Could not find a valid command prefix in the config," +
+			" using default")
+		command_prefix = '!'
 
-	bot.command_prefix = COMMAND_PREFIX
+	bot.command_prefix = command_prefix
+	ADMIN_ID = config.get_str('admin_id')
+	STARTUP_MSG = config.get_str('startup_msg')
+	DEFAULT_TIMER = config.get_str('default_timer')
 
 	# Logging stuff
 
@@ -491,8 +491,9 @@ if __name__ == '__main__':
 	logger.addHandler(termHandler)
 
 	# config
-	#config = config.Config("bot.cfg")
 
 	# Bot init
 
+	bot.response_lifespan = config.get_int('response_lifespan')
+	bot.timer_step = config.get_int('timer_step')
 	bot.run(TOKEN)

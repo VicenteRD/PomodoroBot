@@ -28,7 +28,7 @@ class Config :
 	def get_str(self, key : str) :
 		""" Returns the value corresponding to the given key. """
 
-		return _config_map[key]
+		return _config_map[key] if key in _config_map.keys() else None
 
 	def get_int(self, key : str) :
 		""" Returns the value corresponding to the given key. """

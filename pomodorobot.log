@@ -1,2 +1,4 @@
-[11/20 | 17:15:00] [ERROR] Task was destroyed but it is pending!
-task: <Task pending coro=<Bot._augmented_msg.<locals>.delete() running at C:\Users\Vicente\AppData\Local\Programs\Python\Python35\lib\site-packages\discord\ext\commands\bot.py:298> wait_for=<Future pending cb=[Task._wakeup()]>>
+[11/20 | 18:11:04] [ERROR] Task was destroyed but it is pending!
+task: <Task pending coro=<Bot._augmented_msg.<locals>.delete() done, defined at C:\Users\Vicente\AppData\Local\Programs\Python\Python35\lib\site-packages\discord\ext\commands\bot.py:296> wait_for=<Future pending cb=[Task._wakeup()]>>
+[11/20 | 18:11:04] [ERROR] Task was destroyed but it is pending!
+task: <Task pending coro=<Bot._augmented_msg.<locals>.delete() done, defined at C:\Users\Vicente\AppData\Local\Programs\Python\Python35\lib\site-packages\discord\ext\commands\bot.py:296> wait_for=<Future pending cb=[Task._wakeup()]>>

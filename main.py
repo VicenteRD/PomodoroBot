@@ -25,7 +25,7 @@ logger = logging.getLogger()
 
 
 bot = Bot.PomodoroBot(
-	command_prefix = COMMAND_PREFIX,
+	command_prefix = '!',
 	description = DESCRIPTION,
 	timer_step = 2,
 	response_lifespan = 15,

@@ -459,7 +459,7 @@ if __name__ == '__main__':
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
-	x = raw_input()
+	x = input()
 	# config
 
 	config = config.Config("bot.cfg")

@@ -427,6 +427,7 @@ async def shutdown(ctx) :
 			except UnicodeEncodeError :
 				pass
 
+		x = input()
 		for channelId, pinnedMessage in bot.timeMessage.items() :
 			try :
 				if bot.pomodoroTimer[channelId].state != Timer.State.STOPPED :
@@ -459,7 +460,6 @@ if __name__ == '__main__':
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
-	x = input()
 	# config
 
 	config = config.Config("bot.cfg")

@@ -291,13 +291,9 @@ async def reset(ctx) :
 async def superreset(ctx) :
 	""" Ignores all conditions and resets the channel's timer.	"""
 
-	if lib.getAuthorId(ctx) != ADMIN_ID :
-		superreset = (lib.getAuthorName(ctx) + 
-			"attempted to superreset the bot and failed (No permission).")
-		await bot.say("You're not my real dad!")
+	channelId = lib.getChannelId(ctx)
 
-	else :
-		channelId = lib.getChannelId(ctx)
+	if lib.getAuthorId(ctx) == ADMIN_ID or authorHasRole(ctx, BOT_ROLE_ID) :
 
 		try :
 			if bot.pomodoroTimer[channelId].state == Timer.State.RUNNING :
@@ -319,6 +315,11 @@ async def superreset(ctx) :
 				" tried to force-reset the timer, but no timer was found.")
 			await bot.say("No timer found for this channel.",
 				delete_after = bot.response_lifespan)
+
+	else :
+		superreset = (lib.getAuthorName(ctx) + 
+			"attempted to superreset the bot and failed (No permission).")
+		await bot.say("You're not my real dad!")
 
 	print("<" + channelId + "> " + superreset)
 
@@ -416,7 +417,7 @@ has passed.
 async def shutdown(ctx) :
 	""" Exits the program. """
 
-	if lib.getAuthorId(ctx) == ADMIN_ID or authorHasRole(ctx, BOT_ROLE_ID):
+	if lib.getAuthorId(ctx) == ADMIN_ID :
 		print("Shutting down...")
 		await bot.say("Hope I did well, bye!")
 

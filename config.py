@@ -2,13 +2,16 @@
 
 class Config :
 
+	_file_name = ""
 	_config_map = {}
 
-	def __init__(self, fileName : str) :
+	def __init__(self, file_name : str) :
+		self._file_name = file_name
+	
+	def reload(self) :
+		cfg_file = open(self._file_name, 'r')
 
-		file = open(fileName, 'r')
-
-		for line in file :
+		for line in cfg_file :
 			if line.startswith('#') or line == "" or line == "\n" :
 				continue
 
@@ -23,7 +26,9 @@ class Config :
 
 				self._config_map[key] = val
 
-				#TODO list/dictionary support and multiline support
+		cfg_file.close
+
+		#TODO list/dictionary support and multiline support
 
 	def get_str(self, key : str) :
 		""" Returns the value corresponding to the given key. """

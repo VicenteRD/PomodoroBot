@@ -12,11 +12,9 @@ import config
 
 USAGE = sys.argv[0] + " <token> [prefix] [admin_id]"
 
+
+config = config.Config("bot.cfg")
 TOKEN = "" # can I delete this
-ADMIN_ID = ""
-STARTUP_MSG = ""
-DEFAULT_TIMER = ""
-BOT_ROLE_ID = ""
 
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
@@ -33,7 +31,7 @@ bot = Bot.PomodoroBot(
 	pm_help = True)
 
 @bot.event
-async def on_ready():
+async def on_ready() :
 	print('Logged in as')
 	print(bot.user.name)
 	print(bot.user.id)
@@ -41,7 +39,7 @@ async def on_ready():
 
 	await bot._update_status()
 	for server in bot.servers :
-		await bot.send_message(server, STARTUP_MSG)
+		await bot.send_message(server, config.get_str('startup_msg'))
 
 @bot.command(pass_context = True)
 async def setup(ctx, timerFormat = "default", repeat = "True",
@@ -53,7 +51,8 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 			the period finishes or changes. (Default: False)"""
 
 	if timerFormat == "help" :
-		helpStr = "**Example:**\n\t" + COMMAND_PREFIX + "setup " + DEFAULT_TIMER
+		helpStr = ("**Example:**\n\t" + COMMAND_PREFIX + "setup " +
+			config.get('default_timer_setup'))
 		await bot.say((helpStr  + 
 			"\n\t_This will give you a sequence of 32, 8, 32, 8, 32, 15_"))
 		return
@@ -294,7 +293,8 @@ async def superreset(ctx) :
 
 	channelId = lib.getChannelId(ctx)
 
-	if lib.getAuthorId(ctx) == ADMIN_ID or lib.authorHasRole(ctx, BOT_ROLE_ID) :
+	if lib.getAuthorId(ctx) == config.get_str('admin_id') or \
+		lib.authorHasRole(ctx, config.get_str('bot_friend_role_id')) :
 
 		try :
 			if bot.pomodoroTimer[channelId].state == Timer.State.RUNNING :
@@ -319,8 +319,16 @@ async def superreset(ctx) :
 
 	else :
 		superreset = (lib.getAuthorName(ctx) + 
-			"attempted to superreset the bot and failed (No permission).")
-		await bot.say("You're not my real dad!")
+			" attempted to superreset the bot and failed (No permission).")
+		await bot.say("You're not my real dad!",
+			delete_after = bot.response_lifespan)
+
+		#debug
+		#for role in ctx.message.author.roles :
+		#	try :
+		#		superreset += "\n" + role.name + ": " + role.id
+		#	except UnicodeEncodeError : 
+		#		pass
 
 	print("<" + channelId + "> " + superreset)
 
@@ -418,7 +426,7 @@ has passed.
 async def shutdown(ctx) :
 	""" Exits the program. """
 
-	if lib.getAuthorId(ctx) == ADMIN_ID :
+	if lib.getAuthorId(ctx) == config.get_str('admin_id') :
 		print("Shutting down...")
 		await bot.say("Hope I did well, bye!")
 
@@ -441,7 +449,29 @@ async def shutdown(ctx) :
 		print(lib.getAuthorName(ctx) +
 			"attempted to stop the bot and failed (No permission to shut down)")
 
-# Helper functions
+@bot.command(pass_context = True)
+async def reloadcfg(ctx) :
+	""" Reloads the configuration. """
+
+	channelId = lib.getChannelId(ctx)
+
+	if lib.getAuthorId(ctx) == config.get_str('admin_id') or \
+		lib.authorHasRole(ctx, config.get_str('bot_friend_role_id')) :
+
+		config.reload()
+
+		await bot.say("Successfully reloaded configuration.",
+			delete_after = bot.response_lifespan)
+		reloadcfg = "<------Global------> Reloaded configuration."
+
+	else :
+		reloadcfg = (lib.getAuthorName(ctx) + 
+			" attempted to reload the config and failed (No permission).")
+		await bot.say("You're not my real dad!",
+			delete_after = bot.response_lifespan)
+
+	print("<" + channelId + "> " + reloadcfg)
+
 
 if __name__ == '__main__':
 
@@ -454,21 +484,13 @@ if __name__ == '__main__':
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
-	# config
-
-	config = config.Config("bot.cfg")
+	# Config stuff
 	
 	command_prefix = config.get_str('command_prefix')
 	if command_prefix == None :
 		print("Could not find a valid command prefix in the config," +
 			" using default")
 		command_prefix = '!'
-
-	bot.command_prefix = command_prefix
-	ADMIN_ID = config.get_str('admin_id')
-	STARTUP_MSG = config.get_str('startup_msg')
-	DEFAULT_TIMER = config.get_str('default_timer')
-	BOT_ROLE_ID = config.get_str('bot_friend_role_id')
 
 	# Logging stuff
 
@@ -487,10 +509,9 @@ if __name__ == '__main__':
 	logger.addHandler(fileHandler)
 	logger.addHandler(termHandler)
 
-	# config
-
 	# Bot init
 
 	bot.response_lifespan = config.get_int('response_lifespan')
 	bot.timer_step = config.get_int('timer_step')
+	bot.command_prefix = command_prefix
 	bot.run(TOKEN)

@@ -7,6 +7,8 @@ class Config :
 
 	def __init__(self, file_name : str) :
 		self._file_name = file_name
+
+		self.reload()
 	
 	def reload(self) :
 		cfg_file = open(self._file_name, 'r')

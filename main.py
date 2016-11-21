@@ -488,7 +488,8 @@ def log(message : str, channelId = None, level = logging.INFO) :
 	if channelId == None :
 		channelId = "Global".center(18, '=')
 
-	logger.log(level, "[" + channelId + "] " + message)
+	for line in message.split('\n') :
+		logger.log(level, "[" + channelId + "] " + line)
 
 
 if __name__ == '__main__':
@@ -502,24 +503,27 @@ if __name__ == '__main__':
 	elif len(sys.argv) == 2 :
 		TOKEN = sys.argv[1]
 
+	else : 
+		exit(-2)
+
 	# Config stuff
 	
 	if config.get_str('command_prefix') == None :
 		print("Could not find a valid command prefix in the config, aborting.")
-		exit(-2)
+		exit(-3)
 	
 	# Logging stuff
 
-	logging.basicConfig(level = logging.INFO)
-
 	logger = logging.getLogger()
+	logger.setLevel(logging.INFO)
 
-	logFmt = logging.Formatter(fmt = '[%(asctime)s] [%(levelname)s] %(message)s',
+	logFmt = logging.Formatter(fmt = '[%(asctime)s][%(levelname)s] %(message)s',
 		datefmt = '%m/%d | %H:%M:%S')
 
 	fileHandler = logging.FileHandler(filename = 'pomodorobot.log',
 		encoding = 'utf8', mode = 'w')
 	termHandler = logging.StreamHandler(sys.stderr)
+
 	fileHandler.setFormatter(logFmt)
 	termHandler.setFormatter(logFmt)
 	logger.addHandler(fileHandler)

@@ -474,7 +474,7 @@ async def reloadcfg(ctx) :
 
 def set_bot_config() :
 	bot.response_lifespan = config.get_int('response_lifespan')
-	bot.command_prefix = config.get_int('command_prefix')
+	bot.command_prefix = config.str('command_prefix')
 	bot.timer_step = config.get_int('timer_step')
 
 if __name__ == '__main__':

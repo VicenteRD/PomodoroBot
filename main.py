@@ -58,7 +58,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 		return
 
 	if timerFormat == "default" :
-		timerFormat = DEFAULT_TIMER
+		timerFormat = config.get_str('default_timer_setup')
 
 	channelId = lib.getChannelId(ctx)
 

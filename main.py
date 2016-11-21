@@ -215,7 +215,7 @@ async def resume(ctx) :
 		else :
 			resume = "Unable to resume timer, stopped or already running."
 
-			if lib.getAuthorId(ctx) in\
+			if lib.getAuthorId(ctx) in \
 				["244720666018840576", "231948019325468672"] :
 				await bot.say(("No grumbles for you, " + 
 						lib.getAuthorName(ctx, True) + "!"),
@@ -294,7 +294,7 @@ async def superreset(ctx) :
 
 	channelId = lib.getChannelId(ctx)
 
-	if lib.getAuthorId(ctx) == ADMIN_ID or authorHasRole(ctx, BOT_ROLE_ID) :
+	if lib.getAuthorId(ctx) == ADMIN_ID or lib.authorHasRole(ctx, BOT_ROLE_ID) :
 
 		try :
 			if bot.pomodoroTimer[channelId].state == Timer.State.RUNNING :

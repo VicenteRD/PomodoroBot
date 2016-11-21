@@ -28,7 +28,7 @@ class Config :
 
 				self._config_map[key] = val
 
-		cfg_file.close
+		cfg_file.close()
 
 		#TODO list/dictionary support and multiline support
 

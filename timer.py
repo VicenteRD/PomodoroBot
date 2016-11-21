@@ -175,7 +175,7 @@ class PomodoroTimer :
 
 			return False
 
-	def goto(self, idx : int) :
+	def goto(self, idx : int) : # TODO seems to not work
 		""" Skips to the (n-1)th period. 
 			If successful, returns the name of the period that it jumped to. If not, returns None"""
 

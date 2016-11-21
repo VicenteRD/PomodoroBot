@@ -283,7 +283,8 @@ async def reset(ctx) :
 	except KeyError :
 		reset = (lib.getAuthorName(ctx) + 
 			" tried resetting an inexistant timer setup.")
-		await bot.say("No timer found for this channel.", bot.response_lifespan)
+		await bot.say("No timer found for this channel.", 
+			delete_after = bot.response_lifespan)
 
 	print("<" + channelId + "> " + reset)
 
@@ -462,7 +463,7 @@ async def reloadcfg(ctx) :
 
 		await bot.say("Successfully reloaded configuration.",
 			delete_after = bot.response_lifespan)
-		reloadcfg = "<------Global------> Reloaded configuration."
+		reloadcfg = "Reloaded configuration."
 
 	else :
 		reloadcfg = (lib.getAuthorName(ctx) + 
@@ -470,7 +471,7 @@ async def reloadcfg(ctx) :
 		await bot.say("You're not my real dad!",
 			delete_after = bot.response_lifespan)
 
-	print("<" + channelId + "> " + reloadcfg)
+	print("<------Global------> " + reloadcfg)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,19 @@ class Config :
 				key_val[0] = key_val[0].strip()
 				val = ':'.join(key_val)
 
-				self._config_map[key] = val
+				# If it's a list
+				if val.startswith('[') and val.endswith(']') :
+					val = val[1:-1]
+					self._config_map[key] = val.split(',')
+
+				# If it's a dictionary
+				elif val.startswith('{') and val. endswith('}') :
+					val = val[1:-1]
+					self._config_map[key] = dict((k.strip(), v.strip()) \
+						for k,v in (item.split(':') for item in val.split(',')))
+
+				else :
+					self._config_map[key] = val
 
 		cfg_file.close()
 

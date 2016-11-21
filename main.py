@@ -49,7 +49,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 
 	if timerFormat == "help" :
 		helpStr = ("**Example:**\n\t" + bot.command_prefix + "setup " +
-			config.get('default_timer_setup'))
+			config.get_str('default_timer_setup'))
 		await bot.say((helpStr  + 
 			"\n\t_This will give you a sequence of 32, 8, 32, 8, 32, 15_"))
 		return
@@ -105,7 +105,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 			"' and '" + countback + "'")
 		setupSay = "Invalid arguments received, please try again."
 
-	print("<" + channelId + "> " + setupPrint)
+	log(setupPrint, channelId = channelId)
 	if setupSay != None :
 		await bot.say(setupSay, delete_after = bot.response_lifespan)
 
@@ -146,7 +146,7 @@ async def starttimer(ctx, periodIdx = 1) :
 			delete_after = bot.response_lifespan)
 
 	if starttimer != None :
-		print("<" + channelId + "> " + starttimer)
+		log(starttimer, channelId = channelId)
 
 
 @bot.command(pass_context = True)
@@ -171,7 +171,7 @@ async def pause(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	print("<" + channelId + "> " + pause)
+	log(pause, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def stop(ctx) :
@@ -196,7 +196,7 @@ async def stop(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	print("<" + channelId + "> " + stop)
+	log(stop, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def resume(ctx) :
@@ -228,7 +228,7 @@ async def resume(ctx) :
 			delete_after = bot.response_lifespan)
 	
 	if resume != None :
-		print("<" + channelId + "> " + resume)
+		log(resume, channelId = channelId)
 
 
 @bot.command(pass_context = True)
@@ -253,7 +253,7 @@ async def goto(ctx, nPeriod : int) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 	
-	print("<" + channelId + "> " + goto)
+	log(goto, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def reset(ctx) :
@@ -283,7 +283,7 @@ async def reset(ctx) :
 		await bot.say("No timer found for this channel.", 
 			delete_after = bot.response_lifespan)
 
-	print("<" + channelId + "> " + reset)
+	log(reset, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def superreset(ctx) :
@@ -328,7 +328,7 @@ async def superreset(ctx) :
 		#	except UnicodeEncodeError : 
 		#		pass
 
-	print("<" + channelId + "> " + superreset)
+	log(superreset, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def time(ctx) :
@@ -347,7 +347,7 @@ async def time(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	print("<" + channelId + "> " + time)
+	log(time, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def status(ctx) :
@@ -365,7 +365,7 @@ async def status(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 	
-	print("<" + channelId + "> " + status)
+	log(status, channelId = channelId)
 
 @bot.command()
 async def tts(toggle : str) :
@@ -375,12 +375,12 @@ async def tts(toggle : str) :
 		bot.tts = lib.toBoolean(toggle)
 		ttsStatus = ("on." if bot.tts else "off.")
 
-		print("<------Global------> TTS now " + ttsStatus)
+		log("TTS now " + ttsStatus)
 		await bot.say("Text-to-speech now " + ttsStatus, tts = bot.tts,
 			delete_after = bot.response_lifespan)
 
 	except cmdErr.BadArgument :
-		print("<------Global------> TTS command failed, bad argument.")
+		log("TTS command failed, bad argument.")
 		await bot.say("I could not understand if you wanted to turn TTS" + 
 			" on or off, sorry.")
 
@@ -444,7 +444,7 @@ async def shutdown(ctx) :
 
 		await bot.logout()
 	else :
-		print(lib.getAuthorName(ctx) +
+		log(lib.getAuthorName(ctx) +
 			"attempted to stop the bot and failed (No permission to shut down)")
 
 @bot.command(pass_context = True)
@@ -470,12 +470,26 @@ async def reloadcfg(ctx) :
 		await bot.say("You're not my real dad!",
 			delete_after = bot.response_lifespan)
 
-	print("<------Global------> " + reloadcfg)
+	log(reloadcfg)
+
+@bot.command()
+async def why(time_out = 15) :
+	""" No need for explanation. """
+
+	await bot.say("https://i.imgur.com/OpFcp.jpg", delete_after = time_out % 60)
 
 def set_bot_config() :
 	bot.response_lifespan = config.get_int('response_lifespan')
 	bot.command_prefix = config.get_str('command_prefix')
 	bot.timer_step = config.get_int('timer_step')
+
+def log(message : str, channelId = None, level = logging.INFO) :
+
+	if channelId == None :
+		channelId = "Global".cjust(18, '=')
+
+	logger.log(level, "[" + channelId + "] " + message)
+
 
 if __name__ == '__main__':
 
@@ -490,10 +504,8 @@ if __name__ == '__main__':
 
 	# Config stuff
 	
-	command_prefix = config.get_str('command_prefix')
-	if command_prefix == None :
-		print("Could not find a valid command prefix in the config," +
-			" using default")
+	if config.get_str('command_prefix') == None :
+		print("Could not find a valid command prefix in the config, aborting.")
 		exit(-2)
 	
 	# Logging stuff

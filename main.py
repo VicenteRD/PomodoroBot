@@ -11,17 +11,11 @@ import config
 
 
 USAGE = sys.argv[0] + " <token> [prefix] [admin_id]"
-
-
-config = config.Config("bot.cfg")
-TOKEN = "" # can I delete this
-
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
-#BOT_FRIEND_ROLE_ID
+config = config.Config("bot.cfg")
 
 logger = logging.getLogger()
-
 
 bot = Bot.PomodoroBot(
 	command_prefix = '!',
@@ -30,6 +24,7 @@ bot = Bot.PomodoroBot(
 	response_lifespan = 15,
 	pm_help = True)
 
+
 @bot.event
 async def on_ready() :
 	print('Logged in as')
@@ -37,9 +32,11 @@ async def on_ready() :
 	print(bot.user.id)
 	print('------')
 
-	await bot._update_status()
-	for server in bot.servers :
-		await bot.send_message(server, config.get_str('startup_msg'))
+	start_msg = config.get_str('startup_msg')
+	if start_msg != None and start_msg != "" :
+		await bot._update_status()
+		for server in bot.servers :
+			await bot.send_message(server, start_msg)
 
 @bot.command(pass_context = True)
 async def setup(ctx, timerFormat = "default", repeat = "True",
@@ -51,7 +48,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 			the period finishes or changes. (Default: False)"""
 
 	if timerFormat == "help" :
-		helpStr = ("**Example:**\n\t" + COMMAND_PREFIX + "setup " +
+		helpStr = ("**Example:**\n\t" + bot.command_prefix + "setup " +
 			config.get('default_timer_setup'))
 		await bot.say((helpStr  + 
 			"\n\t_This will give you a sequence of 32, 8, 32, 8, 32, 15_"))
@@ -460,6 +457,8 @@ async def reloadcfg(ctx) :
 		lib.authorHasRole(ctx, config.get_str('bot_friend_role_id')) :
 
 		config.reload()
+		set_bot_config(
+			)
 
 		await bot.say("Successfully reloaded configuration.",
 			delete_after = bot.response_lifespan)
@@ -473,6 +472,10 @@ async def reloadcfg(ctx) :
 
 	print("<------Global------> " + reloadcfg)
 
+def set_bot_config() :
+	bot.response_lifespan = config.get_int('response_lifespan')
+	bot.command_prefix = config.get_int('command_prefix')
+	bot.timer_step = config.get_int('timer_step')
 
 if __name__ == '__main__':
 
@@ -491,8 +494,8 @@ if __name__ == '__main__':
 	if command_prefix == None :
 		print("Could not find a valid command prefix in the config," +
 			" using default")
-		command_prefix = '!'
-
+		exit(-2)
+	
 	# Logging stuff
 
 	logging.basicConfig(level = logging.INFO)
@@ -512,7 +515,5 @@ if __name__ == '__main__':
 
 	# Bot init
 
-	bot.response_lifespan = config.get_int('response_lifespan')
-	bot.timer_step = config.get_int('timer_step')
-	bot.command_prefix = command_prefix
+	set_bot_config()
 	bot.run(TOKEN)

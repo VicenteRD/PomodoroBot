@@ -11,6 +11,8 @@ class Config :
 		self.reload()
 	
 	def reload(self) :
+		_config_map = {}
+
 		cfg_file = open(self._file_name, 'r')
 
 		for line in cfg_file :

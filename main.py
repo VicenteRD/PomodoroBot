@@ -486,7 +486,7 @@ def set_bot_config() :
 def log(message : str, channelId = None, level = logging.INFO) :
 
 	if channelId == None :
-		channelId = "Global".cjust(18, '=')
+		channelId = "Global".center(18, '=')
 
 	logger.log(level, "[" + channelId + "] " + message)
 

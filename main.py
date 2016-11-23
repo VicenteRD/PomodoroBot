@@ -242,6 +242,8 @@ async def goto(ctx, nPeriod : int) :
 
 		if label != None :
 			goto = "Moved to period number " + str(nPeriod) + " (" + label + ")"
+			bot.edit_message(bot.listMessage[channelId],
+				bot.pomodoroTimer[channelId].periodList())
 			await bot.say(goto)
 		else :
 			goto = "Invalid period number entered when trying goto command."

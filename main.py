@@ -1,5 +1,4 @@
 import sys
-import logging
 import asyncio
 
 from discord.ext.commands import errors as cmdErr
@@ -14,8 +13,6 @@ USAGE = sys.argv[0] + " <token> [prefix] [admin_id]"
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
 config = config.Config("bot.cfg")
-
-logger = logging.getLogger()
 
 bot = Bot.PomodoroBot(
 	command_prefix = '!',
@@ -105,7 +102,7 @@ async def setup(ctx, timerFormat = "default", repeat = "True",
 			"' and '" + countback + "'")
 		setupSay = "Invalid arguments received, please try again."
 
-	log(setupPrint, channelId = channelId)
+	lib.log(setupPrint, channelId = channelId)
 	if setupSay != None :
 		await bot.say(setupSay, delete_after = bot.response_lifespan)
 
@@ -122,8 +119,8 @@ async def starttimer(ctx, periodIdx = 1) :
 			if bot.pomodoroTimer[channelId].start() :
 				starttimer = None
 
-				if not\
-					(1 < periodIdx < len(bot.pomodoroTimer[channelId].pTimes)) :
+				if not \
+					(0 < periodIdx <= len(bot.pomodoroTimer[channelId].pTimes)):
 					periodIdx = 1
 
 				await bot._run_timer(channelId, periodIdx - 1)
@@ -146,7 +143,7 @@ async def starttimer(ctx, periodIdx = 1) :
 			delete_after = bot.response_lifespan)
 
 	if starttimer != None :
-		log(starttimer, channelId = channelId)
+		lib.log(starttimer, channelId = channelId)
 
 
 @bot.command(pass_context = True)
@@ -171,7 +168,7 @@ async def pause(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	log(pause, channelId = channelId)
+	lib.log(pause, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def stop(ctx) :
@@ -196,7 +193,7 @@ async def stop(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	log(stop, channelId = channelId)
+	lib.log(stop, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def resume(ctx) :
@@ -228,7 +225,7 @@ async def resume(ctx) :
 			delete_after = bot.response_lifespan)
 	
 	if resume != None :
-		log(resume, channelId = channelId)
+		lib.log(resume, channelId = channelId)
 
 
 @bot.command(pass_context = True)
@@ -242,8 +239,13 @@ async def goto(ctx, nPeriod : int) :
 
 		if label != None :
 			goto = "Moved to period number " + str(nPeriod) + " (" + label + ")"
-			bot.edit_message(bot.listMessage[channelId],
+			
+			await bot.edit_message(bot.listMessage[channelId],
 				bot.pomodoroTimer[channelId].periodList())
+			if (bot.pomodoroTimer[channelId].state == Timer.State.PAUSED) :
+				await bot.edit_message(bot.timeMessage[channelId],
+						bot.pomodoroTimer[channelId].time())
+
 			await bot.say(goto)
 		else :
 			goto = "Invalid period number entered when trying goto command."
@@ -255,7 +257,7 @@ async def goto(ctx, nPeriod : int) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 	
-	log(goto, channelId = channelId)
+	lib.log(goto, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def reset(ctx) :
@@ -285,7 +287,7 @@ async def reset(ctx) :
 		await bot.say("No timer found for this channel.", 
 			delete_after = bot.response_lifespan)
 
-	log(reset, channelId = channelId)
+	lib.log(reset, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def superreset(ctx) :
@@ -330,7 +332,7 @@ async def superreset(ctx) :
 		#	except UnicodeEncodeError : 
 		#		pass
 
-	log(superreset, channelId = channelId)
+	lib.log(superreset, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def time(ctx) :
@@ -349,7 +351,7 @@ async def time(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 
-	log(time, channelId = channelId)
+	lib.log(time, channelId = channelId)
 
 @bot.command(pass_context = True)
 async def status(ctx) :
@@ -367,7 +369,7 @@ async def status(ctx) :
 		await bot.say("No timer found for this channel.",
 			delete_after = bot.response_lifespan)
 	
-	log(status, channelId = channelId)
+	lib.log(status, channelId = channelId)
 
 @bot.command()
 async def tts(toggle : str) :
@@ -377,12 +379,12 @@ async def tts(toggle : str) :
 		bot.tts = lib.toBoolean(toggle)
 		ttsStatus = ("on." if bot.tts else "off.")
 
-		log("TTS now " + ttsStatus)
+		lib.log("TTS now " + ttsStatus)
 		await bot.say("Text-to-speech now " + ttsStatus, tts = bot.tts,
 			delete_after = bot.response_lifespan)
 
 	except cmdErr.BadArgument :
-		log("TTS command failed, bad argument.")
+		lib.log("TTS command failed, bad argument.")
 		await bot.say("I could not understand if you wanted to turn TTS" + 
 			" on or off, sorry.")
 
@@ -446,7 +448,7 @@ async def shutdown(ctx) :
 
 		await bot.logout()
 	else :
-		log(lib.getAuthorName(ctx) +
+		lib.log(lib.getAuthorName(ctx) +
 			"attempted to stop the bot and failed (No permission to shut down)")
 
 @bot.command(pass_context = True)
@@ -459,8 +461,7 @@ async def reloadcfg(ctx) :
 		lib.authorHasRole(ctx, config.get_str('bot_friend_role_id')) :
 
 		config.reload()
-		set_bot_config(
-			)
+		set_bot_config()
 
 		await bot.say("Successfully reloaded configuration.",
 			delete_after = bot.response_lifespan)
@@ -472,7 +473,7 @@ async def reloadcfg(ctx) :
 		await bot.say("You're not my real dad!",
 			delete_after = bot.response_lifespan)
 
-	log(reloadcfg)
+	lib.log(reloadcfg)
 
 @bot.command()
 async def why(time_out = 15) :
@@ -484,14 +485,6 @@ def set_bot_config() :
 	bot.response_lifespan = config.get_int('response_lifespan')
 	bot.command_prefix = config.get_str('command_prefix')
 	bot.timer_step = config.get_int('timer_step')
-
-def log(message : str, channelId = None, level = logging.INFO) :
-
-	if channelId == None :
-		channelId = "Global".center(18, '=')
-
-	for line in message.split('\n') :
-		logger.log(level, "[" + channelId + "] " + line)
 
 
 if __name__ == '__main__':
@@ -516,20 +509,7 @@ if __name__ == '__main__':
 	
 	# Logging stuff
 
-	logger = logging.getLogger()
-	logger.setLevel(logging.INFO)
-
-	logFmt = logging.Formatter(fmt = '[%(asctime)s][%(levelname)s] %(message)s',
-		datefmt = '%m/%d | %H:%M:%S')
-
-	fileHandler = logging.FileHandler(filename = 'pomodorobot.log',
-		encoding = 'utf8', mode = 'w')
-	termHandler = logging.StreamHandler(sys.stderr)
-
-	fileHandler.setFormatter(logFmt)
-	termHandler.setFormatter(logFmt)
-	logger.addHandler(fileHandler)
-	logger.addHandler(termHandler)
+	lib.init_logger()
 
 	# Bot init
 

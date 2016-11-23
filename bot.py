@@ -127,7 +127,7 @@ class PomodoroBot(discord.ext.commands.Bot) :
 
 					timer.action = Timer.Action.STOP
 					toSay += "\nI have ran out of periods, and looping is off."
-					print("<" + channelId + "> " + toSay)
+					lib.log(toSay, channelId = channelId)
 					await self.send_msg(channelId, toSay, tts = self.tts)
 
 					self.timersRunning -= 1
@@ -143,7 +143,7 @@ class PomodoroBot(discord.ext.commands.Bot) :
 					 		"minute", append = "s")
 					 	+ ").")
 					
-				print("<" + channelId + "> " + toSay)
+				lib.log(toSay, channelId = channelId)
 				await self.send_msg(channelId, toSay, tts = self.tts)
 
 				await self.edit_message(self.listMessage[channelId],
@@ -151,12 +151,12 @@ class PomodoroBot(discord.ext.commands.Bot) :
 
 			if timer.action == Timer.Action.STOP :
 				timer.action = Timer.Action.NONE
-				
+				methods
 				timer.currentPeriod = -1
 				timer.currentTime = 0
 				timer.state = Timer.State.STOPPED
 
-				print("<" + channelId + "> Timer has stopped.")
+				lib.log("Timer has stopped.", channelId = channelId)
 				await self.send_msg(channelId, "Timer has stopped.")
 
 				await self._delete_messages(channelId)
@@ -168,7 +168,7 @@ class PomodoroBot(discord.ext.commands.Bot) :
 				timer.action = Timer.Action.NONE
 				timer.state = Timer.State.PAUSED
 
-				print("<" + channelId + "> Timer has paused.")
+				lib.log("Timer has paused.", channelId = channelId)
 				await self.send_msg(channelId,"Timer has paused.")
 
 
@@ -184,14 +184,14 @@ class PomodoroBot(discord.ext.commands.Bot) :
 				if startIdx != 0 :
 					statusAlert += " (from period n." + str(startIdx + 1) + ")"
 
-				print("<" + channelId + "> " + statusAlert )
+				lib.log(statusAlert, channelId = channelId )
 				await self.send_msg(channelId, statusAlert)
 
 				if self.timeMessage[channelId] == None :
 					try :
 						await self._generate_messages(channelId)
 					except discord.Forbidden:
-						print("<" + channelId + "> No permission to pin.")
+						lib.log("No permission to pin.", channelId = channelId)
 						kitty = ("I tried to pin a message and failed." +
 							" Can I haz permission to pin messages?" +
 							" https://goo.gl/tYYD7s")

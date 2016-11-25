@@ -154,7 +154,7 @@ class Config:
         # If it's a list
         if line.startswith('[') and line.endswith(']'):
             line = line[1:-1]
-            return line.split(',')
+            return list(element for element in line.split(','))
 
         # If it's a dictionary
         elif line.startswith('{') and line.endswith('}'):

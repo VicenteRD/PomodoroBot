@@ -106,18 +106,24 @@ class PomodoroTimer:
                     for i in range(0, int(splits[0]) * len(sub_sections)):
                         idx = i % len(sub_sections)
 
+                        time = int(sub_sections[idx][1])
+                        if time == 0:
+                            continue
                         self.names.append(
                             sub_sections[idx][0].replace('_', ' ')
                         )
-                        self.times.append(int(sub_sections[idx][1]))
+                        self.times.append(time)
                 else:
                     splits_b = section.split(':')
                     if len(splits_b) != 2:
                         fmt_err = True
                         break
 
+                    time = int(splits_b[1])
+                    if time == 0:
+                        continue
                     self.names.append(splits_b[0].replace('_', ' '))
-                    self.times.append(int(splits_b[1]))
+                    self.times.append(time)
 
         if not fmt_err:
             concat = str(self.times[0])

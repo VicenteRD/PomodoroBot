@@ -4,10 +4,20 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context, errors
 
-logger = logging.getLogger()
+
+class LibLogger:
+    logger = logging.getLogger()
+    ready = False
+
+
+_logger = LibLogger()
 
 
 def init_logger():
+
+    if _logger.ready:
+        return
+
     log_fmt = logging.Formatter(fmt='[%(asctime)s][%(levelname)s] %(message)s',
                                 datefmt='%m/%d | %H:%M:%S')
 
@@ -17,10 +27,12 @@ def init_logger():
 
     file_handler.setFormatter(log_fmt)
     term_handler.setFormatter(log_fmt)
-    logger.addHandler(file_handler)
-    logger.addHandler(term_handler)
+    _logger.logger.addHandler(file_handler)
+    _logger.logger.addHandler(term_handler)
 
-    logger.setLevel(logging.INFO)
+    _logger.logger.setLevel(logging.INFO)
+
+    _logger.ready = True
 
 
 def get_channel_id(context: Context):
@@ -87,8 +99,11 @@ def pluralize(amount: int, s_name: str, append="", p_name=""):
 
 
 def log(message: str, channel_id=None, level=logging.INFO):
+    if not _logger.ready:
+        init_logger()
+
     if channel_id is None:
         channel_id = "Global".center(18, '=')
 
     for line in message.split('\n'):
-        logger.log(level, "[" + channel_id + "] " + line)
+        _logger.logger.log(level, "[" + channel_id + "] " + line)

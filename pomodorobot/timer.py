@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 
-from pomodorobot import lib
+import pomodorobot.lib as lib
 
 
 class State(Enum):
@@ -50,7 +50,7 @@ class PomodoroTimer:
     action = Action.NONE
 
     # Whether the period list should loop or not.
-    onRepeat = True
+    repeat = True
     # Whether the timer should count from 0 and show the "elapsed" time,
     # or count back from the period's time and show the remaining time.
     countdown = True
@@ -125,7 +125,7 @@ class PomodoroTimer:
                 for i in range(1, len(self.times)):
                     concat += ", " + str(self.times[i])
 
-            self.onRepeat = on_repeat
+            self.repeat = on_repeat
             self.countdown = reverse
 
             return 0, concat
@@ -257,9 +257,9 @@ class PomodoroTimer:
             that also indicates the current period. """
 
         p_list = "**Period list (Loop is " + (
-                 "ON" if self.onRepeat else "OFF") + "):**"
+                 "ON" if self.repeat else "OFF") + "):**"
         for i in range(0, len(self.times)):
-            p_list += ("\n" + self.names[i] + ": " + str(self.times[i]) +
+            p_list += ("\n" + self.names[i] + ": " +
                        lib.pluralize(self.times[i], "minute", append='s'))
 
             if i == self.curr_period:

@@ -1,3 +1,6 @@
+import pomodorobot.lib as lib
+
+
 class Config:
     """ TODO
 
@@ -19,37 +22,23 @@ class Config:
         cfg_file = open(self._file_name, 'r')
 
         for line in cfg_file:
-            if line.startswith('#') or line == "" or line == "\n":
+            if line.startswith('#') or line.startswith('_') or \
+               line == "" or line == '\n':
                 continue
 
             if ':' not in line:
-                print("Could not read line '" + line + "'. Wrong format")
+                lib.log("Could not read line '" + line.strip() +
+                        "'. Wrong format")
             else:
                 key_val = line.split(':')
                 key = key_val.pop(0).strip()
 
                 key_val[0] = key_val[0].strip()
-                val = ':'.join(key_val)
+                value = ':'.join(key_val)
 
-                # If it's a list
-                if val.startswith('[') and val.endswith(']'):
-                    val = val[1:-1]
-                    self._config_map[key] = val.split(',')
-
-                # If it's a dictionary
-                elif val.startswith('{') and val.endswith('}'):
-                    val = val[1:-1]
-                    self._config_map[key] = \
-                        dict((k.strip(), v.strip())
-                             for k, v in (item.split(':')
-                                          for item in val.split(',')))
-
-                else:
-                    self._config_map[key] = val
+                self._config_map[key] = Config._format_val(value)
 
         cfg_file.close()
-
-    # TODO multiline support
 
     def get_str(self, key: str):
         """ Returns the value corresponding to the given key.
@@ -58,7 +47,13 @@ class Config:
         :return: The configuration value pertaining to the key.
         """
 
-        return self._config_map[key] if key in self._config_map.keys() else None
+        if key in self._config_map.keys():
+            if self._config_map[key] == "[heavy]":
+                return self._load_live(key)
+
+            return self._config_map[key]
+
+        return None
 
     def get_int(self, key: str):
         """ Returns the value corresponding to the given key.
@@ -105,3 +100,50 @@ class Config:
                 raise TypeError
         else:
             return None
+
+    def _load_live(self, key):
+        cfg_file = open(self._file_name, 'r')
+
+        value = None
+        mult = ""
+        multiline = False
+        for line in cfg_file:
+            if multiline and line.startswith('_'):
+                line = line.strip()[1:]
+                mult += '\n' + line
+                if line.endswith('"""') or line == '""""':
+                    mult = mult[:-3]
+                    break
+            elif line.strip().startswith(key):
+                aux = line.split(':')
+                aux.pop(0)
+                value = ':'.join(aux).replace("[heavy]", "")
+                if value.strip() == '"""':
+                    multiline = True
+                else:
+                    break
+
+        cfg_file.close()
+        return mult if mult != "" else Config._format_val(value)
+
+
+
+    @staticmethod
+    def _format_val(line):
+        # If it's too much to load into RAM
+        if line.startswith("[heavy]"):
+            return "[heavy]"
+
+        # If it's a list
+        if line.startswith('[') and line.endswith(']'):
+            line = line[1:-1]
+            return line.split(',')
+
+        # If it's a dictionary
+        elif line.startswith('{') and line.endswith('}'):
+            line = line[1:-1]
+            return dict((k.strip(), v.strip())
+                        for k, v in (item.split(':')
+                                     for item in line.split(',')))
+        else:
+            return line

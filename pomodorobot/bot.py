@@ -6,8 +6,8 @@ from discord import errors as d_err
 from discord.enums import Status
 from discord.ext import commands
 
-from pomodorobot import lib
-from .timer import State, Action
+import pomodorobot.lib as lib
+from pomodorobot.timer import State, Action
 
 
 class PomodoroBot(commands.Bot):
@@ -119,14 +119,14 @@ class PomodoroBot(commands.Bot):
             if timer.state == State.RUNNING and \
                timer.curr_time >= timer.times[timer.curr_period] * 60:
 
-                say = "@here | '" + timer.pNames[timer.currentPeriod]
+                say = "@here | '" + timer.names[timer.curr_period]
                 say += "' period over!"
 
-                timer.currentTime = 0
-                timer.currentPeriod += 1
+                timer.curr_time = 0
+                timer.curr_period += 1
 
-                if timer.currentPeriod >= len(timer.pTimes) and \
-                   not timer.onRepeat:
+                if timer.curr_period >= len(timer.times) and \
+                   not timer.repeat:
                     timer.action = Action.STOP
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel_id)
@@ -136,7 +136,7 @@ class PomodoroBot(commands.Bot):
                     await self.update_status()
                     return
 
-                timer.currentPeriod %= len(timer.pTimes)
+                timer.curr_period %= len(timer.times)
 
                 if timer.action == Action.NONE:
                     say += (" '" + timer.names[timer.curr_period] +
@@ -153,8 +153,8 @@ class PomodoroBot(commands.Bot):
             if timer.action == Action.STOP:
                 timer.action = Action.NONE
 
-                timer.currentPeriod = -1
-                timer.currentTime = 0
+                timer.curr_period = -1
+                timer.curr_time = 0
 
                 timer.state = State.STOPPED
 
@@ -177,7 +177,7 @@ class PomodoroBot(commands.Bot):
                 timer.action = Action.NONE
 
                 if timer.state == State.STOPPED:
-                    timer.currentPeriod = start_idx
+                    timer.curr_period = start_idx
                     say_action = "Starting"
                 else:
                     say_action = "Resuming"
@@ -216,7 +216,7 @@ class PomodoroBot(commands.Bot):
                 sleep_time = ((self.timer_step * 1000000.0) - end_micro)
 
                 await asyncio.sleep(sleep_time / 1000000.0)
-                timer.currentTime += self.timer_step
+                timer.curr_time += self.timer_step
             else:
                 self.timers_running -= 1
                 await self.update_status()

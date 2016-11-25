@@ -2,16 +2,17 @@ import sys
 
 from discord.ext.commands import errors as cmd_err
 
-from pomodorobot import lib
-from .bot import PomodoroBot
-from .config import Config
-from .timer import PomodoroTimer, State
+import pomodorobot.lib as lib
+
+from pomodorobot.bot import PomodoroBot
+from pomodorobot.config import Config
+from pomodorobot.timer import PomodoroTimer, State
 
 
 USAGE = sys.argv[0] + " <token>"
 DESCRIPTION = '''A marinara timer bot that can be configured to your needs.'''
 
-cfg_values = Config("../bot.cfg")
+cfg_values = Config("bot.cfg")
 
 bot = PomodoroBot(
     command_prefix='!',
@@ -70,8 +71,8 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
             bot.time_messages[channel_id] = None
             bot.list_messages[channel_id] = None
 
-            result, times = bot.timers[channel_id].setup(timer_format,
-                                                         loop, countdown)
+            result, times = bot.timers[channel_id]\
+                .setup(timer_format, loop, countdown)
 
             if result == 0 and times is not None:
                 settings = ("Correctly set up timer config: " + times + "." +
@@ -124,7 +125,7 @@ async def starttimer(ctx, period_idx=1):
         if bot.timers[channel_id].start():
             say = None
 
-            if not 0 < period_idx <= len(bot.timers[channel_id].pTimes):
+            if not 0 < period_idx <= len(bot.timers[channel_id].times):
                 period_idx = 1
 
             await bot.run_timer(channel_id, period_idx - 1)
@@ -390,37 +391,8 @@ async def tts(toggle: str):
 async def halp(ctx):
     """ Tells the user how to use the bot. """
 
-    await bot.send_message(ctx.message.author, content="""
-**!setup _<format> [loop tts]_**
-\tSets the marinara timer up.
-\t\tformat    : The periods format. Each period is a set of <name>:<time>, \
-where time is in minutes,
-\t\t\tand periods are separated by commas. 
-\t\trepeat    : Indicates whether the timer should start over when it's done
-\t\t\twith the list of periods or simply stop. ('True' or 'False', \
-defaults to True)
-\t\ttts       : Indicates whether the timer should say period changes \
-out loud.
-\t\t\t('True' or 'False', defaults to False)
-**!starttimer**
-\tStarts the timer (must be set up previously).
-**!pause**
-\tPauses the timer, keeping the current period and time intact.
-**!stop**
-\tStops the timer, resetting it to the first period and the time to 0
-**!resume**
-\tRestarts a paused timer.
-**!goto _<period-index>_**
-\tSkips to the indicated period (Resets the time to 0 within the period).
-**!tts _<on|off>_**
-\tTurns text-to-speech on or off.
-**!time**
-\tIf the timer is running, it will show how much time of the current period \
-has passed.
-**!status**
-\tShows whether the timer is stopped, running or paused.
-**!halp**
-\tShows this message.""")
+    await bot.send_message(ctx.message.author,
+                           content=cfg_values.get_str("halp"))
 
 
 @bot.command(pass_context=True)

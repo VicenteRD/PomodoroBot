@@ -74,7 +74,7 @@ class Config:
         else:
             return None
 
-    def to_boolean(self, key: str):
+    def get_boolean(self, key: str):
         """ Returns the value corresponding to the given key.
 
         :param key: The key to look for.
@@ -96,6 +96,23 @@ class Config:
                 return True
             elif val in ['false', 'off', 'no', 'n']:
                 return False
+            else:
+                raise TypeError
+        else:
+            return None
+
+    def get_list(self, key):
+        """
+
+        :param key:
+        :return:
+        """
+
+        if key in self._config_map.keys():
+            val = self._config_map[key]
+
+            if isinstance(val, list):
+                return val
             else:
                 raise TypeError
         else:

@@ -35,6 +35,10 @@ def init_logger():
     _logger.ready = True
 
 
+def get_channel_name(context: Context):
+    return context.message.channel.name
+
+
 def get_channel_id(context: Context):
     return context.message.channel.id
 

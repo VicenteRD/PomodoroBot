@@ -49,6 +49,14 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
     time.
     """
 
+    channel_id = lib.get_channel_id(ctx)
+
+    whitelist = cfg_values.get_list('channel_whitelist')
+    if whitelist is not None and lib.get_channel_name(ctx) not in whitelist:
+        await bot.say("Timers are not allowed in this channel.",
+                      delete_after=bot.response_lifespan)
+        return
+
     if timer_format == "help":
         help_str = ("**Example:**\n\t" + bot.command_prefix + "setup " +
                     cfg_values.get_str('default_timer_setup'))
@@ -58,8 +66,6 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
 
     if timer_format == "default":
         timer_format = cfg_values.get_str('default_timer_setup')
-
-    channel_id = lib.get_channel_id(ctx)
 
     result = -1
     if channel_id not in bot.timers.keys():
@@ -71,7 +77,7 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
             bot.time_messages[channel_id] = None
             bot.list_messages[channel_id] = None
 
-            result, times = bot.timers[channel_id]\
+            result, times = bot.timers[channel_id] \
                 .setup(timer_format, loop, countdown)
 
             if result == 0 and times is not None:

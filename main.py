@@ -541,6 +541,11 @@ async def spoof(ctx, spoofed_id=None):
     if bot.has_permission(ctx.message.author):
         channel_id = lib.get_channel_id(ctx)
 
+        if channel_id == spoofed_id:
+            await bot.say("How about no. " + spoofed_id,
+                          delete_after=bot.response_lifespan)
+            return
+
         if spoofed_id is not None:
             bot.spoofed[channel_id] = spoofed_id
 

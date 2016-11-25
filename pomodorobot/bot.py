@@ -23,14 +23,25 @@ class PomodoroBot(commands.Bot):
     time_messages = {}
     list_messages = {}
 
+    # A list of channels locked, meaning only people with permissions can
+    # change them somehow
+    locked = []
+
     # Whether the bot should send TTS messages on a change of periods.
     tts = False
 
     # The amount of timers running.
     timers_running = 0
 
-    timer_step = 1
+    # The time between each timer update
+    timer_step = 2
+    # The time after which most command responses get deleted
     response_lifespan = 15
+
+    # The ID of the administrator of the bot
+    admin_id = ""
+    # The ID of the role with permissions over the bot
+    role_id = ""
 
     def __init__(self, command_prefix, formatter=None, description=None,
                  pm_help=False, response_lifespan=15, timer_step=2, **options):
@@ -39,6 +50,15 @@ class PomodoroBot(commands.Bot):
 
         self.timer_step = timer_step
         self.response_lifespan = response_lifespan
+
+    def is_admin(self, member: discord.Member):
+        return member.id == self.admin_id
+
+    def has_permission(self, member: discord.Member):
+        return self.is_admin(member) or lib.has_role(member, self.role_id)
+
+    def is_locked(self, channel_id: str):
+        return channel_id in self.locked
 
     @asyncio.coroutine
     async def send_msg(self, channel_id: str, message: str, tts=False):

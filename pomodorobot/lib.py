@@ -55,7 +55,11 @@ def get_author_name(context: Context, nick=False):
 
 
 def author_has_role(context: commands.Context, role_id: str):
-    for role in context.message.author.roles:
+    return has_role(context.message.author, role_id)
+
+
+def has_role(member: discord.Member, role_id: str):
+    for role in member.roles:
         if role.id == role_id:
             return True
     return False

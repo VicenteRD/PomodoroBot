@@ -1,5 +1,6 @@
 import sys
 
+from discord.ext.commands import Context
 from discord.ext.commands import errors as cmd_err
 
 import pomodorobot.lib as lib
@@ -54,6 +55,11 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
     whitelist = cfg_values.get_list('channel_whitelist')
     if whitelist is not None and lib.get_channel_name(ctx) not in whitelist:
         await bot.say("Timers are not allowed in this channel.",
+                      delete_after=bot.response_lifespan)
+        return
+
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
 
@@ -127,6 +133,11 @@ async def starttimer(ctx, period_idx=1):
 
     channel_id = lib.get_channel_id(ctx)
 
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
+
     if channel_id in bot.timers.keys() and bot.timers[channel_id].is_set():
         if bot.timers[channel_id].start():
             say = None
@@ -157,6 +168,11 @@ async def pause(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
+
     if channel_id in bot.timers.keys():
         if bot.timers[channel_id].pause():
             say = "Timer will be paused soon."
@@ -182,6 +198,11 @@ async def stop(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
+
     if channel_id in bot.timers.keys():
         if bot.timers[channel_id].stop():
             say = "Timer will stop soon."
@@ -206,6 +227,11 @@ async def resume(ctx):
     """ Resumes a paused timer. """
 
     channel_id = lib.get_channel_id(ctx)
+
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
 
     if channel_id in bot.timers.keys():
         if bot.timers[channel_id].resume():
@@ -238,6 +264,11 @@ async def goto(ctx, period_idx: int):
     """ Skips to the (n-1)th period. """
 
     channel_id = lib.get_channel_id(ctx)
+
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
 
     if channel_id in bot.timers.keys():
         label = bot.timers[channel_id].goto(period_idx)
@@ -272,6 +303,11 @@ async def reset(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
+    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
+
     if channel_id in bot.timers.keys():
         if bot.timers[channel_id].state == State.STOPPED:
             del bot.timers[channel_id]
@@ -303,8 +339,7 @@ async def superreset(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if lib.get_author_id(ctx) == cfg_values.get_str('admin_id') or \
-            lib.author_has_role(ctx, cfg_values.get_str('bot_friend_role_id')):
+    if bot.has_permission(ctx.message.author):
 
         if channel_id in bot.timers.keys():
             if bot.timers[channel_id].state == State.RUNNING:
@@ -405,7 +440,7 @@ async def halp(ctx):
 async def shutdown(ctx):
     """ Exits the program. """
 
-    if lib.get_author_id(ctx) == cfg_values.get_str('admin_id'):
+    if bot.is_admin(ctx.message.author):
         print("Shutting down...")
         await bot.say("Hope I did well, bye!")
 
@@ -429,8 +464,7 @@ async def shutdown(ctx):
 async def reloadcfg(ctx):
     """ Reloads the configuration. """
 
-    if lib.get_author_id(ctx) == cfg_values.get_str('admin_id') or \
-            lib.author_has_role(ctx, cfg_values.get_str('bot_friend_role_id')):
+    if bot.has_permission(ctx.message.author):
 
         cfg_values.reload()
         set_bot_config()
@@ -448,6 +482,32 @@ async def reloadcfg(ctx):
     lib.log(say)
 
 
+@bot.command(pass_context=True)
+async def lock(ctx):
+
+    channel_id = lib.get_channel_id(ctx)
+    if channel_id not in bot.locked and \
+            bot.has_permission(ctx.message.author):
+        bot.locked.append(channel_id)
+
+        await bot.say("Channel locked.", delete_after=bot.response_lifespan)
+        lib.log(lib.get_author_name(ctx) + "locked the channel.",
+                channel_id=channel_id)
+
+
+@bot.command(pass_context=True)
+async def unlock(ctx):
+
+    channel_id = lib.get_channel_id(ctx)
+    if channel_id in bot.locked and \
+            bot.has_permission(ctx.message.author):
+        bot.locked.remove(channel_id)
+
+        await bot.say("Channel unlocked.", delete_after=bot.response_lifespan)
+        lib.log(lib.get_author_name(ctx) + "unlocked the channel.",
+                channel_id=channel_id)
+
+
 @bot.command()
 async def why(time_out=15):
     """ No need for explanation. """
@@ -456,9 +516,13 @@ async def why(time_out=15):
 
 
 def set_bot_config():
-    bot.response_lifespan = cfg_values.get_int('response_lifespan')
     bot.command_prefix = cfg_values.get_str('command_prefix')
+
+    bot.response_lifespan = cfg_values.get_int('response_lifespan')
     bot.timer_step = cfg_values.get_int('timer_step')
+
+    bot.admin_id = cfg_values.get_str('admin_id')
+    bot.role_id = cfg_values.get_str('bot_friend_role_id')
 
 
 if __name__ == '__main__':

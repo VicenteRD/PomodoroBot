@@ -133,7 +133,10 @@ async def starttimer(ctx, period_idx=1):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -168,7 +171,10 @@ async def pause(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -198,7 +204,10 @@ async def stop(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -228,7 +237,10 @@ async def resume(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -265,7 +277,10 @@ async def goto(ctx, period_idx: int):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -303,7 +318,10 @@ async def reset(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
-    if bot.is_locked(channel_id) and not bot.has_permission(ctx.message.author):
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
         await bot.say("You are not allowed to modify this timer.",
                       delete_after=bot.response_lifespan)
         return
@@ -341,6 +359,9 @@ async def superreset(ctx):
 
     if bot.has_permission(ctx.message.author):
 
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+
         if channel_id in bot.timers.keys():
             if bot.timers[channel_id].state == State.RUNNING:
                 bot.timers_running -= 1
@@ -377,6 +398,10 @@ async def time(ctx):
 
     channel_id = lib.get_channel_id(ctx)
 
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+
     if channel_id in bot.timers.keys():
         say = bot.timers[channel_id].time(True)
 
@@ -396,6 +421,10 @@ async def status(ctx):
     """ Tells the user whether the timer is stopped, running or paused. """
 
     channel_id = lib.get_channel_id(ctx)
+
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
 
     if channel_id in bot.timers.keys():
         say = bot.timers[channel_id].status()
@@ -485,34 +514,61 @@ async def reloadcfg(ctx):
 @bot.command(pass_context=True)
 async def lock(ctx):
 
-    channel_id = lib.get_channel_id(ctx)
-    if channel_id not in bot.locked and \
-            bot.has_permission(ctx.message.author):
-        bot.locked.append(channel_id)
+    if bot.has_permission(ctx.message.author):
+        channel_id = lib.get_channel_id(ctx)
 
-        await bot.say("Channel locked.", delete_after=bot.response_lifespan)
-        lib.log(lib.get_author_name(ctx) + "locked the channel.",
-                channel_id=channel_id)
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+
+        if channel_id not in bot.locked:
+            bot.locked.append(channel_id)
+
+            await bot.say("Channel locked.", delete_after=bot.response_lifespan)
+            lib.log(lib.get_author_name(ctx) + " locked the channel.",
+                    channel_id=channel_id)
+        else:
+            bot.locked.remove(channel_id)
+
+            await bot.say("Channel unlocked.",
+                          delete_after=bot.response_lifespan)
+            lib.log(lib.get_author_name(ctx) + " unlocked the channel.",
+                    channel_id=channel_id)
 
 
 @bot.command(pass_context=True)
-async def unlock(ctx):
+async def spoof(ctx, spoofed_id=None):
 
-    channel_id = lib.get_channel_id(ctx)
-    if channel_id in bot.locked and \
-            bot.has_permission(ctx.message.author):
-        bot.locked.remove(channel_id)
+    if bot.has_permission(ctx.message.author):
+        channel_id = lib.get_channel_id(ctx)
 
-        await bot.say("Channel unlocked.", delete_after=bot.response_lifespan)
-        lib.log(lib.get_author_name(ctx) + "unlocked the channel.",
-                channel_id=channel_id)
+        if spoofed_id is not None:
+            bot.spoofed[channel_id] = spoofed_id
+
+            await bot.say("Now acting in channel " + spoofed_id,
+                          delete_after=bot.response_lifespan)
+            lib.log("Now acting as if in " + spoofed_id, channel_id=channel_id)
+        elif channel_id in bot.spoofed.keys():
+            del bot.spoofed[channel_id]
+
+            await bot.say("Now acting in current channel",
+                          delete_after=bot.response_lifespan)
+            lib.log("Spoofing now off", channel_id=channel_id)
 
 
 @bot.command()
 async def why(time_out=15):
     """ No need for explanation. """
 
-    await bot.say("https://i.imgur.com/OpFcp.jpg", delete_after=time_out % 60)
+    await bot.say("https://i.imgur.com/OpFcp.jpg",
+                  delete_after=min(time_out, 60))
+
+
+@bot.command()
+async def howcome(time_out=15):
+
+    await bot.say("http://24.media.tumblr.com/0c3c175c69e45a4182f18a1057ac4bf7/"
+                  "tumblr_n1ob7kSaiW1qlk7obo1_500.gif",
+                  delete_after=min(time_out, 60))
 
 
 def set_bot_config():

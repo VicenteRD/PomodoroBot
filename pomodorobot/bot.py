@@ -26,6 +26,9 @@ class PomodoroBot(commands.Bot):
     # A list of channels locked, meaning only people with permissions can
     # change them somehow
     locked = []
+    # A list of spoofed channels, meaning any commands ran on channel 'key'
+    # will actually affect timers on channel 'value'
+    spoofed = {}
 
     # Whether the bot should send TTS messages on a change of periods.
     tts = False

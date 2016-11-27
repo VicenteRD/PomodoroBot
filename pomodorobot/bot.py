@@ -12,7 +12,8 @@ from pomodorobot.timer import State, Action
 
 class PomodoroBot(commands.Bot):
     """ An extension of the Bot class, that contains the necessary attributes
-        and methods to run a Marinara Timer. """
+        and methods to run Pomodoro Timers on a series of channels.
+    """
 
     # The timers currently running. There can be one per channel.
     # (Indexed by the channel's ID)
@@ -51,22 +52,68 @@ class PomodoroBot(commands.Bot):
         self.timer_step = timer_step
         self.response_lifespan = response_lifespan
 
-    def is_admin(self, member: discord.Member):
+    def is_admin(self, member: discord.Member) -> bool:
+        """ Checks if a member is the administrator of the bot or not.
+
+        :param member: The member to check for.
+        :type member: discord.Member
+
+        :return: True if the member's ID matches the recorded admin ID, False
+            otherwise.
+        """
+
         return member.id == self.admin_id
 
-    def has_permission(self, member: discord.Member):
+    def has_permission(self, member: discord.Member) -> bool:
+        """ Checks if a member has elevated permissions on bot operations.
+            This can be true if they are the administrator, or if they have
+            the correct role.
+
+        :param member: The member to check for.
+        :type member: discord.Member
+
+        :return: True if the member has permission, False otherwise.
+        """
+
         return self.is_admin(member) or lib.has_role(member, self.role_id)
 
-    def is_locked(self, channel_id: str):
+    def is_locked(self, channel_id: str) -> bool:
+        """ Checks if a certain channel is locked for normal users or not.
+
+        :param channel_id: The ID of the channel to check.
+        :type channel_id: str
+
+        :return: True if the channel is locked, false otherwise.
+        """
+
         return channel_id in self.locked
 
     @asyncio.coroutine
     async def send_msg(self, channel_id: str, message: str, tts=False):
+        """ Wrap-around for the send_message method that allows string-based
+            destinations (i.e. the ID of a channel instead of the channel
+            itself).
+
+            (see discord.Client's send_message method)
+
+        :param channel_id: The ID of the channel (or user) to send the
+            message to.
+        :type channel_id: str
+
+        :param message: The message being sent.
+        :type message: str
+
+        :param tts: Whether the message should be a TTS one or not.
+            Defaults to False
+        :type tts: bool
+        """
         await self.send_message(lib.as_object(channel_id), message, tts=tts)
 
     @asyncio.coroutine
     async def update_status(self):
-        """ something. """
+        """ Updates the status of the bot user to display the amount of
+            timers running, if any, or show the bot as idle if none are.
+        """
 
         if self.timers_running == 0:
             await self.change_presence(game=None, status=Status.idle)
@@ -84,6 +131,8 @@ class PomodoroBot(commands.Bot):
 
         :param channel_id: The channel in which the messages will be
             generated and pinned.
+        :type channel_id: str
+
         :raises: discord.errors.Forbidden: if the client doesn't have
             permissions to pin messages.
         """
@@ -103,10 +152,11 @@ class PomodoroBot(commands.Bot):
     @asyncio.coroutine
     async def remove_messages(self, channel_id: str):
         """ Deletes the time and periods list messages
-            in the channel with the ID given
+            in the channel with the ID given.
 
         :param channel_id: The channel's ID in which the messages will be
             deleted.
+        :type channel_id: str
         """
 
         try:
@@ -123,7 +173,15 @@ class PomodoroBot(commands.Bot):
 
     @asyncio.coroutine
     async def run_timer(self, channel_id, start_idx=0):
-        """ Makes a timer run. """
+        """ Makes a timer run.
+
+        :param channel_id: The ID of the channel's timer that is being ran.
+        :type channel_id: str
+
+        :param start_idx: The index of the period from which the timer should
+            start from. Defaults to 0, or is 0 if it's outside the valid range.
+        :type start_idx: int; 0 < start_idx < len(timer.times)
+        """
 
         timer = self.timers[channel_id]
 

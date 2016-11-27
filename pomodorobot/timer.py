@@ -54,6 +54,8 @@ class PomodoroTimer:
     # Whether the timer should count from 0 and show the "elapsed" time,
     # or count back from the period's time and show the remaining time.
     countdown = True
+    # Whether the bot should speak this timer's alerts out loud or not.
+    tts = False
 
     def __init__(self):
         self.times = []

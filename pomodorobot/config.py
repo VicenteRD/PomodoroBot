@@ -1,4 +1,5 @@
 import pomodorobot.lib as lib
+import logging
 
 
 class Config:
@@ -37,6 +38,9 @@ class Config:
                 value = ':'.join(key_val)
 
                 self._config_map[key] = Config._format_val(value)
+
+                lib.log("Added " + key + ":" + str(self._config_map[key]),
+                        level=logging.DEBUG)
 
         cfg_file.close()
 
@@ -143,8 +147,6 @@ class Config:
         cfg_file.close()
         return mult if mult != "" else Config._format_val(value)
 
-
-
     @staticmethod
     def _format_val(line):
         # If it's too much to load into RAM
@@ -154,7 +156,7 @@ class Config:
         # If it's a list
         if line.startswith('[') and line.endswith(']'):
             line = line[1:-1]
-            return list(element for element in line.split(','))
+            return list(element.strip() for element in line.split(','))
 
         # If it's a dictionary
         elif line.startswith('{') and line.endswith('}'):

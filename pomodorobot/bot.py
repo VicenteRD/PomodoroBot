@@ -30,9 +30,6 @@ class PomodoroBot(commands.Bot):
     # will actually affect timers on channel 'value'
     spoofed = {}
 
-    # Whether the bot should send TTS messages on a change of periods.
-    tts = False
-
     # The amount of timers running.
     timers_running = 0
 
@@ -153,7 +150,7 @@ class PomodoroBot(commands.Bot):
                     timer.action = Action.STOP
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel_id)
-                    await self.send_msg(channel_id, say, tts=self.tts)
+                    await self.send_msg(channel_id, say, tts=timer.tts)
 
                     self.timers_running -= 1
                     await self.update_status()
@@ -168,7 +165,7 @@ class PomodoroBot(commands.Bot):
                                           "minute", append="s") + ").")
 
                 lib.log(say, channel_id=channel_id)
-                await self.send_msg(channel_id, say, tts=self.tts)
+                await self.send_msg(channel_id, say, tts=timer.tts)
 
                 await self.edit_message(self.list_messages[channel_id],
                                         timer.list_periods())

@@ -1,10 +1,8 @@
 import sys
 
-from discord.ext.commands import Context
 from discord.ext.commands import errors as cmd_err
 
 import pomodorobot.lib as lib
-
 from pomodorobot.bot import PomodoroBot
 from pomodorobot.config import Config
 from pomodorobot.timer import PomodoroTimer, State
@@ -439,22 +437,41 @@ async def status(ctx):
     lib.log(say, channel_id=channel_id)
 
 
-@bot.command()
-async def tts(toggle: str):
+@bot.command(pass_context=True)
+async def tts(ctx, toggle: str):
     """ Sets the tts option on or off. """
 
-    try:
-        bot.tts = lib.to_boolean(toggle)
-        say = ("on." if bot.tts else "off.")
+    channel_id = lib.get_channel_id(ctx)
 
-        lib.log("TTS now " + say)
-        await bot.say("Text-to-speech now " + say, tts=bot.tts,
+    if bot.has_permission(ctx.message.author):
+        if channel_id in bot.spoofed.keys():
+            channel_id = bot.spoofed[channel_id]
+    elif bot.is_locked(channel_id):
+        await bot.say("You are not allowed to modify this timer.",
+                      delete_after=bot.response_lifespan)
+        return
+
+    if channel_id in bot.timers.keys():
+        try:
+            timer = bot.timers[channel_id]
+            timer.tts = lib.to_boolean(toggle)
+            say = ("on" if timer.tts else "off")
+
+            await bot.say("Text-to-speech now " + say + " for this channel.",
+                          tts=timer.tts, delete_after=bot.response_lifespan)
+            say = "TTS now " + say + " for this channel."
+
+        except cmd_err.BadArgument:
+            say = "TTS command failed, bad argument."
+            await bot.say("I could not understand if you wanted to turn TTS " +
+                          "on or off, sorry.")
+    else:
+        say = (lib.get_author_name(ctx) +
+               " tried to turn TTS on for a nonexistent timer.")
+        await bot.say("No timer found for this channel.",
                       delete_after=bot.response_lifespan)
 
-    except cmd_err.BadArgument:
-        lib.log("TTS command failed, bad argument.")
-        await bot.say("I could not understand if you wanted to turn TTS " +
-                      "on or off, sorry.")
+    lib.log(say, channel_id=channel_id)
 
 
 @bot.command(pass_context=True)
@@ -470,7 +487,7 @@ async def shutdown(ctx):
     """ Exits the program. """
 
     if bot.is_admin(ctx.message.author):
-        print("Shutting down...")
+        lib.log("Shutting down...")
         await bot.say("Hope I did well, bye!")
 
         for channel_id, p_timer in bot.timers.items():
@@ -574,6 +591,27 @@ async def howcome(time_out=15):
     await bot.say("http://24.media.tumblr.com/0c3c175c69e45a4182f18a1057ac4bf7/"
                   "tumblr_n1ob7kSaiW1qlk7obo1_500.gif",
                   delete_after=min(time_out, 60))
+
+
+@bot.command(pass_context=True)
+async def debug(ctx):
+    """ Makes the logger show out debug-level info """
+
+    if bot.is_admin(ctx.message.author):
+        if lib.on_debug():
+            lib.debug(False)
+            say = "Switching to info-level debugging"
+            await bot.say("Debug mode off.", delete_after=bot.response_lifespan)
+        else:
+            lib.debug(True)
+            say = "Switching to debug-level debugging"
+            await bot.say("Debug mode on.", delete_after=bot.response_lifespan)
+
+    else:
+        say = (lib.get_author_name(ctx) + " attempted to stop the bot " +
+               "and failed (No permission to shut down)")
+
+    lib.log(say)
 
 
 def set_bot_config():

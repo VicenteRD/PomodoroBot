@@ -8,6 +8,7 @@ from discord.ext.commands import Context, errors
 class LibLogger:
     logger = logging.getLogger()
     ready = False
+    debug = False
 
 
 _logger = LibLogger()
@@ -115,3 +116,12 @@ def log(message: str, channel_id=None, level=logging.INFO):
 
     for line in message.split('\n'):
         _logger.logger.log(level, "[" + channel_id + "] " + line)
+
+
+def on_debug():
+    return _logger.debug
+
+
+def debug(val: bool):
+    _logger.debug = val
+    _logger.logger.setLevel(logging.DEBUG if _logger.debug else logging.INFO)

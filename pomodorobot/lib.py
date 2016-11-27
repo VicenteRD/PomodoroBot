@@ -6,8 +6,16 @@ from discord.ext.commands import Context, errors
 
 
 class LibLogger:
+    """ Represents a logger with a couple extra checks to add flexbility.
+    """
+
     logger = logging.getLogger()
+
+    # Whether the logger is ready to be used or not, with the setup correctly
+    # in place.
     ready = False
+    # Whether the logger is in debug mode (meaning its level is set to
+    # logging.DEBUG) or not (meaning the level is at logging.INFO).
     debug = False
 
 
@@ -15,6 +23,8 @@ _logger = LibLogger()
 
 
 def init_logger():
+    """ Instantiates and sets up the logger, if it's not already set up.
+    """
 
     if _logger.ready:
         return
@@ -36,37 +46,108 @@ def init_logger():
     _logger.ready = True
 
 
-def get_channel_name(context: Context):
-    return context.message.channel.name
+def get_channel_id(context: Context) -> str:
+    """ Gets the ID of the channel to which a command was sent,
+        based on the command's context.
 
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
 
-def get_channel_id(context: Context):
+    :return: The channel's ID
+    """
+
     return context.message.channel.id
 
 
-def get_author_id(context: Context):
+def get_channel_name(context: Context) -> str:
+    """ Gets the name of the channel to which a command was sent,
+        based on the command's context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :return: The channel's name
+    """
+
+    return context.message.channel.name
+
+
+def get_author_id(context: Context) -> str:
+    """ Gets the ID of the author of a command, based on the command's
+        context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :return: The author's ID
+    """
+
     return context.message.author.id
 
 
-def get_author_name(context: Context, nick=False):
+def get_author_name(context: Context, nick=False) -> str:
+    """ Gets the name of the author of a command, based on the command's
+        context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :param nick: Whether the given value should be the real user name,
+        or the member's nick (if available). Defaults to False
+    :type nick: bool
+
+    :return: The author's name
+    """
+
     condition = nick and context.message.author.nick is not None
 
     return context.message.author.nick if condition \
         else context.message.author.name
 
 
-def author_has_role(context: commands.Context, role_id: str):
+def author_has_role(context: commands.Context, role_id: str) -> bool:
+    """ Checks within a command's authors roles for one that has a matching ID
+        to the one given.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :param role_id: The ID of a role to check for.
+    :type role_id: str
+
+    :return: True if the author has a role with the given ID, false otherwise.
+    """
+
     return has_role(context.message.author, role_id)
 
 
 def has_role(member: discord.Member, role_id: str):
+    """ Checks if a member has a role with a specified ID.
+
+    :param member: The member to check.
+    :type member: discord.Member
+
+    :param role_id: The ID of the role to check for.
+    :type role_id: str
+
+    :return: True if the member has a role with the given ID, false otherwise
+    """
+
     for role in member.roles:
         if role.id == role_id:
             return True
     return False
 
 
-def as_object(obj_id: str):
+def as_object(obj_id: str) -> discord.Object:
+    """ Creates a basic Discord Object given an ID.
+
+    :param obj_id: The ID of the object being created
+    :type obj_id: str
+
+    :return: The new object with the specified ID.
+    """
+
     return discord.Object(obj_id)
 
 
@@ -96,6 +177,30 @@ def to_boolean(value: str):
 
 
 def pluralize(amount: int, s_name: str, append="", p_name=""):
+    """ Pluralizes a string given the amount related to it.
+        For example, if I have n minute(s), this will return either
+        'n minute' or 'n minutes', depending if n=1 or not.
+
+        Note that only one of append or p_name can be valid.
+
+    :param amount: The amount being evaluated
+    :type amount: int
+
+    :param s_name: The singular name of the concept.
+    :type amount: str
+
+    :param append: If the concept is a regular plural, this indicates the
+        pluralization of the singular name (ex: 's' or 'es').
+    :type append: str
+
+    :param p_name: If the concept is an irregular plural, this indicates the
+        plural name of the concept, which overrides the singular name.
+    :type p_name: str
+
+    :return: The value and the concept name merged in a string, or None if both
+        an append value and a plural name were given, or neither.
+    """
+
     if append != "" and p_name != "":
         return None
     if append == "" and p_name == "":
@@ -108,6 +213,19 @@ def pluralize(amount: int, s_name: str, append="", p_name=""):
 
 
 def log(message: str, channel_id=None, level=logging.INFO):
+    """ Logs a message with a given format, specifying the channel originating
+        the message, or if its a global message.
+
+    :param message: The message to log.
+    :type message: str
+
+    :param channel_id: The ID of the channel in which the message was generated,
+        or None if it's a global message (defaults to None).
+    :type channel_id: str
+
+    :param level: The logging level. Defaults to logging.INFO
+    """
+
     if not _logger.ready:
         init_logger()
 
@@ -118,10 +236,20 @@ def log(message: str, channel_id=None, level=logging.INFO):
         _logger.logger.log(level, "[" + channel_id + "] " + line)
 
 
-def on_debug():
+def is_logger_debug():
+    """ Tells if the logger is currently on debug mode or not.
+
+    :return: True if the logger is on debug mode, False otherwise.
+    """
+
     return _logger.debug
 
 
 def debug(val: bool):
+    """ Turns the logger's debug mode on or off
+
+    :param val: Whether to turn the logger's debug mode on or off.
+    :type val: bool
+    """
     _logger.debug = val
     _logger.logger.setLevel(logging.DEBUG if _logger.debug else logging.INFO)

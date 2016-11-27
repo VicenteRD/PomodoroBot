@@ -603,7 +603,7 @@ async def debug(ctx):
     """ Makes the logger show out debug-level info """
 
     if bot.is_admin(ctx.message.author):
-        if lib.on_debug():
+        if lib.is_logger_debug():
             lib.debug(False)
             say = "Switching to info-level debugging"
             await bot.say("Debug mode off.", delete_after=bot.response_lifespan)

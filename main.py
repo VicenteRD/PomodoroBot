@@ -93,6 +93,11 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
                 lib.log(settings, channel_id=channel_id)
                 await bot.say(settings,
                               delete_after=bot.response_lifespan * 2)
+            else:
+                del bot.timers[channel_id]
+                del bot.time_messages[channel_id]
+                del bot.list_messages[channel_id]
+
         except cmd_err.BadArgument:
             result = -4
 

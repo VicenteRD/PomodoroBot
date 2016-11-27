@@ -126,14 +126,14 @@ class Config:
         cfg_file = open(self._file_name, 'r')
 
         value = None
-        mult = ""
+        multi = ""
         multiline = False
         for line in cfg_file:
             if multiline and line.startswith('_'):
                 line = line.strip()[1:]
-                mult += '\n' + line
+                multi += '\n' + line
                 if line.endswith('"""') or line == '""""':
-                    mult = mult[:-3]
+                    multi = multi[:-3]
                     break
             elif line.strip().startswith(key):
                 aux = line.split(':')
@@ -145,7 +145,7 @@ class Config:
                     break
 
         cfg_file.close()
-        return mult if mult != "" else Config._format_val(value)
+        return multi if multi != "" else Config._format_val(value)
 
     @staticmethod
     def _format_val(line):

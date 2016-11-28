@@ -5,7 +5,8 @@ import pomodorobot.lib as lib
 
 
 class State(Enum):
-    """ Represents the states in which the timer can be. """
+    """ Represents the states in which a pomdoro timer can be.
+    """
 
     STOPPED = -1
     RUNNING = 1
@@ -23,7 +24,8 @@ class State(Enum):
 
 
 class Action(Enum):
-    """ Represents the actions that can affect the timer. """
+    """ Represents the actions that a pomodoro timer can do.
+    """
 
     NONE = 0
     RUN = 1
@@ -32,7 +34,8 @@ class Action(Enum):
 
 
 class PomodoroTimer:
-    """ A class representing a pomodoro timer."""
+    """ A class representing a pomodoro timer.
+    """
 
     # The times for the different periods the timer has been setup with
     times = []
@@ -50,10 +53,10 @@ class PomodoroTimer:
     action = Action.NONE
 
     # Whether the period list should loop or not.
-    repeat = True
+    _repeat = True
     # Whether the timer should count from 0 and show the "elapsed" time,
     # or count back from the period's time and show the remaining time.
-    countdown = True
+    _countdown = True
     # Whether the bot should speak this timer's alerts out loud or not.
     tts = False
 
@@ -61,8 +64,40 @@ class PomodoroTimer:
         self.times = []
         self.names = []
 
-    def setup(self, periods_format, on_repeat, reverse):
-        """ Sets the marinara timer. """
+    def setup(self, periods_format: str, on_repeat: bool, reverse: bool):
+        """ Sets the pomodoro timer up with its periods, periods' names and
+            extra options
+
+        :param periods_format: The string containing the periods and
+            their names, in a format similar to that of a dictionary.
+            Ex.: PeriodA:10,PeriodB:5,PeriodC:15
+                 This will create 3 periods of 10, 5 and 15 minutes each.
+            It also accepts segments with the format (nxName1:t1,Name2:t2),
+            which creates n iterations of Name1:t1,Name2:t2 periods (Where
+            Name1 and Name2 are the period names and t1, t2 the respective
+            times).
+            Ex.: (3xPeriodA:10,PeriodB:5),PeriodC:15
+                This will create 7 periods of times 10,5,10,5,10,5 and 15 each.
+        :type periods_format:str
+
+        :param on_repeat: Whether the timer should go back to period 0 after
+            going through the complete list (True) or not (False).
+        :type on_repeat: bool
+
+        :param reverse: Whether the timer should should remaining (True) or
+            elapsed (False) time.
+        :type reverse bool
+
+        :return: Returns an integer with a success/fail code, and if the timer
+            was successfully set, it will also return a string with the periods'
+            times, separated by commas.
+
+            The codes are:
+                 0 -> Success.
+                -1 -> Timer already set up.
+                -2 -> Timer already running.
+                -3 -> Format error (periods_format was malformed).
+        """
 
         if len(self.times) > 0:
             return -1, None
@@ -133,16 +168,18 @@ class PomodoroTimer:
                 for i in range(1, len(self.times)):
                     concat += ", " + str(self.times[i])
 
-            self.repeat = on_repeat
-            self.countdown = reverse
+            self._repeat = on_repeat
+            self._countdown = reverse
 
             return 0, concat
         else:
             return -3, None
 
-    def start(self):
+    def start(self) -> bool:
         """ Starts the timer.
-            Returns True if successful, False if it was already running """
+
+        :return: True if successful, False if it was already running.
+        """
 
         if self.state == State.RUNNING:
             return False
@@ -150,32 +187,39 @@ class PomodoroTimer:
         self.action = Action.RUN
         return True
 
-    def pause(self):
-        """ Pauses the timer, if it's running.
-            Keeps all settings and current period / time.
-            Returns True if the timer was running and got paused,
-            False otherwise (No need to pause then). """
+    def pause(self) -> bool:
+        """ Pauses the timer, if it's running. Keeps all settings and
+            current period and elapsed (or remaining) time.
+
+        :return: True if the timer was running and got paused, False otherwise
+            (No need to pause then).
+        """
 
         if self.state == State.RUNNING:
             self.action = Action.PAUSE
             return True
         return False
 
-    def resume(self):
+    def resume(self) -> bool:
         """ Resumes the timer, if it was actually paused. Complains if not.
-            Returns True the timer was actually paused and got resumed
-            successfully, False if it was running/stopped. """
+
+        :return: True the timer was actually paused and got resumed
+            successfully, False if it was running or stopped.
+        """
 
         if self.state == State.PAUSED:
             self.start()
             return True
         return False
 
-    def stop(self):
+    def stop(self) -> bool:
         """ Attempts to stop the timer.
-            Returns True if the timer was running and got stopped successfully,
+
+        :return: True if the timer was running and got stopped successfully,
             False if the timer was paused or about to be (Timer actually
-            gets stopped, cancelling the pause state/action). """
+            gets stopped, cancelling the pause state/action).
+
+        """
 
         if self.state == State.RUNNING:
             self.action = Action.STOP
@@ -191,9 +235,13 @@ class PomodoroTimer:
             return False
 
     def goto(self, idx: int):
-        """ Skips to the (n-1)th period.
-            If successful, returns the name of the period that it jumped to.
-            If not, returns None. """
+        """ Skips to the n-th period, assuming the periods are counted 1 -> n
+            (Thus it actually jumps to [idx-1]).
+
+        :param idx: The index of the period to jump to.
+        :return: If successful, returns the name of the new current period.
+            If not, returns None.
+        """
 
         if 0 < idx <= len(self.times):
             self.curr_period = idx - 1
@@ -201,14 +249,21 @@ class PomodoroTimer:
             return self.names[self.curr_period]
         return None
 
-    def is_set(self):
+    def is_set(self) -> bool:
         """ Tells whether the timer is already set up or not.
-            Also does a precheck to see if the setup is actually well done. """
+
+        :return: True if the timer is set and ready to go, False otherwise.
+        """
 
         return len(self.times) > 0
 
-    def status(self):
-        """ Tells the user whether the timer is stopped, running or paused. """
+    def status(self) -> str:
+        """ Tells whether the timer is stopped, running or paused, as well as
+            the next timer's action.
+
+        :return: A string stating the current status, whether it's correctly set
+            up or not, and the next action it's going to take.
+        """
 
         status = "Currently " + State.to_string(self.state).lower()
 
@@ -228,9 +283,14 @@ class PomodoroTimer:
 
         return status
 
-    def time(self, extended=False):
-        """ Generates a string containing
-            the timer's current period and time. """
+    def time(self, extended=False) -> str:
+        """ Generates a string containing the timer's current period and time.
+
+        :param extended: Whether it should display extra information (True)
+            or keep it simple (False).
+        :return: The string with the current period and the remaining or elapsed
+            time (Depending on the value of _countdown, see PomodoroTimer.setup)
+        """
 
         if self.state == State.STOPPED:
             return "Currently not running."
@@ -241,7 +301,7 @@ class PomodoroTimer:
             time += "(Duration: " + lib.pluralize(
                 self.times[self.curr_period], "minute", append='s') + ")"
 
-        if self.countdown:
+        if self._countdown:
             time += "\nRemaining:\t"
             m, s = divmod(
                 (self.times[self.curr_period] * 60) - self.curr_time, 60
@@ -261,11 +321,13 @@ class PomodoroTimer:
         return time
 
     def list_periods(self):
-        """ Generates a list of the periods as a string,
-            that also indicates the current period. """
+        """ Generates a list of the periods as a string, flagging the
+            current one.
+        :return: The list of periods, specifying which one is the current one.
+        """
 
         p_list = "**Period list (Loop is " + (
-                 "ON" if self.repeat else "OFF") + "):**"
+                 "ON" if self._repeat else "OFF") + "):**"
         for i in range(0, len(self.times)):
             p_list += ("\n" + self.names[i] + ": " +
                        lib.pluralize(self.times[i], "minute", append='s'))

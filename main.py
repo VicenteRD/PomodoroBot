@@ -39,17 +39,32 @@ async def on_ready():
 @bot.command(pass_context=True)
 async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
     """ Sets up a timer for the channel in which this command was executed.
+        Only allows timers in white-listed channels (Specified in the
+        configuration).
 
-    :param ctx: The context in which the command was executed.
-    :param timer_format: The string containing the format of the timer.
-    :param repeat: Whether the timer should loop back
-    to the first period after finishing.
-    :param count_back: Whether the timer should show the remaining or elapsed
-    time.
+        :param timer_format: The string containing the periods and
+            their names, in a format similar to that of a dictionary.
+            Ex.: PeriodA:10,PeriodB:5,PeriodC:15
+                 This will create 3 periods of 10, 5 and 15 minutes each.
+
+            It also accepts segments with the format (nxName1:t1,Name2:t2),
+            which creates n iterations of Name1:t1,Name2:t2 periods (Where
+            Name1 and Name2 are the period names and t1, t2 the respective
+            times).
+            Ex.: (3xPeriodA:10,PeriodB:5),PeriodC:15
+                This will create 7 periods of times 10,5,10,5,10,5 and 15 each.
+        :type timer_format: str
+
+        :param repeat: Whether the timer should go back to period 0 after
+            going through the complete list (yes) or not (no).
+        :type repeat: str
+
+        :param count_back: Whether the timer should show remaining (yes) or
+            elapsed (no) time.
+        :type count_back: str
     """
 
     channel_id = lib.get_channel_id(ctx)
-
     whitelist = cfg_values.get_list('channel_whitelist')
     if whitelist is not None and lib.get_channel_name(ctx) not in whitelist:
         await bot.say("Timers are not allowed in this channel.",
@@ -130,9 +145,15 @@ async def setup(ctx, timer_format="default", repeat="True", count_back="True"):
 
 @bot.command(pass_context=True)
 async def starttimer(ctx, period_idx=1):
-    """ Starts the timer with the recorded setup.
-        If none present, or if it's already running,
-        it simply gives an error message."""
+    """ Starts the timer with the recorded setup. The timer must be correctly
+        set up and not running for it to work.
+
+    :param ctx: The context in which the command was executed
+    :type ctx: discord.ext.commands.Context
+
+    :param period_idx: The index of the period to start from, from 1 to n.
+    :type period_idx: int; 1 <= period_idx <= amount of periods
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -170,7 +191,11 @@ async def starttimer(ctx, period_idx=1):
 @bot.command(pass_context=True)
 async def pause(ctx):
     """ Pauses the timer, if it's running. Keeps all settings and current
-        period / time. """
+        period and time.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -203,7 +228,11 @@ async def pause(ctx):
 @bot.command(pass_context=True)
 async def stop(ctx):
     """ Stops the timer, if it's running.
-        Resets the current period and time, but keeps the setup. """
+        Resets the current period and time, but keeps the setup.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -236,7 +265,11 @@ async def stop(ctx):
 
 @bot.command(pass_context=True)
 async def resume(ctx):
-    """ Resumes a paused timer. """
+    """ Resumes a paused timer.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -276,7 +309,15 @@ async def resume(ctx):
 
 @bot.command(pass_context=True)
 async def goto(ctx, period_idx: int):
-    """ Skips to the (n-1)th period. """
+    """ Skips to the n-th period, assuming the periods' indexes go from 1 to
+        the amount of them.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+
+    :param period_idx: The index of the period to start from, from 1 to n.
+    :type period_idx: int; 1 <= period_idx <= amount of periods
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -317,7 +358,11 @@ async def goto(ctx, period_idx: int):
 
 @bot.command(pass_context=True)
 async def reset(ctx):
-    """ Resets the timer setup. """
+    """ Resets the timer setup.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -356,7 +401,12 @@ async def reset(ctx):
 
 @bot.command(pass_context=True)
 async def superreset(ctx):
-    """ Ignores all conditions and resets the channel's timer.	"""
+    """ Ignores all conditions and resets the channel's timer.
+        Requires elevated permissions
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -397,7 +447,11 @@ async def superreset(ctx):
 
 @bot.command(pass_context=True)
 async def time(ctx):
-    """ Gives the user the current period and time of the timer. """
+    """ Gives the user the current period and time of the timer.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -421,7 +475,12 @@ async def time(ctx):
 
 @bot.command(pass_context=True)
 async def status(ctx):
-    """ Tells the user whether the timer is stopped, running or paused. """
+    """ Tells whether the timer is stopped, running or paused, if it's correctly
+        set up and if it will soon stop or pause.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -444,7 +503,14 @@ async def status(ctx):
 
 @bot.command(pass_context=True)
 async def tts(ctx, toggle: str):
-    """ Sets the tts option on or off. """
+    """ Sets the TTS option on or off for the channel.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+
+    :param toggle: Whether to turn on or off the TTS option
+    :type toggle: str
+    """
 
     channel_id = lib.get_channel_id(ctx)
 
@@ -481,7 +547,11 @@ async def tts(ctx, toggle: str):
 
 @bot.command(pass_context=True)
 async def halp(ctx):
-    """ Tells the user how to use the bot. """
+    """ Tells the user how to use the bot.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     await bot.send_message(ctx.message.author,
                            content=cfg_values.get_str("halp"))
@@ -489,7 +559,11 @@ async def halp(ctx):
 
 @bot.command(pass_context=True)
 async def shutdown(ctx):
-    """ Exits the program. """
+    """ Exits the program. Can only be executed by the bot's administrator.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     if bot.is_admin(ctx.message.author):
         lib.log("Shutting down...")
@@ -513,7 +587,11 @@ async def shutdown(ctx):
 
 @bot.command(pass_context=True)
 async def reloadcfg(ctx):
-    """ Reloads the configuration. """
+    """ Reloads the configuration. Requires elevated permissions.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     if bot.has_permission(ctx.message.author):
 
@@ -535,6 +613,14 @@ async def reloadcfg(ctx):
 
 @bot.command(pass_context=True)
 async def lock(ctx):
+    """ Locks a channel's timer so no user can modify it unless they
+        have permissions. This command either locks or unlocks, thus acting as a
+        switch.
+        Requires elevated permissions.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     if bot.has_permission(ctx.message.author):
         channel_id = lib.get_channel_id(ctx)
@@ -559,6 +645,22 @@ async def lock(ctx):
 
 @bot.command(pass_context=True)
 async def spoof(ctx, spoofed_id=None):
+    """ Enables spoof-mode, allowing users with permissions to modify another
+        specified channel's timer from the one in which this command
+        was executed.
+
+        For example, if channel #session_1 has ID '249719010319532064'
+        and someone executes '!spoof 249719010319532064' from #admin_area,
+        all timer-related commands (except for setup) executed from #admin_area
+        by members with permissions will either affect or give information of
+        the timer in #session_1 instead.
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+
+    :param spoofed_id: The ID of the channel that instructions will be sent to.
+    :type spoofed_id: str
+    """
 
     if bot.has_permission(ctx.message.author):
         channel_id = lib.get_channel_id(ctx)
@@ -592,6 +694,7 @@ async def why(time_out=15):
 
 @bot.command()
 async def howcome(time_out=15):
+    """ Again, no need for explanation. """
 
     await bot.say("http://24.media.tumblr.com/0c3c175c69e45a4182f18a1057ac4bf7/"
                   "tumblr_n1ob7kSaiW1qlk7obo1_500.gif",
@@ -600,7 +703,12 @@ async def howcome(time_out=15):
 
 @bot.command(pass_context=True)
 async def debug(ctx):
-    """ Makes the logger show out debug-level info """
+    """ Makes the logger show out debug-level information in stdout.
+        This command is administrator-only
+
+    :param ctx: The context in which the command was executed.
+    :type ctx: discord.ext.commands.Context
+    """
 
     if bot.is_admin(ctx.message.author):
         if lib.is_logger_debug():
@@ -620,6 +728,16 @@ async def debug(ctx):
 
 
 def set_bot_config():
+    """ Sets the different configuration-based values on the bot.
+        These are:
+
+        command_prefix: The prefix used to identify commands.
+        response_lifespan: The time after which most bot responses are deleted.
+        timer_step: The rate (in seconds) that the timers update at.
+            It is recommended to use 2 seconds.
+        admin_id: The User ID of the bot's administrator
+        role_id: The ID of the role that grants Members elevated permissions.
+    """
     bot.command_prefix = cfg_values.get_str('command_prefix')
 
     bot.response_lifespan = cfg_values.get_int('response_lifespan')

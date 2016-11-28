@@ -72,21 +72,22 @@ class PomodoroTimer:
             their names, in a format similar to that of a dictionary.
             Ex.: PeriodA:10,PeriodB:5,PeriodC:15
                  This will create 3 periods of 10, 5 and 15 minutes each.
+
             It also accepts segments with the format (nxName1:t1,Name2:t2),
             which creates n iterations of Name1:t1,Name2:t2 periods (Where
             Name1 and Name2 are the period names and t1, t2 the respective
             times).
             Ex.: (3xPeriodA:10,PeriodB:5),PeriodC:15
                 This will create 7 periods of times 10,5,10,5,10,5 and 15 each.
-        :type periods_format:str
+        :type periods_format: str
 
         :param on_repeat: Whether the timer should go back to period 0 after
             going through the complete list (True) or not (False).
         :type on_repeat: bool
 
-        :param reverse: Whether the timer should should remaining (True) or
+        :param reverse: Whether the timer should show remaining (True) or
             elapsed (False) time.
-        :type reverse bool
+        :type reverse: bool
 
         :return: Returns an integer with a success/fail code, and if the timer
             was successfully set, it will also return a string with the periods'

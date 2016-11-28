@@ -180,7 +180,7 @@ class PomodoroBot(commands.Bot):
 
         :param start_idx: The index of the period from which the timer should
             start from. Defaults to 0, or is 0 if it's outside the valid range.
-        :type start_idx: int; 0 < start_idx < len(timer.times)
+        :type start_idx: int; 0 < start_idx <= len(timer.times)
         """
 
         timer = self.timers[channel_id]

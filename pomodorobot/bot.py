@@ -88,26 +88,46 @@ class PomodoroBot(commands.Bot):
 
         return channel_id in self.locked
 
-    @asyncio.coroutine
-    async def send_msg(self, channel_id: str, message: str, tts=False):
-        """ Wrap-around for the send_message method that allows string-based
-            destinations (i.e. the ID of a channel instead of the channel
-            itself).
+    def spoof(self, member: discord.Member, channel_id):
+        """ Spoofs a channel ID if there's a set channel to spoof from
+            the one where the command was executed. Also checks for the
+            author's permissions to see if they can spoof commands.
 
-            (see discord.Client's send_message method)
+        :param member: The member trying to spoof the command.
+        :type member: discord.Member
 
-        :param channel_id: The ID of the channel (or user) to send the
-            message to.
+        :param channel_id: The ID from which the command to spoof was sent.
         :type channel_id: str
 
-        :param message: The message being sent.
-        :type message: str
-
-        :param tts: Whether the message should be a TTS one or not.
-            Defaults to False
-        :type tts: bool
+        :return: If there's a registered ID to spoof and the author has elevated
+            permissions, returns the spoofed ID. If not, returns the same ID
+            as channel_id
         """
-        await self.send_message(lib.as_object(channel_id), message, tts=tts)
+
+        if channel_id in self.spoofed.keys() and self.has_permission(member):
+            return self.spoofed[channel_id]
+        return channel_id
+
+    @asyncio.coroutine
+    async def safe_send(self, dest, content: str, **kwargs):
+        """ Sends a message and then deletes it after a certain time has passed.
+
+        :param dest: Where the message will be sent.
+        :param content: The content of the message to send.
+        """
+        tts = kwargs.pop('tts', False)
+        delete_after = kwargs.pop('delete_after', self.response_lifespan)
+
+        message = await self.send_message(
+            lib.as_object(dest) if isinstance(dest, str) else dest,
+            content, tts=tts)
+
+        if message and delete_after > 0:
+            @asyncio.coroutine
+            def delete():
+                yield from asyncio.sleep(delete_after)
+                yield from self.delete_message(message)
+            asyncio.ensure_future(delete(), loop=self.loop)
 
     @asyncio.coroutine
     async def update_status(self):
@@ -208,7 +228,7 @@ class PomodoroBot(commands.Bot):
                     timer.action = Action.STOP
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel_id)
-                    await self.send_msg(channel_id, say, tts=timer.tts)
+                    await self.safe_send(channel_id, say, tts=timer.tts)
 
                     self.timers_running -= 1
                     await self.update_status()
@@ -223,7 +243,7 @@ class PomodoroBot(commands.Bot):
                                           "minute", append="s") + ").")
 
                 lib.log(say, channel_id=channel_id)
-                await self.send_msg(channel_id, say, tts=timer.tts)
+                await self.safe_send(channel_id, say, tts=timer.tts)
 
                 await self.edit_message(self.list_messages[channel_id],
                                         timer.list_periods())
@@ -237,7 +257,7 @@ class PomodoroBot(commands.Bot):
                 timer.state = State.STOPPED
 
                 lib.log("Timer has stopped.", channel_id=channel_id)
-                await self.send_msg(channel_id, "Timer has stopped.")
+                await self.safe_send(channel_id, "Timer has stopped.")
 
                 await self.remove_messages(channel_id)
 
@@ -249,7 +269,7 @@ class PomodoroBot(commands.Bot):
                 timer.state = State.PAUSED
 
                 lib.log("Timer has paused.", channel_id=channel_id)
-                await self.send_msg(channel_id, "Timer has paused.")
+                await self.safe_send(channel_id, "Timer has paused.")
 
             elif timer.action == Action.RUN:
                 timer.action = Action.NONE
@@ -264,7 +284,7 @@ class PomodoroBot(commands.Bot):
                     say_action += " (from period n." + str(start_idx + 1) + ")"
 
                 lib.log(say_action, channel_id=channel_id)
-                await self.send_msg(channel_id, say_action)
+                await self.safe_send(channel_id, say_action)
 
                 if self.time_messages[channel_id] is None:
                     try:
@@ -274,7 +294,7 @@ class PomodoroBot(commands.Bot):
                         kitty = ("I tried to pin a message and failed." +
                                  " Can I haz permission to pin messages?" +
                                  " https://goo.gl/tYYD7s")
-                        await self.send_msg(channel_id, kitty)
+                        await self.safe_send(channel_id, kitty)
 
                 timer.state = State.RUNNING
 

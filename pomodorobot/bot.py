@@ -37,12 +37,15 @@ class PomodoroBot(commands.Bot):
     # The time between each timer update
     timer_step = 2
     # The time after which most command responses get deleted
-    response_lifespan = 15
+    ans_lifespan = 15
 
     # The ID of the administrator of the bot
     admin_id = ""
     # The ID of the role with permissions over the bot
     role_id = ""
+
+    default_setup = {}
+    whitelist = []
 
     def __init__(self, command_prefix, formatter=None, description=None,
                  pm_help=False, response_lifespan=15, timer_step=2, **options):
@@ -50,7 +53,7 @@ class PomodoroBot(commands.Bot):
                          description, pm_help, **options)
 
         self.timer_step = timer_step
-        self.response_lifespan = response_lifespan
+        self.ans_lifespan = response_lifespan
 
     def is_admin(self, member: discord.Member) -> bool:
         """ Checks if a member is the administrator of the bot or not.
@@ -116,7 +119,7 @@ class PomodoroBot(commands.Bot):
         :param content: The content of the message to send.
         """
         tts = kwargs.pop('tts', False)
-        delete_after = kwargs.pop('delete_after', self.response_lifespan)
+        delete_after = kwargs.pop('delete_after', self.ans_lifespan)
 
         message = await self.send_message(
             lib.as_object(dest) if isinstance(dest, str) else dest,

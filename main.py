@@ -90,14 +90,14 @@ async def reloadcfg(ctx):
         set_bot_config()
 
         await bot.say("Successfully reloaded configuration.",
-                      delete_after=bot.response_lifespan)
+                      delete_after=bot.ans_lifespan)
         say = "Reloaded configuration."
 
     else:
         say = (lib.get_author_name(ctx) +
                " attempted to reload the config and failed (No permission).")
         await bot.say("You're not my real dad!",
-                      delete_after=bot.response_lifespan)
+                      delete_after=bot.ans_lifespan)
 
     lib.log(say)
 
@@ -122,14 +122,14 @@ async def lock(ctx):
         if channel_id not in bot.locked:
             bot.locked.append(channel_id)
 
-            await bot.say("Channel locked.", delete_after=bot.response_lifespan)
+            await bot.say("Channel locked.", delete_after=bot.ans_lifespan)
             lib.log(lib.get_author_name(ctx) + " locked the channel.",
                     channel_id=channel_id)
         else:
             bot.locked.remove(channel_id)
 
             await bot.say("Channel unlocked.",
-                          delete_after=bot.response_lifespan)
+                          delete_after=bot.ans_lifespan)
             lib.log(lib.get_author_name(ctx) + " unlocked the channel.",
                     channel_id=channel_id)
 
@@ -158,20 +158,20 @@ async def spoof(ctx, spoofed_id=None):
 
         if channel_id == spoofed_id:
             await bot.say("How about no. " + spoofed_id,
-                          delete_after=bot.response_lifespan)
+                          delete_after=bot.ans_lifespan)
             return
 
         if spoofed_id is not None:
             bot.spoofed[channel_id] = spoofed_id
 
             await bot.say("Now acting in channel " + spoofed_id,
-                          delete_after=bot.response_lifespan)
+                          delete_after=bot.ans_lifespan)
             lib.log("Now acting as if in " + spoofed_id, channel_id=channel_id)
         elif channel_id in bot.spoofed.keys():
             del bot.spoofed[channel_id]
 
             await bot.say("Now acting in current channel",
-                          delete_after=bot.response_lifespan)
+                          delete_after=bot.ans_lifespan)
             lib.log("Spoofing now off", channel_id=channel_id)
 
 
@@ -205,11 +205,11 @@ async def debug(ctx):
         if lib.is_logger_debug():
             lib.debug(False)
             say = "Switching to info-level debugging"
-            await bot.say("Debug mode off.", delete_after=bot.response_lifespan)
+            await bot.say("Debug mode off.", delete_after=bot.ans_lifespan)
         else:
             lib.debug(True)
             say = "Switching to debug-level debugging"
-            await bot.say("Debug mode on.", delete_after=bot.response_lifespan)
+            await bot.say("Debug mode on.", delete_after=bot.ans_lifespan)
 
     else:
         say = (lib.get_author_name(ctx) + " attempted to stop the bot " +
@@ -228,14 +228,21 @@ def set_bot_config():
             It is recommended to use 2 seconds.
         admin_id: The User ID of the bot's administrator
         role_id: The ID of the role that grants Members elevated permissions.
+        whitelist: The list of channels, by their names, that are allowed to
+            have timers within them.
+        default_setup: The input and output of the default setup.
     """
+
     bot.command_prefix = cfg_values.get_str('command_prefix')
 
-    bot.response_lifespan = cfg_values.get_int('response_lifespan')
+    bot.ans_lifespan = cfg_values.get_int('response_lifespan')
     bot.timer_step = cfg_values.get_int('timer_step')
 
     bot.admin_id = cfg_values.get_str('admin_id')
     bot.role_id = cfg_values.get_str('bot_friend_role_id')
+
+    bot.whitelist = cfg_values.get_list('whitelist')
+    bot.default_setup = cfg_values.get_dict('default_setup')
 
 
 if __name__ == '__main__':
@@ -265,4 +272,7 @@ if __name__ == '__main__':
     # Bot init
 
     set_bot_config()
+    bot.load_extension('pomodorobot.cogs.general')
+    bot.load_extension('pomodorobot.cogs.timercommands')
+
     bot.run(TOKEN)

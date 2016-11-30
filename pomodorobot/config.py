@@ -169,6 +169,28 @@ class Config:
         else:
             return None
 
+    def get_dict(self, key):
+        """ Returns the dictionary corresponding to the given key.
+
+        :param key: The key to look for.
+        :type key: str
+
+        :return: The dictionary corresponding to the given key,
+            or None if there is no value associated to that key.
+
+        :raises: TypeError: if the value is not a dictionary.
+        """
+
+        if key in self._config_map.keys():
+            val = self._config_map
+
+            if isinstance(val, dict):
+                return val
+            else:
+                raise TypeError
+        else:
+            return None
+
     def _load_live(self, key):
         cfg_file = open(self._file_name, 'r')
 

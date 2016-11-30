@@ -2,14 +2,14 @@ from discord.ext import commands
 from discord.ext.commands import errors as cmd_err
 
 from pomodorobot.bot import PomodoroBot
-from pomodorobot.timer import State
+from pomodorobot.timer import PomodoroTimer, State
 import pomodorobot.lib as lib
 import pomodorobot.cogs.general as general
 
 
 class TimerCommands:
 
-    def __init__(self, bot):
+    def __init__(self, bot: PomodoroBot):
         self.bot = bot
         pass
 
@@ -24,7 +24,7 @@ class TimerCommands:
     @commands.check(whitelisted)
     @commands.check(unlocked_or_allowed)
     async def setup(self, ctx, timer_format="default", repeat="True",
-                    count_back="True"):  # TODO
+                    count_back="True"):
         """ Sets up a timer for the channel in which this command was executed.
             Only allows timers in white-listed channels (Specified in the
             configuration).
@@ -57,72 +57,73 @@ class TimerCommands:
         channel_id = lib.get_channel_id(ctx)
 
         if timer_format == "help":
-            help_str = ("**Example:**\n\t" + bot.command_prefix + "setup " +
-                        cfg_values.get_str('default_timer_setup'))
-            await bot.say(help_str + "\n\t_This will give you a sequence of " +
-                          cfg_values.get_str('default_timer_result') + "_")
+            send = "**Example:**\n\t {}setup {}".\
+                format(self.bot.command_prefix, self.bot.default_setup['in'])
+
+            send += "\n\t_This will give you a sequence of {}_".\
+                format(self.bot.default_setup['out'])
+            await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
             return
 
         if timer_format == "default":
-            timer_format = cfg_values.get_str('default_timer_setup')
+            timer_format = self.bot.default_setup['in']
 
         result = -1
-        if channel_id not in bot.timers.keys():
+        if channel_id not in self.bot.timers.keys():
             try:
                 loop = lib.to_boolean(repeat)
                 countdown = lib.to_boolean(count_back)
 
-                bot.timers[channel_id] = PomodoroTimer()
-                bot.time_messages[channel_id] = None
-                bot.list_messages[channel_id] = None
+                self.bot.timers[channel_id] = PomodoroTimer()
+                self.bot.time_messages[channel_id] = None
+                self.bot.list_messages[channel_id] = None
 
-                result, times = bot.timers[channel_id] \
+                result, times = self.bot.timers[channel_id]\
                     .setup(timer_format, loop, countdown)
 
                 if result == 0 and times is not None:
                     settings = (
-                    "Correctly set up timer config: " + times + "." +
-                    "\nLooping is **" + ("ON" if repeat else "OFF") +
-                    "**\nCountdown is **" +
-                    ("ON" if countdown else "OFF") + "**")
+                        "Correctly set up timer config: " + times + "." +
+                        "\nLooping is **" + ("ON" if repeat else "OFF") +
+                        "**\nCountdown is **" +
+                        ("ON" if countdown else "OFF") + "**")
 
                     lib.log(settings, channel_id=channel_id)
-                    await bot.say(settings,
-                                  delete_after=bot.response_lifespan * 2)
+                    await self.bot.say(settings,
+                                       delete_after=self.bot.ans_lifespan * 2)
                 else:
-                    del bot.timers[channel_id]
-                    del bot.time_messages[channel_id]
-                    del bot.list_messages[channel_id]
+                    del self.bot.timers[channel_id]
+                    del self.bot.time_messages[channel_id]
+                    del self.bot.list_messages[channel_id]
 
             except cmd_err.BadArgument:
                 result = -4
 
         if result == -1:  # channel_id is in p_timers.keys() or len(times) > 0
-            setup_log = ("Rejecting setup command, " +
-                         "there is a period set already established.")
-            setup_say = (
-            "I'm already set and ready to go, please use the reset " +
-            "command if you want to change the timer configuration.")
+            log = ("Rejecting setup command, there is a period set already " +
+                   "established.")
+            send = ("I'm already set and ready to go, please use the reset " +
+                    "command if you want to change the timer configuration.")
 
         elif result == -2:  # state == RUNNING or PAUSED
-            setup_log = ("Someone tried to modify the timer " +
-                         "while it was already running.")
-            setup_say = "Please stop the timer completely before modifying it."
+            log = ("Someone tried to modify the timer while it was already " +
+                   "running.")
+            send = "Please stop the timer completely before modifying it."
 
         elif result == -3:  # format error
-            setup_log = ("Could not set the periods correctly, " +
-                         "command 'setup' failed.")
-            setup_say = "I did not understand what you wanted, please try again!"
+            log = ("Could not set the periods correctly, command 'setup' " +
+                   "failed.")
+            send = "I did not understand what you wanted, please try again!"
 
-        elif result == -4: # repeat or countback are not valid booleans
-            setup_log = ("Could not parse boolean arguments '" + repeat +
-                         "' and '" + count_back + "'")
-            setup_say = "Invalid arguments received, please try again."
+        elif result == -4:  # repeat or count_back are not valid booleans
+            log = "Could not parse boolean arguments '{}' and '{}'"\
+                .format(repeat, count_back)
+            send = "Invalid arguments received, please try again."
         else:
             return
 
-        lib.log(setup_log, channel_id=channel_id)
-        await bot.say(setup_say, delete_after=bot.response_lifespan)
+        lib.log(log, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="start", pass_context=True)
     @commands.check(channel_has_timer)
@@ -149,8 +150,8 @@ class TimerCommands:
             lib.log(lib.get_author_name(ctx) +
                     " tried to start a timer that was already running.",
                     channel_id=channel_id)
-            await self.bot.safe_send(channel_id,
-                                     "This channel's timer is already running")
+            await self.bot.say("This channel's timer is already running",
+                               delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="resume", pass_context=True)
     @commands.check(channel_has_timer)
@@ -169,10 +170,10 @@ class TimerCommands:
         else:
             lib.log("Unable to resume timer, stopped or already running.",
                     channel_id=channel_id)
-            await self.bot.safe_send(channel_id,
-                                     "**grumble grumble.** The timer is " +
-                                     "stopped or already running, I can't " +
-                                     "resume that!")
+            await self.bot.say("**grumble grumble.** The timer is " +
+                               "stopped or already running, I can't " +
+                               "resume that!",
+                               delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="pause", pass_context=True)
     @commands.check(channel_has_timer)
@@ -196,7 +197,7 @@ class TimerCommands:
             send = "Bruh, I cannot stop something that isn't moving."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.safe_send(channel_id, send)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="stop", pass_context=True)
     @commands.check(channel_has_timer)
@@ -212,14 +213,14 @@ class TimerCommands:
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
         if self.bot.timers[channel_id].stop():
-            say = "Timer will stop soon."
+            send = "Timer will stop soon."
 
         else:
             await self.bot.remove_messages(channel_id)
-            say = "Timer has stopped."
+            send = "Timer has stopped."
 
-        lib.log(say, channel_id=channel_id)
-        await self.bot.safe_send(channel_id, say)
+        lib.log(send, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="goto", pass_context=True)
     @commands.check(channel_has_timer)
@@ -258,7 +259,7 @@ class TimerCommands:
             send = "Invalid period number."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.safe_send(channel_id, send)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="reset", pass_context=True)
     @commands.check(channel_has_timer)
@@ -286,7 +287,7 @@ class TimerCommands:
             send = "Cannot do that while the timer is not stopped."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.safe_send(channel_id, send)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="force reset", pass_context=True, hidden=True)
     @commands.check(channel_has_timer)
@@ -314,7 +315,8 @@ class TimerCommands:
 
         lib.log("Successfully forced a reset on this channel's timer.",
                 channel_id=channel_id)
-        await self.bot.safe_send(channel_id, "Timer has been force-reset")
+        await self.bot.say("Timer has been force-reset",
+                           delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="time", pass_context=True)
     @commands.check(channel_has_timer)
@@ -327,11 +329,10 @@ class TimerCommands:
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
-        say = self.bot.timers[channel_id].time(True)
+        send = self.bot.timers[channel_id].time(True)
 
-        lib.log(say, channel_id=channel_id)
-        await self.bot.safe_send(say,
-                                 delete_after=self.bot.response_lifespan * 2)
+        lib.log(send, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
 
     @timer.command(name="status", pass_context=True)
     @commands.check(channel_has_timer)
@@ -345,11 +346,10 @@ class TimerCommands:
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
-        say = self.bot.timers[channel_id].status()
+        send = self.bot.timers[channel_id].status()
 
-        lib.log(say, channel_id=channel_id)
-        await self.bot.safe_send(say,
-                                 delete_after=self.bot.response_lifespan * 2)
+        lib.log(send, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
 
     @timer.command(name="tts", pass_context=True)
     @commands.check(channel_has_timer)
@@ -379,16 +379,15 @@ class TimerCommands:
             send = "I could not understand if you wanted to turn TTS on or off."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.safe_send(channel_id, send, tts=self.bot.tts)
+        await self.bot.say(send, tts=self.bot.tts,
+                           delete_after=self.bot.ans_lifespan)
 
 
-def whitelisted(ctx: commands.Context) -> bool:  # TODO
-    # whitelist = cfg_values.get_list('channel_whitelist')
-    # if whitelist is not None and lib.get_channel_name(ctx) not in whitelist:
-        # await self.bot.say("Timers are not allowed in this channel.",
-        #        delete_after=self.bot.response_lifespan)
-        # return
-    return True  # check whitelist
+def whitelisted(ctx: commands.Context) -> bool:
+    if isinstance(ctx.bot, PomodoroBot) and ctx.bot.whitelist and \
+       lib.get_channel_name(ctx) in ctx.bot.whitelist:
+                return True
+    raise commands.CheckFailure(message="not whitelisted")
 
 
 def channel_has_timer(ctx: commands.Context) -> bool:

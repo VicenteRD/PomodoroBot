@@ -13,28 +13,42 @@ class General:
         if isinstance(error, commands.CheckFailure):
             log = lib.get_author_name(ctx)
 
-            if error.message == "timer not found":
+            if str(error) == "timer not found":
                 send = "No timer found for this channel."
-                log += " tried to start a timer that was already running."
+                log += " tried to start a nonexistent timer."
 
-            elif error.message == "timer locked":
+            elif str(error) == "timer locked":
                 send = "You are not allowed to modify this timer."
                 log += " tried to modify a locked timer without permissions."
 
-            elif error.message == "not whitelisted":
-                send = "Timers are not allowed in this channel."
-                log += " tried to start a timer in a non-whitelisted channel."
-
-            elif error.message == "no permissions":
+            elif str(error) == "no permissions":
                 send = "You do not have permission to do this!"
                 log += (" tried to execute a command and failed, " +
                         "lacked permissions.")
             else:
-                send = log = ""
+                send = "Timers are not allowed in this channel."
+                log += " tried to start a timer in a non-whitelisted channel."
 
             lib.log(log, channel_id=ctx.message.channel.id)
-            self.bot.safe_send(ctx.message.channel, send,
-                               delete_after=self.bot.response_lifespan)
+            await self.bot.safe_send(ctx.message.channel, send,
+                                     delete_after=self.bot.ans_lifespan)
+        if isinstance(error, commands.CommandNotFound):
+            send = "Command not found: `" + ctx.invoked_with + "`."
+            lib.log(send)
+
+            alt = None
+            for name, command in self.bot.commands.items():
+                if ctx.invoked_with == name:
+                    alt = name
+                elif isinstance(command, commands.GroupMixin):
+                    for sub_name, sub_command in command.commands.items():
+                        if ctx.invoked_with == sub_name:
+                            alt = name + " " + sub_name
+
+            if alt is not None:
+                send += " Did you mean `" + alt + "`?"
+            await self.bot.safe_send(ctx.message.channel, send,
+                                     delete_after=self.bot.ans_lifespan)
 
 
 def has_permission(ctx: commands.Context) -> bool:

@@ -5,32 +5,48 @@ from pomodorobot.bot import PomodoroBot
 from pomodorobot.timer import PomodoroTimer, State
 import pomodorobot.lib as lib
 import pomodorobot.cogs.general as general
+import pomodorobot.checks.timerchecks as checks
 
 
 class TimerCommands:
+    """ Represents all the possible commands that influence a timer.
+    """
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
-        pass
 
-    @commands.group(pass_context=True)
+    @commands.group(name="timer", pass_context=True)
+    @commands.check(checks.whitelisted)
     async def timer(self, ctx):
+        """ Controls the channel's timer.
+            None of the sub-commands will really work without using `setup`
+            first.
+        """
+
         if ctx.invoked_subcommand is None:
-            await self.bot.say('Invalid timer command passed...')  # TODO
+            sect = ctx.message.content.split(' ')
+            if len(sect) < 2 or sect[1] is None:
+                log = "{} invoked an incomplete timer command."
+
+                send = "Timers are allowed here. Now what?"
+            else:
+                log = "{} invoked an invalid timer command."
+                send = "Invalid timer sub-command."
         else:
-            pass
+            return
+
+        lib.log(log.format(lib.get_author_name(ctx)),
+                channel_id=lib.get_channel_id(ctx))
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="setup", pass_context=True)
-    @commands.check(whitelisted)
-    @commands.check(unlocked_or_allowed)
-    async def setup(self, ctx, timer_format="default", repeat="True",
-                    count_back="True"):
+    @commands.check(checks.whitelisted)
+    @commands.check(checks.unlocked_or_allowed)
+    async def setup(self, ctx: commands.Context, timer_format="default",
+                    repeat="True", count_back="True"):
         """ Sets up a timer for the channel in which this command was executed.
             Only allows timers in white-listed channels (Specified in the
             configuration).
-
-            :param ctx: The context in which the command was executed.
-            :type ctx: discord.ext.commands.Context
 
             :param timer_format: The string containing the periods and
                 their names, in a format similar to that of a dictionary.
@@ -45,23 +61,22 @@ class TimerCommands:
                     This will create 7 periods of times 10,5,10,5,10,5 and 15.
             :type timer_format: str
 
-            :param repeat: Whether the timer should go back to period 0 after
-                going through the complete list (yes) or not (no).
-            :type repeat: str
+            :param repeat: (boolean) Whether the timer should go back to
+                period 1 after going through the complete list (True)
+                or not (False). Defaults to True.
 
-            :param count_back: Whether the timer should show remaining (yes) or
-                elapsed (no) time.
-            :type count_back: str
+            :param count_back: (boolean) Whether the timer should show
+                remaining (True) or elapsed (False) time. Defaults to True.
         """
 
         channel_id = lib.get_channel_id(ctx)
 
         if timer_format == "help":
-            send = "**Example:**\n\t {}setup {}".\
-                format(self.bot.command_prefix, self.bot.default_setup['in'])
+            send = "**Example:**\n\t {}setup {}"\
+                .format(self.bot.command_prefix, self.bot.default_setup['in'])
 
-            send += "\n\t_This will give you a sequence of {}_".\
-                format(self.bot.default_setup['out'])
+            send += "\n\t_This will give you a sequence of {}_"\
+                .format(self.bot.default_setup['out'])
             await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
             return
 
@@ -126,14 +141,11 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="start", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_start(self, ctx, period_idx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_start(self, ctx: commands.Context, period_idx=1):
         """ Starts the timer with the recorded setup. The timer must be
             correctly set up and not running for it to work.
-
-        :param ctx: The context in which the command was executed
-        :type ctx: discord.ext.commands.Context
 
         :param period_idx: The index of the period to start from, from 1 to n.
         :type period_idx: int; 1 <= period_idx <= amount of periods
@@ -154,13 +166,10 @@ class TimerCommands:
                                delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="resume", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_resume(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_resume(self, ctx: commands.Context):
         """ Resumes a paused timer.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
@@ -176,61 +185,53 @@ class TimerCommands:
                                delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="pause", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_pause(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_pause(self, ctx: commands.Context):
         """ Pauses the timer, if it's running. Keeps all settings and current
             period and time.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
         if self.bot.timers[channel_id].pause():
             log = "Timer will be paused soon."
-            send = log
+            await self.bot.say(log, delete_after=self.bot.timer_step)
 
         else:
             log = "Could not pause timer, stopped or already running."
-            send = "Bruh, I cannot stop something that isn't moving."
+            await self.bot.say("I cannot stop something that isn't moving.",
+                               delete_after=self.bot.ans_lifespan)
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="stop", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_stop(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_stop(self, ctx: commands.Context):
         """ Stops the timer, if it's running.
             Resets the current period and time, but keeps the setup.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
         if self.bot.timers[channel_id].stop():
             send = "Timer will stop soon."
+            await self.bot.say(send, delete_after=self.bot.timer_step)
 
         else:
             await self.bot.remove_messages(channel_id)
             send = "Timer has stopped."
+            await self.bot.say(send, tts=self.bot.tts)
 
         lib.log(send, channel_id=channel_id)
-        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="goto", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_goto(self, ctx, period_idx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_goto(self, ctx: commands.Context, period_idx: int):
         """ Skips to the n-th period, assuming the periods' indexes go
             from 1 to the amount of them.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
 
         :param period_idx: The index of the period to start from, from 1 to n.
         :type period_idx: int; 1 <= period_idx <= amount of periods
@@ -241,7 +242,7 @@ class TimerCommands:
         label = self.bot.timers[channel_id].goto(period_idx)
 
         if label is not None:
-            log = "Moved to period number {!s} +({})".format(period_idx, label)
+            log = "Moved to period number {!s} ({})".format(period_idx, label)
             send = log
 
             await self.bot.edit_message(
@@ -262,13 +263,10 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="reset", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def timer_reset(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def timer_reset(self, ctx: commands.Context):
         """ Resets the timer setup.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
@@ -290,14 +288,11 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="force reset", pass_context=True, hidden=True)
-    @commands.check(channel_has_timer)
+    @commands.check(checks.channel_has_timer)
     @commands.check(general.has_permission)
-    async def timer_forcereset(self, ctx):
+    async def timer_forcereset(self, ctx: commands.Context):
         """ Ignores all conditions and resets the channel's timer.
-            Requires elevated permissions
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
+            Requires elevated permissions.
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
@@ -319,12 +314,9 @@ class TimerCommands:
                            delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="time", pass_context=True)
-    @commands.check(channel_has_timer)
-    async def timer_time(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    async def timer_time(self, ctx: commands.Context):
         """ Gives the user the current period and time of the timer.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
@@ -335,13 +327,10 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
 
     @timer.command(name="status", pass_context=True)
-    @commands.check(channel_has_timer)
-    async def timer_status(self, ctx):
+    @commands.check(checks.channel_has_timer)
+    async def timer_status(self, ctx: commands.Context):
         """ Tells whether the timer is stopped, running or paused,
             if it's correctly set up and if it will soon stop or pause.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
@@ -352,13 +341,10 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
 
     @timer.command(name="tts", pass_context=True)
-    @commands.check(channel_has_timer)
-    @commands.check(unlocked_or_allowed)
-    async def tts(self, ctx, toggle: str):
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def tts(self, ctx: commands.Context, toggle: str):
         """ Sets the TTS option on or off for the channel.
-
-        :param ctx: The context in which the command was executed.
-        :type ctx: discord.ext.commands.Context
 
         :param toggle: Whether to turn on or off the TTS option
         :type toggle: str
@@ -381,28 +367,6 @@ class TimerCommands:
         lib.log(log, channel_id=channel_id)
         await self.bot.say(send, tts=self.bot.tts,
                            delete_after=self.bot.ans_lifespan)
-
-
-def whitelisted(ctx: commands.Context) -> bool:
-    if isinstance(ctx.bot, PomodoroBot) and ctx.bot.whitelist and \
-       lib.get_channel_name(ctx) in ctx.bot.whitelist:
-                return True
-    raise commands.CheckFailure(message="not whitelisted")
-
-
-def channel_has_timer(ctx: commands.Context) -> bool:
-    if isinstance(ctx.bot, PomodoroBot) and \
-       lib.get_channel_id(ctx) in ctx.bot.timers.keys():
-        return True
-    raise commands.CheckFailure(message="timer not found")
-
-
-def unlocked_or_allowed(ctx: commands.Context) -> bool:
-    if isinstance(ctx.bot, PomodoroBot) and \
-       ctx.bot.is_locked(lib.get_channel_id(ctx)) and \
-       not ctx.bot.has_permission(ctx.message.author):
-            raise commands.CheckFailure(message="timer locked")
-    return True
 
 
 def setup(bot: PomodoroBot):

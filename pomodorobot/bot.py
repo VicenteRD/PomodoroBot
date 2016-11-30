@@ -55,6 +55,8 @@ class PomodoroBot(commands.Bot):
         self.timer_step = timer_step
         self.ans_lifespan = response_lifespan
 
+        self.formatter.show_check_failure = True
+
     def is_admin(self, member: discord.Member) -> bool:
         """ Checks if a member is the administrator of the bot or not.
 
@@ -119,7 +121,7 @@ class PomodoroBot(commands.Bot):
         :param content: The content of the message to send.
         """
         tts = kwargs.pop('tts', False)
-        delete_after = kwargs.pop('delete_after', self.ans_lifespan)
+        delete_after = kwargs.pop('delete_after', 0)
 
         message = await self.send_message(
             lib.as_object(dest) if isinstance(dest, str) else dest,

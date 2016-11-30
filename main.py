@@ -76,7 +76,7 @@ async def shutdown(ctx):
                 "and failed (No permission to shut down)")
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, hidden=True)
 async def reloadcfg(ctx):
     """ Reloads the configuration. Requires elevated permissions.
 
@@ -102,7 +102,7 @@ async def reloadcfg(ctx):
     lib.log(say)
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, hidden=True)
 async def lock(ctx):
     """ Locks a channel's timer so no user can modify it unless they
         have permissions. This command either locks or unlocks, thus acting as a
@@ -134,7 +134,7 @@ async def lock(ctx):
                     channel_id=channel_id)
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, hidden=True)
 async def spoof(ctx, spoofed_id=None):
     """ Enables spoof-mode, allowing users with permissions to modify another
         specified channel's timer from the one in which this command
@@ -192,7 +192,7 @@ async def howcome(time_out=15):
                   delete_after=min(time_out, 60))
 
 
-@bot.command(pass_context=True)
+@bot.command(pass_context=True, hidden=True)
 async def debug(ctx):
     """ Makes the logger show out debug-level information in stdout.
         This command is administrator-only
@@ -241,9 +241,8 @@ def set_bot_config():
     bot.admin_id = cfg_values.get_str('admin_id')
     bot.role_id = cfg_values.get_str('bot_friend_role_id')
 
-    bot.whitelist = cfg_values.get_list('whitelist')
+    bot.whitelist = cfg_values.get_list('channel_whitelist')
     bot.default_setup = cfg_values.get_dict('default_setup')
-
 
 if __name__ == '__main__':
 

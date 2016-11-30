@@ -1,3 +1,5 @@
+import ast
+
 import pomodorobot.lib as lib
 import logging
 
@@ -30,11 +32,12 @@ class Config:
             _It now ends
             _\"""
 
-        For dictionaries and lists, the format is the same than that of the
-        python notation, so a list would be:
+        For lists, the format is the same than that of the
+        python notation, so it would be:
             list: [element_1, element_2, element_3]
-        and a dictionary would be:
-            dict: {key_1: value_1, key_2: value_2, key_3: value_3}
+        and a dictionary format is almost the same, but uses ' - ' instead
+        of ':', thus a dictionary would be noted as:
+            dict: {key_1 - value_1, key_2 - value_2, key_3 - value_3}
 
 
         For values too big to be worth holding in memory, you can add a [heavy]
@@ -75,7 +78,7 @@ class Config:
                 key = key_val.pop(0).strip()
 
                 key_val[0] = key_val[0].strip()
-                value = ':'.join(key_val)
+                value = ':'.join(key_val).strip()
 
                 self._config_map[key] = Config._format_val(value)
 
@@ -182,7 +185,7 @@ class Config:
         """
 
         if key in self._config_map.keys():
-            val = self._config_map
+            val = self._config_map[key]
 
             if isinstance(val, dict):
                 return val
@@ -218,6 +221,7 @@ class Config:
 
     @staticmethod
     def _format_val(line):
+
         # If it's too much to load into RAM
         if line.startswith("[heavy]"):
             return "[heavy]"
@@ -225,9 +229,11 @@ class Config:
         if line.startswith("[i]"):
             line.replace("[i]", "")
             return int(line)
+
         elif line.startswith("[b]"):
             line.replace("[b]", "")
             return lib.to_boolean(line)
+
         # If it's a list
         elif line.startswith('[') and line.endswith(']'):
             line = line[1:-1]
@@ -236,8 +242,10 @@ class Config:
         # If it's a dictionary
         elif line.startswith('{') and line.endswith('}'):
             line = line[1:-1]
-            return dict((k.strip(), v.strip())
-                        for k, v in (item.split(':')
-                                     for item in line.split(',')))
+            d = dict(item.strip().split(' - ') for item in line.split(','))
+            for k, v in d.items():
+                d[k] = v.strip().replace('.', ',')
+            return d
+
         else:
             return line

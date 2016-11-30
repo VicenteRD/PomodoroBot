@@ -3,9 +3,9 @@ from discord.ext.commands import errors as cmd_err
 
 from pomodorobot.bot import PomodoroBot
 from pomodorobot.timer import PomodoroTimer, State
+
+import pomodorobot.ext.checks as checks
 import pomodorobot.lib as lib
-import pomodorobot.cogs.general as general
-import pomodorobot.checks.timerchecks as checks
 
 
 class TimerCommands:
@@ -289,7 +289,7 @@ class TimerCommands:
 
     @timer.command(name="force reset", pass_context=True, hidden=True)
     @commands.check(checks.channel_has_timer)
-    @commands.check(general.has_permission)
+    @commands.check(checks.has_permission)
     async def timer_forcereset(self, ctx: commands.Context):
         """ Ignores all conditions and resets the channel's timer.
             Requires elevated permissions.
@@ -371,4 +371,3 @@ class TimerCommands:
 
 def setup(bot: PomodoroBot):
     bot.add_cog(TimerCommands(bot))
-

@@ -53,10 +53,11 @@ class Config:
     _file_name = ""
     _config_map = {}
 
-    def __init__(self, file_name: str):
-        self._file_name = file_name
+    def __init__(self):
+        pass
 
-        self.reload()
+    def set_file(self, file_name: str):
+        self._file_name = file_name
 
     def reload(self):
         """ Reloads the configuration dictionary from the given file. """
@@ -249,3 +250,15 @@ class Config:
 
         else:
             return line
+
+
+_instance = Config()
+
+
+def load(file_name: str):
+    _instance.set_file(file_name)
+    _instance.reload()
+
+
+def get_config():
+    return _instance

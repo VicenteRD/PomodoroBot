@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-from pomodorobot.bot import PomodoroBot
 import pomodorobot.lib as lib
+from pomodorobot.bot import PomodoroBot
 
 
-class General:
+class Events:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
@@ -50,13 +50,18 @@ class General:
             await self.bot.safe_send(ctx.message.channel, send,
                                      delete_after=self.bot.ans_lifespan)
 
+    async def on_ready(self):
+        lib.log("")
+        lib.log("Logged in as :")
+        lib.log("\t" + self.bot.user.name)
+        lib.log("\t" + self.bot.user.id)
+        lib.log("")
 
-def has_permission(ctx: commands.Context) -> bool:
-    if isinstance(ctx.bot, PomodoroBot) and \
-       ctx.bot.has_permission(ctx.message.author):
-        return True
-    raise commands.CheckFailure(message="no permissions")
+        if self.bot.start_msg is not None and self.bot.start_msg != "":
+            await self.bot.update_status()
+            for server in self.bot.servers:
+                await self.bot.send_message(server, self.bot.start_msg)
 
 
 def setup(bot: PomodoroBot):
-    bot.add_cog(General(bot))
+    bot.add_cog(Events(bot))

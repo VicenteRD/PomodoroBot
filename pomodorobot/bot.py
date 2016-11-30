@@ -7,6 +7,7 @@ from discord.enums import Status
 from discord.ext import commands
 
 import pomodorobot.lib as lib
+from pomodorobot.config import Config
 from pomodorobot.timer import State, Action
 
 
@@ -44,11 +45,13 @@ class PomodoroBot(commands.Bot):
     # The ID of the role with permissions over the bot
     role_id = ""
 
+    start_msg = ""
     default_setup = {}
     whitelist = []
 
     def __init__(self, command_prefix, formatter=None, description=None,
                  pm_help=False, response_lifespan=15, timer_step=2, **options):
+
         super().__init__(command_prefix, formatter,
                          description, pm_help, **options)
 
@@ -56,6 +59,27 @@ class PomodoroBot(commands.Bot):
         self.ans_lifespan = response_lifespan
 
         self.formatter.show_check_failure = True
+
+    def reload_config(self, cfg: Config):
+        """
+
+        :param cfg: The configuration object, holding all the loaded
+            configurations
+        :type cfg: pomodorobot.config.Config
+        """
+
+        self.command_prefix = cfg.get_str('command_prefix')
+
+        self.start_msg = cfg.get_str('startup_msg')
+
+        self.ans_lifespan = cfg.get_int('response_lifespan')
+        self.timer_step = cfg.get_int('timer_step')
+
+        self.admin_id = cfg.get_str('admin_id')
+        self.role_id = cfg.get_str('bot_friend_role_id')
+
+        self.whitelist = cfg.get_list('channel_whitelist')
+        self.default_setup = cfg.get_dict('default_setup')
 
     def is_admin(self, member: discord.Member) -> bool:
         """ Checks if a member is the administrator of the bot or not.

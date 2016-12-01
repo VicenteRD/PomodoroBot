@@ -51,9 +51,12 @@ def channel_has_timer(ctx: commands.Context) -> bool:
         message : "timer not found"
     """
 
-    if isinstance(ctx.bot, PomodoroBot) and \
-       lib.get_channel_id(ctx) in ctx.bot.timers.keys():
-        return True
+    if isinstance(ctx.bot, PomodoroBot):
+        channel_id = ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+
+        if channel_id in ctx.bot.timers.keys():
+            return True
+
     raise commands.CheckFailure(message="timer not found")
 
 
@@ -84,5 +87,10 @@ def whitelisted(ctx: commands.Context) -> bool:
     :return: True if the command succeeds, else False.
     """
 
-    return isinstance(ctx.bot, PomodoroBot) and ctx.bot.whitelist and \
-       lib.get_channel_name(ctx) in ctx.bot.whitelist
+    if isinstance(ctx.bot, PomodoroBot):
+        channel_id = ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+        channel_name = ctx.message.channel.server.get_channel(channel_id).name
+
+        return ctx.bot.whitelist and channel_name in ctx.bot.whitelist
+    return False
+

@@ -360,6 +360,7 @@ class TimerCommands:
         else:
             try:
                 timer.tts = lib.to_boolean(toggle)
+
             except cmd_err.BadArgument:
                 log = "TTS command failed, bad argument."
                 send = ("I could not understand if you wanted to " +
@@ -371,7 +372,7 @@ class TimerCommands:
             send = "Text-to-speech now " + status + " for this channel."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.say(send, tts=self.bot.tts,
+        await self.bot.say(send, tts=timer.tts,
                            delete_after=self.bot.ans_lifespan)
 
 

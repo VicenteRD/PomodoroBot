@@ -229,20 +229,29 @@ class TimerCommands:
     @timer.command(name="goto", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.unlocked_or_allowed)
-    async def timer_goto(self, ctx: commands.Context, period_idx: int):
+    async def timer_goto(self, ctx: commands.Context, period_idx):
         """ Skips to the n-th period, assuming the periods' indexes go
             from 1 to the amount of them.
 
         :param period_idx: The index of the period to start from, from 1 to n.
-        :type period_idx: int; 1 <= period_idx <= amount of periods
+        :type period_idx: 'next' or int such that 1 <= period_idx <= n,
+            n being the amount of periods set.
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
-        label = self.bot.timers[channel_id].goto(period_idx)
+        if period_idx == "next":
+            idx = self.bot.timers[channel_id].curr_period + 1
+        else:
+            try:
+                idx = int(period_idx)
+            except TypeError:
+                raise commands.BadArgument
+
+        label = self.bot.timers[channel_id].goto(idx)
 
         if label is not None:
-            log = "Moved to period number {!s} ({})".format(period_idx, label)
+            log = "Moved to period number {!s} ({})".format(idx, label)
             send = log
 
             await self.bot.edit_message(

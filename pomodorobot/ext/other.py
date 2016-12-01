@@ -35,9 +35,9 @@ class Other:
 
     @admin_cmd.command(pass_context=True)
     async def lock(self, ctx: commands.Context):
-        """ Locks a channel's timer so no user can modify it unless they
-            have permissions. This command either locks or unlocks,
-            thus acting as a switch.
+        """ Locks a channel's timer so no user can modify it.
+            Unless they have permissions.
+            This command either locks or unlocks, thus acting as a switch.
             Requires elevated permissions.
         """
 
@@ -63,8 +63,9 @@ class Other:
 
     @admin_cmd.command(pass_context=True)
     async def spoof(self, ctx: commands.Context, spoofed_id=None):
-        """ Enables spoof-mode, allowing users with permissions to modify
-            another specified channel's timer from the one in which this command
+        """ Enables spoof-mode on a channel.
+            Spoof mode allows users with permissions to modify another specified
+            channel's timer from the one in which this command
             was executed.
 
             For example, if channel #session_1 has ID '249719010319532064'
@@ -105,8 +106,8 @@ class Other:
     @admin_cmd.command()
     @commands.check(checks.is_admin)
     async def debug(self):
-        """ Makes the logger show out debug-level information in stdout.
-            This command is administrator-only
+        """ Makes the logger show debug-level information on the log.
+            This command is administrator-only.
         """
 
         if lib.is_logger_debug():
@@ -125,8 +126,7 @@ class Other:
     @admin_cmd.command()
     @commands.check(checks.is_admin)
     async def shutdown(self, ctx: commands.Context):
-        """ Exits the program.
-            Can only be executed by the bot's administrator.
+        """ Exits the program. Administrator only!
         """
 
         lib.log("Shutting down...")
@@ -147,7 +147,10 @@ class Other:
 
     @commands.command()
     async def why(self, time_out=15):
-        """ No need for explanation.
+        """ For when you question life and decisions.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
         """
 
         url = "https://i.imgur.com/OpFcp.jpg"
@@ -158,7 +161,10 @@ class Other:
 
     @commands.command()
     async def howcome(self, time_out=15):
-        """ Again, no need for explanation.
+        """ When you just don't understand, this command is your best friend.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
         """
 
         url = ("http://24.media.tumblr.com/0c3c175c69e45a4182f18a1057ac4bf7/" +
@@ -172,6 +178,9 @@ class Other:
     @commands.command()
     async def no(self, time_out=15):
         """ For those moments when people don't get it.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
         """
 
         url = "https://media.giphy.com/media/ToMjGpx9F5ktZw8qPUQ/giphy.gif"

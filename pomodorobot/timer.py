@@ -53,7 +53,7 @@ class PomodoroTimer:
     action = Action.NONE
 
     # Whether the period list should loop or not.
-    _repeat = True
+    repeat = True
     # Whether the timer should count from 0 and show the "elapsed" time,
     # or count back from the period's time and show the remaining time.
     _countdown = True
@@ -169,7 +169,7 @@ class PomodoroTimer:
                 for i in range(1, len(self.times)):
                     concat += ", " + str(self.times[i])
 
-            self._repeat = on_repeat
+            self.repeat = on_repeat
             self._countdown = reverse
 
             return 0, concat
@@ -328,7 +328,7 @@ class PomodoroTimer:
         """
 
         p_list = "**Period list (Loop is " + (
-                 "ON" if self._repeat else "OFF") + "):**"
+                 "ON" if self.repeat else "OFF") + "):**"
         for i in range(0, len(self.times)):
             p_list += ("\n" + self.names[i] + ": " +
                        lib.pluralize(self.times[i], "minute", append='s'))

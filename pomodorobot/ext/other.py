@@ -160,7 +160,7 @@ class Other:
         """
 
         url = ("http://24.media.tumblr.com/0c3c175c69e45a4182f18a1057ac4bf7/" +
-                  "tumblr_n1ob7kSaiW1qlk7obo1_500.gif")
+               "tumblr_n1ob7kSaiW1qlk7obo1_500.gif")
 
         embed = discord.Embed(title="How come...?",
                               url=url).set_image(url=url)

@@ -352,29 +352,36 @@ class TimerCommands:
     @timer.command(name="tts", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.unlocked_or_allowed)
-    async def tts(self, ctx: commands.Context, toggle: str):
+    async def tts(self, ctx: commands.Context, toggle: str = None):
         """ Sets the TTS option on or off for the channel.
 
-        :param toggle: Whether to turn on or off the TTS option
+        :param toggle: Whether to turn on or off the TTS option. If no option
+            is provided, it will toggle it
         :type toggle: str
         """
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+        timer = self.bot.timers[channel_id]
 
-        try:
-            timer = self.bot.timers[channel_id]
-            timer.tts = lib.to_boolean(toggle)
-            say = ("on" if timer.tts else "off")
+        log = send = None
+        if toggle is None:
+            timer.tts = not timer.tts
+        else:
+            try:
+                timer.tts = lib.to_boolean(toggle)
 
-            log = "TTS now " + say + " for this channel."
-            send = "Text-to-speech now " + say + " for this channel."
+            except cmd_err.BadArgument:
+                log = "TTS command failed, bad argument."
+                send = ("I could not understand if you wanted to " +
+                        "turn TTS on or off.")
 
-        except cmd_err.BadArgument:
-            log = "TTS command failed, bad argument."
-            send = "I could not understand if you wanted to turn TTS on or off."
+        if log is None or send is None:
+            status = ("on" if timer.tts else "off")
+            log = "TTS now " + status + " for this channel."
+            send = "Text-to-speech now " + status + " for this channel."
 
         lib.log(log, channel_id=channel_id)
-        await self.bot.say(send, tts=self.bot.tts,
+        await self.bot.say(send, tts=timer.tts,
                            delete_after=self.bot.ans_lifespan)
 
 

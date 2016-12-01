@@ -2,13 +2,18 @@ import asyncio
 from datetime import datetime
 
 import discord
+
 from discord import errors as d_err
 from discord.enums import Status
 from discord.ext import commands
 
 import pomodorobot.lib as lib
+
 from pomodorobot.config import Config
 from pomodorobot.timer import State, Action
+
+
+VERSION = "0.8b"
 
 
 class PomodoroBot(commands.Bot):

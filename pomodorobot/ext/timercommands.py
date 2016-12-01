@@ -1,11 +1,13 @@
+import logging
+
 from discord.ext import commands
 from discord.ext.commands import errors as cmd_err
 
-from pomodorobot.bot import PomodoroBot
-from pomodorobot.timer import PomodoroTimer, State
-
 import pomodorobot.ext.checks as checks
 import pomodorobot.lib as lib
+
+from pomodorobot.bot import PomodoroBot
+from pomodorobot.timer import PomodoroTimer, State
 
 
 class TimerCommands:
@@ -364,6 +366,7 @@ class TimerCommands:
         timer = self.bot.timers[channel_id]
 
         log = send = None
+        fail = False
         if toggle is None:
             timer.tts = not timer.tts
         else:
@@ -371,6 +374,7 @@ class TimerCommands:
                 timer.tts = lib.to_boolean(toggle)
 
             except cmd_err.BadArgument:
+                fail = True
                 log = "TTS command failed, bad argument."
                 send = ("I could not understand if you wanted to " +
                         "turn TTS on or off.")
@@ -380,8 +384,9 @@ class TimerCommands:
             log = "TTS now " + status + " for this channel."
             send = "Text-to-speech now " + status + " for this channel."
 
-        lib.log(log, channel_id=channel_id)
-        await self.bot.say(send, tts=timer.tts,
+        lib.log(log, channel_id=channel_id,
+                level=logging.WARN if fail else logging.INFO)
+        await self.bot.say(send, tts=timer.tts and not fail,
                            delete_after=self.bot.ans_lifespan)
 
 

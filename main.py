@@ -1,8 +1,5 @@
 import sys
 
-import pomodorobot.lib as lib
-import pomodorobot.config as config
-
 from pomodorobot.bot import PomodoroBot
 
 

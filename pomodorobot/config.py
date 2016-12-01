@@ -1,7 +1,6 @@
-import ast
+import logging
 
 import pomodorobot.lib as lib
-import logging
 
 
 class Config:

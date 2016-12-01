@@ -1,6 +1,9 @@
+import logging
+
 from discord.ext import commands
 
 import pomodorobot.lib as lib
+
 from pomodorobot.bot import PomodoroBot
 
 
@@ -21,7 +24,7 @@ class Events:
                 send = "You are not allowed to modify this timer."
                 log += " tried to modify a locked timer without permissions."
 
-            elif str(error) == "no permissions":
+            elif str(error) == "no permissions" or str(error) == "not admin":
                 send = "You do not have permission to do this!"
                 log += (" tried to execute a command and failed, " +
                         "lacked permissions.")
@@ -29,12 +32,12 @@ class Events:
                 send = "Timers are not allowed in this channel."
                 log += " tried to start a timer in a non-whitelisted channel."
 
-            lib.log(log, channel_id=ctx.message.channel.id)
+            lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
             await self.bot.safe_send(ctx.message.channel, send,
                                      delete_after=self.bot.ans_lifespan)
         if isinstance(error, commands.CommandNotFound):
             send = "Command not found: `" + ctx.invoked_with + "`."
-            lib.log(send)
+            lib.log(send, level=logging.WARN)
 
             alt = None
             for name, command in self.bot.commands.items():

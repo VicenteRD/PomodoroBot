@@ -1,12 +1,12 @@
 import discord
 from discord.ext import commands
 
-from pomodorobot.bot import PomodoroBot
-from pomodorobot.timer import State
-
 import pomodorobot.lib as lib
 import pomodorobot.config as config
 import pomodorobot.ext.checks as checks
+
+from pomodorobot.bot import PomodoroBot
+from pomodorobot.timer import State
 
 
 class Other:
@@ -144,6 +144,12 @@ class Other:
                     await self.bot.remove_messages(channel_id)
 
         await self.bot.logout()
+
+    @commands.command()
+    async def about(self):
+        await self.bot.say("Current version: {}\nSource: {}")\
+            .format(PomodoroBot.VERSION,
+                    "https://github.com/VicenteRD/PomodoroBot/")
 
     @commands.command()
     async def why(self, time_out=15):

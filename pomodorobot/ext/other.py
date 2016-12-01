@@ -17,9 +17,11 @@ class Other:
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)
     async def admin_cmd(self, ctx: commands.Context):
+        """ Bot friends only! Do !help admin for sub-commands
+        """
         pass
 
-    @admin_cmd.command(hidden=True)
+    @admin_cmd.command()
     async def reloadcfg(self):
         """ Reloads the configuration.
             Requires elevated permissions.
@@ -31,7 +33,7 @@ class Other:
                            delete_after=self.bot.ans_lifespan)
         lib.log("Reloaded configuration.")
 
-    @admin_cmd.command(pass_context=True, hidden=True)
+    @admin_cmd.command(pass_context=True)
     async def lock(self, ctx: commands.Context):
         """ Locks a channel's timer so no user can modify it unless they
             have permissions. This command either locks or unlocks,
@@ -59,7 +61,7 @@ class Other:
             lib.log(lib.get_author_name(ctx) + " unlocked the channel.",
                     channel_id=channel_id)
 
-    @admin_cmd.command(pass_context=True, hidden=True)
+    @admin_cmd.command(pass_context=True)
     async def spoof(self, ctx: commands.Context, spoofed_id=None):
         """ Enables spoof-mode, allowing users with permissions to modify
             another specified channel's timer from the one in which this command
@@ -100,7 +102,7 @@ class Other:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
         lib.log(log, channel_id=channel_id)
 
-    @admin_cmd.command(hidden=True)
+    @admin_cmd.command()
     @commands.check(checks.is_admin)
     async def debug(self):
         """ Makes the logger show out debug-level information in stdout.
@@ -120,7 +122,7 @@ class Other:
         await self.bot.say("Debug mode {}.".format(state),
                            delete_after=self.bot.ans_lifespan)
 
-    @admin_cmd.command(pass_context=True)
+    @admin_cmd.command()
     @commands.check(checks.is_admin)
     async def shutdown(self, ctx: commands.Context):
         """ Exits the program.

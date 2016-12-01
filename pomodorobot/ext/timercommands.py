@@ -18,7 +18,7 @@ class TimerCommands:
     @commands.group(name="timer", pass_context=True)
     @commands.check(checks.whitelisted)
     async def timer(self, ctx):
-        """ Controls the channel's timer. Do !help timer for subcommands
+        """ Controls the channel's timer. Do '!help timer' for sub-commands
             None of the sub-commands will really work without using `setup`
             first.
         """

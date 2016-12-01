@@ -17,7 +17,7 @@ class Other:
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)
     async def admin_cmd(self, ctx: commands.Context):
-        """ Bot friends only! Do !help admin for sub-commands
+        """ Bot friends only! Do '!help admin' for sub-commands
         """
         pass
 

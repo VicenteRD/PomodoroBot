@@ -18,9 +18,9 @@ class Other:
 
     @commands.command()
     async def about(self):
-        await self.bot.say("Current version: {}\nSource: {}")\
-            .format(PomodoroBot.VERSION,
-                    "https://github.com/VicenteRD/PomodoroBot/")
+        await self.bot.say("Current version: {}\nSource: {}"
+                           .format(PomodoroBot.VERSION,
+                                   "https://github.com/VicenteRD/PomodoroBot/"))
 
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)

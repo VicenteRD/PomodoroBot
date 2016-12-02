@@ -52,6 +52,8 @@ class Events:
                 send += " Did you mean `" + alt + "`?"
             await self.bot.safe_send(ctx.message.channel, send,
                                      delete_after=self.bot.ans_lifespan)
+        else:
+            lib.log(str(error))
 
     async def on_ready(self):
         lib.log("")

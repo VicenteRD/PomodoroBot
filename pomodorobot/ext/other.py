@@ -1,4 +1,6 @@
 import discord
+
+from discord.enums import Status
 from discord.ext import commands
 
 import pomodorobot.lib as lib
@@ -13,6 +15,12 @@ class Other:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
+
+    @commands.command()
+    async def about(self):
+        await self.bot.say("Current version: {}\nSource: {}")\
+            .format(PomodoroBot.VERSION,
+                    "https://github.com/VicenteRD/PomodoroBot/")
 
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)
@@ -123,7 +131,7 @@ class Other:
         await self.bot.say("Debug mode {}.".format(state),
                            delete_after=self.bot.ans_lifespan)
 
-    @admin_cmd.command()
+    @admin_cmd.command(pass_context=True)
     @commands.check(checks.is_admin)
     async def shutdown(self, ctx: commands.Context):
         """ Exits the program. Administrator only!
@@ -144,12 +152,6 @@ class Other:
                     await self.bot.remove_messages(channel_id)
 
         await self.bot.logout()
-
-    @commands.command()
-    async def about(self):
-        await self.bot.say("Current version: {}\nSource: {}")\
-            .format(PomodoroBot.VERSION,
-                    "https://github.com/VicenteRD/PomodoroBot/")
 
     @commands.command()
     async def why(self, time_out=15):

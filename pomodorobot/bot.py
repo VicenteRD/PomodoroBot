@@ -175,7 +175,7 @@ class PomodoroBot(commands.Bot):
         else:
             game = discord.Game()
             channels = lib.pluralize(self.timers_running, "channel", append="s")
-            game.name = (" on " + channels)
+            game.name = ("on " + channels)
 
             await self.change_presence(game=game, status=Status.online)
 

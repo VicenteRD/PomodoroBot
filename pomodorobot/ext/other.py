@@ -1,13 +1,12 @@
 import discord
 
-from discord.enums import Status
 from discord.ext import commands
 
 import pomodorobot.lib as lib
 import pomodorobot.config as config
 import pomodorobot.ext.checks as checks
 
-from pomodorobot.bot import PomodoroBot
+from pomodorobot.bot import PomodoroBot, VERSION
 from pomodorobot.timer import State
 
 
@@ -19,7 +18,7 @@ class Other:
     @commands.command()
     async def about(self):
         await self.bot.say("Current version: {}\nSource: {}"
-                           .format(PomodoroBot.VERSION,
+                           .format(VERSION,
                                    "https://github.com/VicenteRD/PomodoroBot/"))
 
     @commands.group(name="admin", pass_context=True)

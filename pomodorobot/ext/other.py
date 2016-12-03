@@ -17,10 +17,19 @@ class Other:
 
     @commands.command()
     async def about(self):
+        """ Information about me!
+        """
+
         await self.bot.say("Current version: {}\nSource: {}"
                            .format(config.get_config().get_str("version"),
                                    config.get_config().get_str("source")),
-                           delete_after=self.bot.ans_lifespan)
+                           delete_after=self.bot.ans_lifespan * 4)
+
+        await self.bot.say("Questions, suggestions, bug to report?\n" +
+                           "Open an issue on the Github page, " +
+                           "or send me a message on Discord! " +
+                           config.get_config().get_str("author_name"),
+                           delete_after=self.bot.ans_lifespan * 4)
 
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)

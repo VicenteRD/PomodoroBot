@@ -6,7 +6,7 @@ import pomodorobot.lib as lib
 import pomodorobot.config as config
 import pomodorobot.ext.checks as checks
 
-from pomodorobot.bot import PomodoroBot, VERSION
+from pomodorobot.bot import PomodoroBot
 from pomodorobot.timer import State
 
 
@@ -18,8 +18,9 @@ class Other:
     @commands.command()
     async def about(self):
         await self.bot.say("Current version: {}\nSource: {}"
-                           .format(VERSION,
-                                   "https://github.com/VicenteRD/PomodoroBot/"))
+                           .format(config.get_config().get_str("version"),
+                                   config.get_config().get_str("source")),
+                           delete_after=self.bot.ans_lifespan)
 
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)
@@ -34,7 +35,7 @@ class Other:
             Requires elevated permissions.
         """
 
-        self.bot.reload_config(config.get_config())
+        self.bot.reload_config(config.get_config().reload())
 
         await self.bot.say("Successfully reloaded configuration.",
                            delete_after=self.bot.ans_lifespan)

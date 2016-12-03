@@ -13,9 +13,6 @@ from pomodorobot.config import Config
 from pomodorobot.timer import State, Action
 
 
-VERSION = "0.8b"
-
-
 class PomodoroBot(commands.Bot):
     """ An extension of the Bot class, that contains the necessary attributes
         and methods to run Pomodoro Timers on a series of channels.

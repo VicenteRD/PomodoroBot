@@ -59,7 +59,10 @@ class Config:
         self._file_name = file_name
 
     def reload(self):
-        """ Reloads the configuration dictionary from the given file. """
+        """ Reloads the configuration dictionary from the given file.
+
+        :return: Itself to allow easier statement chaining
+        """
 
         self._config_map = {}
 
@@ -86,6 +89,8 @@ class Config:
                         level=logging.DEBUG)
 
         cfg_file.close()
+
+        return self
 
     def get_str(self, key: str):
         """ Returns the value corresponding to the given key.

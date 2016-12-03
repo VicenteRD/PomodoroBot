@@ -3,6 +3,7 @@ import logging
 from discord.ext import commands
 
 import pomodorobot.lib as lib
+import pomodorobot.config as config
 
 from pomodorobot.bot import PomodoroBot
 
@@ -62,10 +63,13 @@ class Events:
         lib.log("\t" + self.bot.user.id)
         lib.log("")
 
-        if self.bot.start_msg is not None and self.bot.start_msg != "":
-            await self.bot.update_status()
-            for server in self.bot.servers:
-                await self.bot.send_message(server, self.bot.start_msg)
+        await self.bot.update_status()
+
+        message = "**[{}]** {}"\
+            .format(config.get_config().get_str("version"),
+                    config.get_config().get_str("startup_msg"))
+        for server in self.bot.servers:
+            await self.bot.send_message(server, message)
 
 
 def setup(bot: PomodoroBot):

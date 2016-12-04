@@ -50,8 +50,8 @@ class Other:
                            delete_after=self.bot.ans_lifespan)
         lib.log("Reloaded configuration.")
 
-    @admin_cmd.command(pass_context=True)
-    async def lock(self, ctx: commands.Context):
+    @admin_cmd.command(name="lock", pass_context=True)
+    async def admin_lock(self, ctx: commands.Context):
         """ Locks a channel's timer so no user can modify it.
             Unless they have permissions.
             This command either locks or unlocks, thus acting as a switch.
@@ -78,8 +78,8 @@ class Other:
             lib.log(lib.get_author_name(ctx) + " unlocked the channel.",
                     channel_id=channel_id)
 
-    @admin_cmd.command(pass_context=True)
-    async def spoof(self, ctx: commands.Context, spoofed_id=None):
+    @admin_cmd.command(name="spoof", pass_context=True)
+    async def admin_spoof(self, ctx: commands.Context, spoofed_id=None):
         """ Enables spoof-mode on a channel.
             Spoof mode allows users with permissions to modify another specified
             channel's timer from the one in which this command
@@ -120,9 +120,9 @@ class Other:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
         lib.log(log, channel_id=channel_id)
 
-    @admin_cmd.command()
+    @admin_cmd.command(name="debug")
     @commands.check(checks.is_admin)
-    async def debug(self):
+    async def admin_debug(self):
         """ Makes the logger show debug-level information on the log.
             This command is administrator-only.
         """
@@ -140,9 +140,9 @@ class Other:
         await self.bot.say("Debug mode {}.".format(state),
                            delete_after=self.bot.ans_lifespan)
 
-    @admin_cmd.command(pass_context=True)
+    @admin_cmd.command(name="shutdown", pass_context=True)
     @commands.check(checks.is_admin)
-    async def shutdown(self, ctx: commands.Context):
+    async def admin_shutdown(self, ctx: commands.Context):
         """ Exits the program. Administrator only!
         """
 

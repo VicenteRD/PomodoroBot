@@ -298,7 +298,7 @@ class TimerCommands:
         lib.log(log, channel_id=channel_id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
-    @timer.command(name="force reset", pass_context=True, hidden=True)
+    @timer.command(name="superreset", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.has_permission)
     async def timer_forcereset(self, ctx: commands.Context):

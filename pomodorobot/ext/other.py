@@ -15,7 +15,7 @@ class Other:
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(aliases=['aboot'])
     async def about(self):
         """ Information about me!
         """

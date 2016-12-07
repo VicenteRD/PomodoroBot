@@ -1,3 +1,4 @@
+import sys
 import logging
 
 import discord
@@ -30,12 +31,13 @@ def init_logger():
     if _logger.ready:
         return
 
-    log_fmt = logging.Formatter(fmt='[%(asctime)s][%(levelname)s] %(message)s',
-                                datefmt='%m/%d | %H:%M:%S')
+    log_fmt = logging.Formatter(
+        fmt='[{asctime}][{levelname:^7}] {message}',
+        datefmt='%m/%d | %H:%M:%S', style='{')
 
     file_handler = logging.FileHandler(filename='pomodorobot.log',
                                        encoding='utf8', mode='w')
-    term_handler = logging.StreamHandler()
+    term_handler = logging.StreamHandler(sys.stdout)
 
     file_handler.setFormatter(log_fmt)
     term_handler.setFormatter(log_fmt)
@@ -213,7 +215,7 @@ def pluralize(amount: int, s_name: str, append="", p_name=""):
         return str(amount) + " " + (s_name if amount == 1 else p_name)
 
 
-def log(message: str, channel_id=None, level=logging.INFO):
+def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
     """ Logs a message with a given format, specifying the channel originating
         the message, or if its a global message.
 
@@ -230,11 +232,20 @@ def log(message: str, channel_id=None, level=logging.INFO):
     if not _logger.ready:
         init_logger()
 
-    if channel_id is None:
-        channel_id = "Global".center(18, '=')
-
     for line in message.split('\n'):
         _logger.logger.log(level, "[" + channel_id + "] " + line)
+
+
+def log_cmd_stacktrace(err: commands.CommandInvokeError, channel_id=None):
+    """ Logs the stacktrace of a failed command execution.
+
+    :param err:
+    """
+
+    if not _logger.ready:
+        init_logger()
+
+    _logger.logger.exception(" ", exc_info=err.original)
 
 
 def is_logger_debug():

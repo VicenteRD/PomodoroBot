@@ -9,6 +9,8 @@ import pomodorobot.lib as lib
 from pomodorobot.bot import PomodoroBot
 from pomodorobot.timer import PomodoroTimer, State
 
+SAFE_DEFAULT_FMT = "(2xStudy:32,Break:8),Study:32,Long_Break:15"
+
 
 class TimerCommands:
     """ Represents all the possible commands that influence a timer.
@@ -74,70 +76,67 @@ class TimerCommands:
         channel_id = lib.get_channel_id(ctx)
 
         if timer_format == "help":
-            send = "**Example:**\n\t {}setup {}"\
-                .format(self.bot.command_prefix, self.bot.default_setup['in'])
+            send = "**Example:**\n\t {}setup {}" \
+                .format(self.bot.command_prefix, SAFE_DEFAULT_FMT)
 
-            send += "\n\t_This will give you a sequence of {}_"\
-                .format(self.bot.default_setup['out'])
+            send += "\n\t_This will give you a sequence of {}_" \
+                .format(PomodoroTimer.parse_format(SAFE_DEFAULT_FMT))
             await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
             return
 
+        # Load default if the option was opted for.
         if timer_format == "default":
-            timer_format = self.bot.default_setup['in']
 
-        result = -1
+            if isinstance(self.bot.default_setup, str):
+                timer_format = self.bot.default_setup
+            elif isinstance(self.bot.default_setup, dict) and \
+                 channel_id in self.bot.default_setup.keys():
+                timer_format = self.bot.default_setup[channel_id]
+            else:
+                lib.log("No setup configured for this channel. Using the " +
+                        "safe default option", channel_id=channel_id)
+                timer_format = SAFE_DEFAULT_FMT
+
+        # Parse the countdown and looping arguments with the custom function.
+        try:
+            loop = lib.to_boolean(repeat)
+            countdown = lib.to_boolean(count_back)
+        except cmd_err.BadArgument:
+            lib.log("Could not parse boolean arguments '{}' and '{}'"
+                    .format(repeat, count_back), channel_id=channel_id)
+            await self.bot.say("Invalid arguments received, please try again.",
+                               delete_after=self.bot.ans_lifespan)
+            return
+
         if channel_id not in self.bot.timers.keys():
-            try:
-                loop = lib.to_boolean(repeat)
-                countdown = lib.to_boolean(count_back)
+            self.bot.timers[channel_id] = PomodoroTimer()
 
-                self.bot.timers[channel_id] = PomodoroTimer()
+            times = self.bot.timers[channel_id] \
+                .setup(timer_format, loop, countdown)
+
+            if times is not None:
+                # Initialize the messages if the timer was correctly setup.
                 self.bot.time_messages[channel_id] = None
                 self.bot.list_messages[channel_id] = None
 
-                result, times = self.bot.timers[channel_id]\
-                    .setup(timer_format, loop, countdown)
+                send = log = (
+                    "Correctly set up timer config: " + times + "." +
+                    "\nLooping is **" + ("ON" if repeat else "OFF") +
+                    "**\nCountdown is **" +
+                    ("ON" if countdown else "OFF") + "**")
+            else:
+                del self.bot.timers[channel_id]
 
-                if result == 0 and times is not None:
-                    settings = (
-                        "Correctly set up timer config: " + times + "." +
-                        "\nLooping is **" + ("ON" if repeat else "OFF") +
-                        "**\nCountdown is **" +
-                        ("ON" if countdown else "OFF") + "**")
+                log = ("Could not set the periods correctly, " +
+                       "command 'setup' failed.")
+                send = ("I did not understand what you wanted, " +
+                        "please try again!")
 
-                    lib.log(settings, channel_id=channel_id)
-                    await self.bot.say(settings,
-                                       delete_after=self.bot.ans_lifespan * 2)
-                else:
-                    del self.bot.timers[channel_id]
-                    del self.bot.time_messages[channel_id]
-                    del self.bot.list_messages[channel_id]
-
-            except cmd_err.BadArgument:
-                result = -4
-
-        if result == -1:  # channel_id is in p_timers.keys() or len(times) > 0
+        else:  # channel_id is in p_timers.keys()
             log = ("Rejecting setup command, there is a period set already " +
                    "established.")
             send = ("I'm already set and ready to go, please use the reset " +
                     "command if you want to change the timer configuration.")
-
-        elif result == -2:  # state == RUNNING or PAUSED
-            log = ("Someone tried to modify the timer while it was already " +
-                   "running.")
-            send = "Please stop the timer completely before modifying it."
-
-        elif result == -3:  # format error
-            log = ("Could not set the periods correctly, command 'setup' " +
-                   "failed.")
-            send = "I did not understand what you wanted, please try again!"
-
-        elif result == -4:  # repeat or count_back are not valid booleans
-            log = "Could not parse boolean arguments '{}' and '{}'"\
-                .format(repeat, count_back)
-            send = "Invalid arguments received, please try again."
-        else:
-            return
 
         lib.log(log, channel_id=channel_id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)

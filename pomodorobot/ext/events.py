@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from discord.ext import commands
 
@@ -14,8 +15,11 @@ class Events:
         self.bot = bot
 
     async def on_command_error(self, error, ctx: commands.Context):
+
+        log = lib.get_author_name(ctx)
+        send = None
+
         if isinstance(error, commands.CheckFailure):
-            log = lib.get_author_name(ctx)
 
             if str(error) == "timer not found":
                 send = "No timer found for this channel."
@@ -33,12 +37,10 @@ class Events:
                 send = "Timers are not allowed in this channel."
                 log += " tried to start a timer in a non-whitelisted channel."
 
-            lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
-            await self.bot.safe_send(ctx.message.channel, send,
-                                     delete_after=self.bot.ans_lifespan)
-        if isinstance(error, commands.CommandNotFound):
+        elif isinstance(error, commands.CommandNotFound):
             send = "Command not found: `" + ctx.invoked_with + "`."
-            lib.log(send, level=logging.WARN)
+            log += " tried to execute a nonexistent command: `{}`."\
+                .format(ctx.invoked_with)
 
             alt = None
             for name, command in self.bot.commands.items():
@@ -47,14 +49,20 @@ class Events:
                 elif isinstance(command, commands.GroupMixin):
                     for sub_name, sub_command in command.commands.items():
                         if ctx.invoked_with == sub_name:
-                            alt = name + " " + sub_name
+                            alt = name + " " + sub_name  # TODO: many found?
 
             if alt is not None:
                 send += " Did you mean `" + alt + "`?"
-            await self.bot.safe_send(ctx.message.channel, send,
-                                     delete_after=self.bot.ans_lifespan)
+
+        elif isinstance(error, commands.CommandInvokeError):
+            lib.log_cmd_stacktrace(error)
+            return
         else:
-            lib.log(str(error))
+            log = str(error)
+
+        lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
+        await self.bot.safe_send(ctx.message.channel, send,
+                                 delete_after=self.bot.ans_lifespan)
 
     async def on_ready(self):
         lib.log("")

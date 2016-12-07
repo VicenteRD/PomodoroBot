@@ -89,92 +89,19 @@ class PomodoroTimer:
             elapsed (False) time.
         :type reverse: bool
 
-        :return: Returns an integer with a success/fail code, and if the timer
-            was successfully set, it will also return a string with the periods'
-            times, separated by commas.
-
-            The codes are:
-                 0 -> Success.
-                -1 -> Timer already set up.
-                -2 -> Timer already running.
-                -3 -> Format error (periods_format was malformed).
+        :return: Returns a string with the periods'
+            times, separated by commas, if successful. Else, returns None.
+            If the result is None, this timer will be useless until the method
+            is ran successfully
         """
 
-        if len(self.times) > 0:
-            return -1, None
+        self.repeat = on_repeat
+        self._countdown = reverse
 
-        if self.state == State.RUNNING or self.state == State.PAUSED:
-            return -2, None
+        self.names, self.times = PomodoroTimer.parse_format(periods_format)
 
-        raw_sections = re.sub(r",(?=[^()]*\))", '.', periods_format).split(',')
-
-        loop = True
-        if ':' in periods_format:
-            if ',' in periods_format:
-                fmt_err = False
-            else:
-                try:
-                    attempt = periods_format.split(':')
-                    self.names.append(attempt[0])
-                    self.times.append(int(attempt[1]))
-                    fmt_err = False
-                    loop = False
-                except ValueError:
-                    fmt_err = True
-        else:
-            fmt_err = True
-
-        if not fmt_err and loop:
-            for section in raw_sections:
-                if section.startswith('(') and section.endswith(')'):
-
-                    section = section.replace('(', '').replace(')', '')
-                    splits = section.split('x')
-
-                    sub_sections = []
-
-                    for s in splits[1].strip().split('.'):
-                        sub_sections.append(s.split(':'))
-                        if len(sub_sections[len(sub_sections) - 1]) != 2:
-                            fmt_err = True
-                            break
-                    if fmt_err:
-                        break
-
-                    for i in range(0, int(splits[0]) * len(sub_sections)):
-                        idx = i % len(sub_sections)
-
-                        time = int(sub_sections[idx][1])
-                        if time == 0:
-                            continue
-                        self.names.append(
-                            sub_sections[idx][0].replace('_', ' ')
-                        )
-                        self.times.append(time)
-                else:
-                    splits_b = section.split(':')
-                    if len(splits_b) != 2:
-                        fmt_err = True
-                        break
-
-                    time = int(splits_b[1])
-                    if time == 0:
-                        continue
-                    self.names.append(splits_b[0].replace('_', ' '))
-                    self.times.append(time)
-
-        if not fmt_err:
-            concat = str(self.times[0])
-            if len(self.times) > 1:
-                for i in range(1, len(self.times)):
-                    concat += ", " + str(self.times[i])
-
-            self.repeat = on_repeat
-            self._countdown = reverse
-
-            return 0, concat
-        else:
-            return -3, None
+        return None if self.times is None else\
+            ", ".join(str(time) for time in self.times)
 
     def start(self) -> bool:
         """ Starts the timer.
@@ -337,3 +264,64 @@ class PomodoroTimer:
                 p_list += "\t-> _You are here!_"
 
         return p_list
+
+    @staticmethod
+    def parse_format(periods_format):
+        """
+
+        :param periods_format:
+        :return:
+        """
+        if periods_format is None or ':' not in periods_format:
+            return None, None
+
+        names = []
+        times = []
+        if ',' not in periods_format:
+            try:
+                attempt = periods_format.split(':')
+                names.append(attempt[0])
+                times.append(int(attempt[1]))
+
+                return names, times
+            except ValueError:
+                return None, None
+
+        sections = re.sub(r",(?=[^()]*\))", '.', periods_format).split(',')
+
+        for section in sections:
+            if section.startswith('(') and section.endswith(')'):
+
+                section = section.replace('(', '').replace(')', '')
+                splits = section.split('x')
+
+                sub_sections = []
+
+                for s in splits[1].strip().split('.'):
+                    sub_sections.append(s.split(':'))
+                    if len(sub_sections[len(sub_sections) - 1]) != 2:
+                        return None, None
+
+                for i in range(0, int(splits[0]) * len(sub_sections)):
+                    idx = i % len(sub_sections)
+
+                    time = int(sub_sections[idx][1])
+                    if time == 0:
+                        continue
+                    names.append(
+                        sub_sections[idx][0].replace('_', ' ')
+                    )
+                    times.append(time)
+            else:
+                splits_b = section.split(':')
+                if len(splits_b) != 2:
+                    return None, None
+
+                time = int(splits_b[1])
+                if time == 0:
+                    continue
+                names.append(splits_b[0].replace('_', ' '))
+                times.append(time)
+
+        return names, times
+

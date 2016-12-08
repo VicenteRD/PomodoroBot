@@ -1,3 +1,4 @@
+import yaml
 import logging
 
 import pomodorobot.lib as lib
@@ -49,7 +50,7 @@ class Config:
         Comments are allowed within the file by starting a line with #.
     """
 
-    _file_name = ""
+    _file_name = None
     _config_map = {}
 
     def __init__(self):
@@ -58,85 +59,93 @@ class Config:
     def set_file(self, file_name: str):
         self._file_name = file_name
 
+    def is_set(self):
+        return self._config_map and self._file_name is not None
+
     def reload(self):
         """ Reloads the configuration dictionary from the given file.
 
         :return: Itself to allow easier statement chaining
         """
-
-        self._config_map = {}
-
-        cfg_file = open(self._file_name, 'r')
-
-        for line in cfg_file:
-            if line.startswith('#') or line.startswith('_') or \
-               line == "" or line == '\n':
-                continue
-
-            if ':' not in line:
-                lib.log("Could not read line '" + line.strip() +
-                        "'. Wrong format")
-            else:
-                key_val = line.split(':')
-                key = key_val.pop(0).strip()
-
-                key_val[0] = key_val[0].strip()
-                value = ':'.join(key_val).strip()
-
-                self._config_map[key] = Config._format_val(value)
-
-                lib.log("Added " + key + ":" + str(self._config_map[key]),
-                        level=logging.DEBUG)
-
-        cfg_file.close()
+        file = open(self._file_name)
+        self._config_map = yaml.safe_load(file)
+        file.close()
 
         return self
 
-    def get_str(self, key: str):
-        """ Returns the value corresponding to the given key.
+    def get_section(self, path):
+        """ TODO
 
-        :param key: The key to look for.
-        :type key: str
+        :param path:
+        :return:
+        """
+        if isinstance(path, str):
+            keys = path.split('.')
+        else:
+            keys = path
+
+        section = self._config_map
+        for key in keys:
+            if key in section.keys():
+                section = section[key]
+                if not isinstance(section, dict):
+                    return None
+        return section
+
+    def get_element(self, path: str):
+        """ TODO . NOT TYPE SAFE
+
+        :param path:
+        :return:
+        """
+        keys = path.split('.')
+        element_key = keys.pop(-1)
+
+        section = self.get_section(keys)
+        return section[element_key] if\
+            section is not None and element_key in section.keys() else None
+
+    def get_str(self, path: str):
+        """ Returns the string corresponding to the given key, if valid.
+
+        :param path: The key to look for.
+        :type path: str
 
         :return: The configuration value pertaining to the key, or None if there
-            is no value associated with the given key
+            is no value associated with the given key.
+
+        :raises: TypeError: if the value cannot be parsed to `str`.
         """
 
-        if key in self._config_map.keys():
-            if self._config_map[key] == "[heavy]":
-                return self._load_live(key)
+        string = self.get_element(path)
+        if isinstance(string, str):
+            return string
+        raise TypeError("Configuration value {} could not be parsed to `str`"
+                        .format(path))
 
-            return self._config_map[key]
-
-        return None
-
-    def get_int(self, key: str):
+    def get_int(self, path: str):
         """ Returns the value corresponding to the given key.
 
-        :param key: The key to look for.
-        :type key: str
+        :param path: The key to look for.
+        :type path: str
 
         :return: The configuration value, parsed to int, or None if the
             key is not valid.
 
-        :raises: TypeError: if the value cannot be parsed to int.
+        :raises: TypeError: if the value cannot be parsed to `int`.
         """
 
-        if key in self._config_map.keys():
-            val = self._config_map[key]
+        number = self.get_element(path)
+        if isinstance(number, int):
+            return number
+        raise TypeError("Configuration value {} could not be parsed to `int`"
+                        .format(path))
 
-            if val.isdigit():
-                return int(val)
-            else:
-                raise TypeError
-        else:
-            return None
-
-    def get_boolean(self, key: str):
+    def get_boolean(self, path: str):
         """ Returns the value corresponding to the given key.
 
-        :param key: The key to look for.
-        :type key: str
+        :param path: The key to look for.
+        :type path: str
 
         :return: The configuration value, evaluated as boolean, or None
             if the key is not a valid configuration key.
@@ -150,110 +159,30 @@ class Config:
             and is not case-sensitive (so something like TruE is valid).
         """
 
-        if key in self._config_map.keys():
-            return lib.to_boolean(self._config_map[key].lower())
-        else:
-            return None
+        boolean = self.get_element(path)
+        try:
+            return None if boolean is None else\
+                lib.to_boolean(boolean)
+        except TypeError:
+            raise TypeError(("Configuration value {} could not be parsed to " +
+                            "`boolean`").format(path))
 
-    def get_list(self, key):
+    def get_list(self, path):
         """ Returns the list corresponding to the given key.
 
-        :param key: The key to look for.
-        :type key: str
+        :param path: The key to look for.
+        :type path: str
 
         :return: The list corresponding to the given key, or None if there is
             no value associated to that key.
 
         :raises: TypeError: if the value is not a list.
         """
-
-        if key in self._config_map.keys():
-            val = self._config_map[key]
-
-            if isinstance(val, list):
-                return val
-            else:
-                raise TypeError
-        else:
-            return None
-
-    def get_dict(self, key):
-        """ Returns the dictionary corresponding to the given key.
-
-        :param key: The key to look for.
-        :type key: str
-
-        :return: The dictionary corresponding to the given key,
-            or None if there is no value associated to that key.
-
-        :raises: TypeError: if the value is not a dictionary.
-        """
-
-        if key in self._config_map.keys():
-            val = self._config_map[key]
-
-            if isinstance(val, dict):
-                return val
-            else:
-                raise TypeError
-        else:
-            return None
-
-    def _load_live(self, key):
-        cfg_file = open(self._file_name, 'r')
-
-        value = None
-        multi = ""
-        multiline = False
-        for line in cfg_file:
-            if multiline and line.startswith('_'):
-                line = line.strip()[1:]
-                multi += '\n' + line
-                if line.endswith('"""') or line == '""""':
-                    multi = multi[:-3]
-                    break
-            elif line.strip().startswith(key):
-                aux = line.split(':')
-                aux.pop(0)
-                value = ':'.join(aux).replace("[heavy]", "")
-                if value.strip() == '"""':
-                    multiline = True
-                else:
-                    break
-
-        cfg_file.close()
-        return multi if multi != "" else Config._format_val(value)
-
-    @staticmethod
-    def _format_val(line):
-
-        # If it's too much to load into RAM
-        if line.startswith("[heavy]"):
-            return "[heavy]"
-
-        if line.startswith("[i]"):
-            line.replace("[i]", "")
-            return int(line)
-
-        elif line.startswith("[b]"):
-            line.replace("[b]", "")
-            return lib.to_boolean(line)
-
-        # If it's a list
-        elif line.startswith('[') and line.endswith(']'):
-            line = line[1:-1]
-            return list(element.strip() for element in line.split(','))
-
-        # If it's a dictionary
-        elif line.startswith('{') and line.endswith('}'):
-            line = line[1:-1]
-            d = dict(item.strip().split(' - ') for item in line.split(','))
-            for k, v in d.items():
-                d[k] = v.strip().replace('.', ',')
-            return d
-
-        else:
-            return line
+        e_list = self.get_element(path)
+        if isinstance(e_list, list):
+            return e_list
+        raise TypeError("Configuration value {} could not be parsed to `list`"
+                        .format(path))
 
 
 _instance = Config()
@@ -265,4 +194,8 @@ def load(file_name: str):
 
 
 def get_config():
-    return _instance
+    if _instance.is_set():
+        return _instance
+    else:
+        lib.log("Configuration instance was asked for before it was set up.",
+                level=logging.ERROR)

@@ -21,14 +21,14 @@ class Other:
         """
 
         await self.bot.say("Current version: {}\nSource: {}"
-                           .format(config.get_config().get_str("version"),
-                                   config.get_config().get_str("source")),
+                           .format(config.get_config().get_str('version'),
+                                   config.get_config().get_str('source')),
                            delete_after=self.bot.ans_lifespan * 4)
 
         await self.bot.say("Questions, suggestions, bug to report?\n" +
                            "Open an issue on the Github page, " +
                            "or send me a message on Discord! " +
-                           config.get_config().get_str("author_name"),
+                           config.get_config().get_str('author_name'),
                            delete_after=self.bot.ans_lifespan * 4)
 
     @commands.group(name="admin", pass_context=True)
@@ -45,6 +45,8 @@ class Other:
         """
 
         self.bot.reload_config(config.get_config().reload())
+        for timer in self.bot.timers.values():
+            timer.step = config.get_config().get_int('timer.time_step')
 
         await self.bot.say("Successfully reloaded configuration.",
                            delete_after=self.bot.ans_lifespan)

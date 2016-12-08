@@ -1,5 +1,4 @@
 import logging
-import traceback
 
 from discord.ext import commands
 
@@ -74,10 +73,14 @@ class Events:
         await self.bot.update_status()
 
         message = "**[{}]** {}"\
-            .format(config.get_config().get_str("version"),
-                    config.get_config().get_str("startup_msg"))
+            .format(config.get_config().get_str('version'),
+                    config.get_config().get_str('startup_msg'))
         for server in self.bot.servers:
-            await self.bot.send_message(server, message)
+            await self.bot.send_message(server, message)\
+
+
+    async def on_message_edit(self, before, after):
+        pass
 
 
 def setup(bot: PomodoroBot):

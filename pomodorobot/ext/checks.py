@@ -1,5 +1,6 @@
 from discord.ext import commands
 
+import pomodorobot.config as config
 from pomodorobot import lib
 from pomodorobot.bot import PomodoroBot
 
@@ -87,10 +88,13 @@ def whitelisted(ctx: commands.Context) -> bool:
     :return: True if the command succeeds, else False.
     """
 
-    if isinstance(ctx.bot, PomodoroBot):
-        channel_id = ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
-        channel_name = ctx.message.channel.server.get_channel(channel_id).name
+    whitelist = config.get_config().get_section('timer.channel_whitelist')
+    server_id = lib.get_server_id(ctx)
 
-        return ctx.bot.whitelist and channel_name in ctx.bot.whitelist
-    return False
+    return whitelist is not None and server_id in whitelist.keys() and \
+        isinstance(ctx.bot, PomodoroBot) and \
+        isinstance(whitelist[server_id], dict) and \
+        ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx)) in \
+        whitelist[server_id].keys()
+
 

@@ -2,6 +2,7 @@ import re
 from enum import Enum
 
 import pomodorobot.lib as lib
+import pomodorobot.config as config
 
 
 class State(Enum):
@@ -61,8 +62,7 @@ class PomodoroTimer:
     tts = False
 
     def __init__(self):
-        self.times = []
-        self.names = []
+        self.step = config.get_config().get_int('timer.time_step')
 
     def setup(self, periods_format: str, on_repeat: bool, reverse: bool):
         """ Sets the pomodoro timer up with its periods, periods' names and

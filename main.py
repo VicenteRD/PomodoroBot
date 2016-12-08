@@ -33,11 +33,7 @@ if __name__ == '__main__':
 
     # Config
 
-    config.load('bot.cfg')
-
-    if config.get_config().get_str('command_prefix') is None:
-        print("Could not find a valid command prefix in the config, aborting.")
-        exit(-3)
+    config.load('bot.yml')
 
     # Logging
 

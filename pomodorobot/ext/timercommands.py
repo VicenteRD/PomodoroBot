@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord.ext.commands import errors as cmd_err
 
 import pomodorobot.ext.checks as checks
+import pomodorobot.config as config
 import pomodorobot.lib as lib
 
 from pomodorobot.bot import PomodoroBot
@@ -71,9 +72,7 @@ class TimerCommands:
 
             :param count_back: (boolean) Whether the timer should show
                 remaining (True) or elapsed (False) time. Defaults to True.
-        """
-
-        channel_id = lib.get_channel_id(ctx)
+        """  # TODO. Use the new whitelist config
 
         if timer_format == "help":
             send = "**Example:**\n\t {}setup {}" \
@@ -84,14 +83,17 @@ class TimerCommands:
             await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
             return
 
+        channel_id = lib.get_channel_id(ctx)
+
         # Load default if the option was opted for.
         if timer_format == "default":
 
-            if isinstance(self.bot.default_setup, str):
-                timer_format = self.bot.default_setup
-            elif isinstance(self.bot.default_setup, dict) and \
-                 channel_id in self.bot.default_setup.keys():
-                timer_format = self.bot.default_setup[channel_id]
+            channel_default = config.get_config().get_str(
+                'timer.channel_whitelist.' +
+                lib.get_server_id(ctx) + '.' + channel_id)
+
+            if channel_default is not None:
+                timer_format = channel_default
             else:
                 lib.log("No setup configured for this channel. Using the " +
                         "safe default option", channel_id=channel_id)

@@ -1,0 +1,51 @@
+version: 0.15.0b
+source: https://github.com/VicenteRD/PomodoroBot/
+author_name: Sherpa#5493
+
+startup_msg: "Beep boop. I'm back online, ready to ~~take over the world~~ help your productivity!"
+
+
+# Bot settings
+bot:
+  description: A marinara timer bot that can be configured to your needs.
+
+  bot_admin_id: "87387330037448704"
+  bot_role_id: "249727962214039554"
+
+  command_prefix: '!'
+
+  response_lifespan: 15
+
+# Timer settings
+timer:
+
+  # The time, in seconds, at which the timer should tick. 2 is recommended, as 1 second will get the bot rate-limited.
+  time_step: 2
+  # Whether period looping should be set to 'on' or 'off' by default
+  looping_default: True
+  # Whether countdown mode should be enabled or disabled by default
+  countdown_default: True
+
+  # A list of the channels where timers are allowed and the setup for each channel.
+  #  They are grouped by server ID then channel ID.
+  #  The setup linked to them are the periods that are set if 'default' or no setup is given.
+  #   They are channel-specific. If a channel has no setup configured, it will use the one hard-coded into the
+  #   program.
+  #
+  # PLEASE MAKE SURE THE SPECIFIED DEFAULT SETUPS ARE VALID. THE BOT WILL FAIL WITH 'default' SPECIFIED, OTHERWISE.
+  channel_whitelist:
+
+    # Study Group
+    "231989318363774976":
+      # 1_study_session
+      "254352302352236544": (2xStudy:32,Break:8),Study:32,Long_Break:15
+      # 2_study_session
+      "247545704971632641": (2xStudy:45,Break:15),Study:45,Long_Break:20
+      # 3_study_session
+      "251780383484411904": (2xStudy:32,Break:8),Study:32,Long_Break:15
+
+    # Sherpa's Dev Realm
+    "248116963140829195":
+      # pomodoro-land
+      "248982730656710667": (2xStudy:45,Break:15),Study:45,Long_Break:20
+

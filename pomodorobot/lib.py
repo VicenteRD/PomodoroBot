@@ -49,6 +49,19 @@ def init_logger():
     _logger.ready = True
 
 
+def get_server_id(context: Context) -> str:
+    """ Gets the ID of the server to which a command was sent,
+        based on the command's context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :return: The server's ID
+    """
+
+    return context.message.server.id
+
+
 def get_channel_id(context: Context) -> str:
     """ Gets the ID of the channel to which a command was sent,
         based on the command's context.
@@ -176,7 +189,7 @@ def to_boolean(value: str):
     elif value in ['false', 'off', 'no', 'n']:
         return False
     else:
-        raise errors.BadArgument
+        raise TypeError("Could not parse {} to boolean".format(value))
 
 
 def pluralize(amount: int, s_name: str, append="", p_name=""):
@@ -236,7 +249,7 @@ def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
         _logger.logger.log(level, "[" + channel_id + "] " + line)
 
 
-def log_cmd_stacktrace(err: commands.CommandInvokeError, channel_id=None):
+def log_cmd_stacktrace(err: commands.CommandInvokeError):
     """ Logs the stacktrace of a failed command execution.
 
     :param err:

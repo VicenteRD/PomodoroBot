@@ -37,8 +37,6 @@ class PomodoroBot(commands.Bot):
     # The amount of timers running.
     timers_running = 0
 
-    # The time between each timer update
-    timer_step = 2
     # The time after which most command responses get deleted
     ans_lifespan = 15
 
@@ -46,10 +44,6 @@ class PomodoroBot(commands.Bot):
     admin_id = ""
     # The ID of the role with permissions over the bot
     role_id = ""
-
-    start_msg = ""
-    default_setup = {}
-    whitelist = []
 
     def __init__(self, command_prefix, formatter=None, description=None,
                  pm_help=False, response_lifespan=15, timer_step=2, **options):
@@ -70,18 +64,14 @@ class PomodoroBot(commands.Bot):
         :type cfg: pomodorobot.config.Config
         """
 
-        self.command_prefix = cfg.get_str('command_prefix')
+        cfg_section = cfg.get_section('bot')
 
-        self.start_msg = cfg.get_str('startup_msg')
+        self.command_prefix = cfg_section['command_prefix']
 
-        self.ans_lifespan = cfg.get_int('response_lifespan')
-        self.timer_step = cfg.get_int('timer_step')
+        self.ans_lifespan = cfg_section['response_lifespan']
 
-        self.admin_id = cfg.get_str('admin_id')
-        self.role_id = cfg.get_str('bot_friend_role_id')
-
-        self.whitelist = cfg.get_list('channel_whitelist')
-        self.default_setup = cfg.get_dict('default_setup')
+        self.admin_id = cfg_section['bot_admin_id']
+        self.role_id = cfg_section['bot_role_id']
 
     def is_admin(self, member: discord.Member) -> bool:
         """ Checks if a member is the administrator of the bot or not.
@@ -342,10 +332,10 @@ class PomodoroBot(commands.Bot):
 
                 end_micro -= start_micro
                 end_micro %= 1000000.0
-                sleep_time = ((self.timer_step * 1000000.0) - end_micro)
+                sleep_time = ((timer.step * 1000000.0) - end_micro)
 
                 await asyncio.sleep(sleep_time / 1000000.0)
-                timer.curr_time += self.timer_step
+                timer.curr_time += timer.step
             else:
                 self.timers_running -= 1
                 await self.update_status()

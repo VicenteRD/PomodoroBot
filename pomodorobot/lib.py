@@ -167,7 +167,7 @@ def as_object(obj_id: str) -> discord.Object:
     return discord.Object(obj_id)
 
 
-def to_boolean(value: str):
+def to_boolean(value) -> bool:
     """Parses a string to boolean. Only meant to be used for command arguments.
 
     :param value: The string to evaluate.
@@ -181,12 +181,14 @@ def to_boolean(value: str):
         or 'false', 'off', 'no' or 'n' for False
         and is not case-sensitive (so something like TruE is valid).
     """
+    if isinstance(value, bool):
+        return value
 
-    value = value.lower()
+    value = str(value).lower()
 
-    if value in ['true', 'on', 'yes', 'y']:
+    if value in ['1', 'true', 'on', 'yes', 'y']:
         return True
-    elif value in ['false', 'off', 'no', 'n']:
+    elif value in ['0', 'false', 'off', 'no', 'n']:
         return False
     else:
         raise TypeError("Could not parse {} to boolean".format(value))

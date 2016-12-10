@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from discord.ext import commands
 
@@ -6,12 +7,15 @@ import pomodorobot.lib as lib
 import pomodorobot.config as config
 
 from pomodorobot.bot import PomodoroBot
+from pomodorobot.timer import TimerEvent, TimerStateEvent, TimerPeriodEvent
 
 
 class Events:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
+
+        TimerEvent.add_listener(self.timer_state_listener)
 
     async def on_command_error(self, error, ctx: commands.Context):
 
@@ -81,6 +85,32 @@ class Events:
 
     async def on_message_edit(self, before, after):
         pass
+
+    def timer_state_listener(self, e: TimerEvent):
+        if isinstance(e, TimerStateEvent):
+            message = "{} -> {}".format(
+                e.old_state.name if e.old_state is not None else "None",
+                e.new_state.name if e.new_state is not None else "None"
+            )
+
+        elif isinstance(e, TimerPeriodEvent):
+            message = "{} -> {}".format(
+                e.old_period.name if e.old_period is not None else "None",
+                e.new_period.name if e.new_period is not None else "None"
+            )
+
+
+        else:
+            return
+
+        # TODO, actual update
+
+        @asyncio.coroutine
+        def reaction():
+            for member in e.timer.subbed:
+                yield from self.bot.safe_send(member, message)
+
+        self.bot.loop.create_task(reaction())
 
 
 def setup(bot: PomodoroBot):

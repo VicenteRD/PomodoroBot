@@ -221,7 +221,7 @@ class PomodoroBot(commands.Bot):
 
         :param start_idx: The index of the period from which the timer should
             start from. Defaults to 0, or is 0 if it's outside the valid range.
-        :type start_idx: int; 0 < start_idx <= len(timer.times)
+        :type start_idx: int; 0 < start_idx <= len(timer.periods)
         """
 
         timer = self.timers[channel_id]
@@ -235,18 +235,18 @@ class PomodoroBot(commands.Bot):
             iter_start = datetime.now()
             start_micro = iter_start.second * 1000000 + iter_start.microsecond
 
-            if timer.state == State.RUNNING and \
-               timer.curr_time >= timer.times[timer.curr_period] * 60:
+            if timer.get_state() == State.RUNNING and \
+               timer.curr_time >= timer.periods[timer.get_period()].time * 60:
 
-                say = "@here | '" + timer.names[timer.curr_period]
+                say = "'" + timer.periods[timer.get_period()].name
                 say += "' period over!"
 
                 timer.curr_time = 0
-                timer.curr_period += 1
 
-                if timer.curr_period >= len(timer.times) and \
+                if timer.get_period() + 1 >= len(timer.periods) and \
                    not timer.repeat:
                     timer.action = Action.STOP
+                    # TODO actually stop and set idx to -1
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel_id)
                     await self.safe_send(channel_id, say, tts=timer.tts)
@@ -255,13 +255,14 @@ class PomodoroBot(commands.Bot):
                     await self.update_status()
                     return
 
-                timer.curr_period %= len(timer.times)
+                timer.set_period(timer.get_period() + 1 % len(timer.periods))
 
                 if timer.action == Action.NONE:
-                    say += (" '" + timer.names[timer.curr_period] +
+                    say += (" '" + timer.periods[timer.get_period()].name +
                             "' period now starting (" +
-                            lib.pluralize(timer.times[timer.curr_period],
-                                          "minute", append="s") + ").")
+                            lib.pluralize(
+                                timer.periods[timer.get_period()].time,
+                                "minute", append="s") + ").")
 
                 lib.log(say, channel_id=channel_id)
                 await self.safe_send(channel_id, say, tts=timer.tts)
@@ -272,10 +273,10 @@ class PomodoroBot(commands.Bot):
             if timer.action == Action.STOP:
                 timer.action = Action.NONE
 
-                timer.curr_period = -1
-                timer.curr_time = 0
+                timer.set_period(-1)
+                timer.set_state(State.STOPPED)
 
-                timer.state = State.STOPPED
+                timer.curr_time = 0
 
                 lib.log("Timer has stopped.", channel_id=channel_id)
                 await self.safe_send(channel_id, "Timer has stopped.")
@@ -287,7 +288,7 @@ class PomodoroBot(commands.Bot):
 
             elif timer.action == Action.PAUSE:
                 timer.action = Action.NONE
-                timer.state = State.PAUSED
+                timer.set_state(State.PAUSED)
 
                 lib.log("Timer has paused.", channel_id=channel_id)
                 await self.safe_send(channel_id, "Timer has paused.")
@@ -295,8 +296,11 @@ class PomodoroBot(commands.Bot):
             elif timer.action == Action.RUN:
                 timer.action = Action.NONE
 
-                if timer.state == State.STOPPED:
-                    timer.curr_period = start_idx
+                prev_state = timer.get_state()
+                timer.set_state(State.RUNNING)
+
+                if prev_state == State.STOPPED:
+                    timer.set_period(start_idx)
                     say_action = "Starting"
                 else:
                     say_action = "Resuming"
@@ -317,8 +321,6 @@ class PomodoroBot(commands.Bot):
                                  " https://goo.gl/tYYD7s")
                         await self.safe_send(channel_id, kitty)
 
-                timer.state = State.RUNNING
-
             try:
                 if self.time_messages[channel_id] is not None:
                     await self.edit_message(self.time_messages[channel_id],
@@ -326,7 +328,7 @@ class PomodoroBot(commands.Bot):
             except d_err.NotFound:
                 pass
 
-            if timer.state == State.RUNNING:
+            if timer.get_state() == State.RUNNING:
                 iter_end = datetime.now()
                 end_micro = iter_end.second * 1000000 + iter_end.microsecond
 

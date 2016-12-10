@@ -152,7 +152,7 @@ class Other:
         await self.bot.say("Hope I did well, bye!")
 
         for channel_id, p_timer in self.bot.timers.items():
-            if p_timer.state != State.STOPPED:
+            if p_timer.get_state() != State.STOPPED:
                 p_timer.stop()
                 if lib.get_channel_id(ctx) != channel_id:
                     await self.bot.safe_send(

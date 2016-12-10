@@ -59,7 +59,8 @@ def get_server_id(context: Context) -> str:
     :return: The server's ID
     """
 
-    return context.message.server.id
+    server = context.message.server
+    return None if server is None else server.id
 
 
 def get_channel_id(context: Context) -> str:

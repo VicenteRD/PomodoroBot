@@ -123,7 +123,7 @@ class TimerCommands:
 
                 send = log = (
                     "Correctly set up timer config: " + times + "." +
-                    "\nLooping is **" + ("ON" if repeat else "OFF") +
+                    "\nLooping is **" + ("ON" if loop else "OFF") +
                     "**\nCountdown is **" +
                     ("ON" if countdown else "OFF") + "**")
             else:
@@ -143,6 +143,58 @@ class TimerCommands:
         lib.log(log, channel_id=channel_id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
+    @timer.command(name="sub", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    async def timer_sub(self, ctx: commands.Context):
+        """
+
+        :param ctx:
+        :return:
+        """
+
+        channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+        author = ctx.message.author
+
+        if author not in self.bot.timers[channel_id].subbed:
+            # TODO: check if he's subbed to another timer.
+            self.bot.timers[channel_id].subbed.append(author)
+            log = author.id + " has subscribed to this timer."
+            send = "You've successfully subscribed to this timer, {}!"\
+                .format(lib.get_author_name(ctx, True))
+        else:
+            log = (author.id + " tried to subscribe to this timer, but he " +
+                   "was already added")
+            send = ("You're already subscribed. " +
+                    "I'll let you know of any changes!")
+
+        lib.log(log, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
+
+    @timer.command(name="unsub", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    async def timer_unsub(self, ctx: commands.Context):
+        """
+
+        :param ctx:
+        :return:
+        """
+
+        channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+        author = ctx.message.author
+
+        if author in self.bot.timers[channel_id].subbed:
+            self.bot.timers[channel_id].subbed.append(author)
+            log = author.id + " has un-subscribed to this timer."
+            send = "You've successfully un-subscribed to this timer, {}!"\
+                .format(lib.get_author_name(ctx, True))
+        else:
+            log = (author.id + " tried to un-subscribe to this timer, but he " +
+                   "was not in the list")
+            send = "You're not subscribed to this timer... "
+
+        lib.log(log, channel_id=channel_id)
+        await self.bot.say(send, delete_after=self.bot.ans_lifespan)
+
     @timer.command(name="start", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.unlocked_or_allowed)
@@ -157,7 +209,7 @@ class TimerCommands:
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
         if self.bot.timers[channel_id].start():
-            if not 0 < period_idx <= len(self.bot.timers[channel_id].times):
+            if not 0 < period_idx <= len(self.bot.timers[channel_id].periods):
                 period_idx = 1
 
             await self.bot.run_timer(channel_id, period_idx - 1)
@@ -262,7 +314,7 @@ class TimerCommands:
                 self.bot.timers[channel_id].list_periods()
             )
 
-            if self.bot.timers[channel_id].state == State.PAUSED:
+            if self.bot.timers[channel_id].get_state() == State.PAUSED:
                 await self.bot.edit_message(
                     self.bot.time_messages[channel_id],
                     self.bot.timers[channel_id].time()
@@ -283,7 +335,8 @@ class TimerCommands:
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
-        if self.bot.timers[channel_id].state == State.STOPPED:
+        if self.bot.timers[channel_id].get_state() == State.STOPPED:
+            self.bot.timers[channel_id].set_state(None)
             del self.bot.timers[channel_id]
 
             del self.bot.time_messages[channel_id]
@@ -309,7 +362,7 @@ class TimerCommands:
 
         channel_id = self.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
 
-        if self.bot.timers[channel_id].state == State.RUNNING:
+        if self.bot.timers[channel_id].get_state() == State.RUNNING:
             self.bot.timers_running -= 1
             await self.bot.update_status()
 
@@ -389,6 +442,23 @@ class TimerCommands:
                 level=logging.WARN if fail else logging.INFO)
         await self.bot.say(send, tts=timer.tts and not fail,
                            delete_after=self.bot.ans_lifespan)
+
+    @commands.command(name="timers", pass_context=True)
+    async def timers_list(self, ctx: commands.Context):
+        server = ctx.message.server
+        if server is None:
+            await self.bot.say("Timers are not allowed in private messages.",
+                               delete_after=self.bot.ans_lifespan)
+            return
+
+        t_list = ""
+        for c_id, timer in self.bot.timers.items():
+            t_list += server.get_channel(c_id).mention + ": "
+            t_list += timer.list_periods(True) + "\n\n"
+            t_list += "\n".join('\t' + l for l in timer.time().split('\n'))
+            t_list += "\n\n"
+
+        await self.bot.say(t_list, delete_after=self.bot.ans_lifespan * 3)
 
 
 def setup(bot: PomodoroBot):

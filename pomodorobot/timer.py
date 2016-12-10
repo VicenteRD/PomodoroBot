@@ -3,6 +3,7 @@ from enum import Enum
 
 import pomodorobot.lib as lib
 import pomodorobot.config as config
+from pomodorobot.channeltimerinterface import ChannelTimerInterface
 
 
 class State(Enum):
@@ -35,22 +36,40 @@ class Action(Enum):
 
 
 class TimerEvent:
+    """ Represents a timer-related event.
+    """
 
+    # The methods that listen to these events and react accordingly.
+    # See `add_listener` to see restrictions.
     listeners = []
 
     def __init__(self, timer):
         self.timer = timer
 
     def dispatch(self):
+        """ Dispatches the event, thus making the listeners react to it.
+        """
+
         for listener in TimerStateEvent.listeners:
             listener(self)
 
     @classmethod
     def add_listener(cls, listener):
+        """ Adds a listener to the list.
+            Listeners must be valid, callable functions (not messages),
+            and should only take 1 argument (aside from self if it's a method).
+
+        :param listener: The listener function.
+        :type listener: function
+        """
         cls.listeners.append(listener)
 
 
 class TimerStateEvent(TimerEvent):
+    """ A timer event that represents a change on its state.
+        It holds the state from which it's changing and the one it has changed
+        to.
+    """
 
     def __init__(self, timer, old_state, new_state):
         super().__init__(timer)
@@ -60,6 +79,9 @@ class TimerStateEvent(TimerEvent):
 
 
 class TimerPeriodEvent(TimerEvent):
+    """ A timer event that represents a change on its period.
+        It has a reference to the old period as well as the new one.
+    """
 
     def __init__(self, timer, old_period, new_period):
         super().__init__(timer)
@@ -69,6 +91,9 @@ class TimerPeriodEvent(TimerEvent):
 
 
 class Period:
+    """ Represents a Pomodoro Timer period.
+        It has a name and a duration, in minutes.
+    """
 
     def __init__(self, name, time):
         self.name = name
@@ -79,14 +104,17 @@ class PomodoroTimer:
     """ A class representing a pomodoro timer.
     """
 
-    def __init__(self):
+    def __init__(self, interface: ChannelTimerInterface):
+
+        # The interface that connects this timer to the channel where it's
+        # running
+        self._interface = interface
+
+        # The
         self.step = config.get_config().get_int('timer.time_step')
 
         # The different periods the timer has been setup with.
         self.periods = []
-
-        # The people using (subscribed) to this timer.
-        self.subbed = []
 
         # The period the timer is currently at.
         self._current_period = -1
@@ -106,24 +134,13 @@ class PomodoroTimer:
         # Whether the timer should count from 0 and show the "elapsed" time,
         # or count back from the period's time and show the remaining time.
         self._countdown = True
-        # Whether the bot should speak this timer's alerts out loud or not.
-        self.tts = False
 
     def setup(self, periods_format: str, on_repeat: bool, reverse: bool):
         """ Sets the pomodoro timer up with its periods, periods' names and
             extra options
 
-        :param periods_format: The string containing the periods and
-            their names, in a format similar to that of a dictionary.
-            Ex.: PeriodA:10,PeriodB:5,PeriodC:15
-                 This will create 3 periods of 10, 5 and 15 minutes each.
-
-            It also accepts segments with the format (nxName1:t1,Name2:t2),
-            which creates n iterations of Name1:t1,Name2:t2 periods (Where
-            Name1 and Name2 are the period names and t1, t2 the respective
-            times).
-            Ex.: (3xPeriodA:10,PeriodB:5),PeriodC:15
-                This will create 7 periods of times 10,5,10,5,10,5 and 15 each.
+        :param periods_format: The string to get the periods from. See
+            `PomodoroTimer.parse_format` for an in-depth explanation.
         :type periods_format: str
 
         :param on_repeat: Whether the timer should go back to period 0 after
@@ -145,8 +162,8 @@ class PomodoroTimer:
 
         self.periods = PomodoroTimer.parse_format(periods_format)
 
-        return None if self.periods is None else\
-            ", ".join(str(period.time) for period in self.periods)
+        return ", ".join(str(period.time) for period in self.periods) if \
+            self.periods is not None else None
 
     def start(self) -> bool:
         """ Starts the timer.
@@ -315,62 +332,6 @@ class PomodoroTimer:
 
         return p_list
 
-    @staticmethod
-    def parse_format(periods_format):
-        """
-
-        :param periods_format:
-        :return:
-        """
-        if periods_format is None or ':' not in periods_format:
-            return None, None
-
-        periods = []
-        if ',' not in periods_format:
-            try:
-                attempt = periods_format.split(':')
-                periods.append(Period(attempt[0], int(attempt[1])))
-
-                return periods
-            except ValueError:
-                return None, None
-
-        sections = re.sub(r",(?=[^()]*\))", '.', periods_format).split(',')
-
-        for section in sections:
-            if section.startswith('(') and section.endswith(')'):
-
-                section = section.replace('(', '').replace(')', '')
-                splits = section.split('x')
-
-                sub_sections = []
-
-                for s in splits[1].strip().split('.'):
-                    sub_sections.append(s.split(':'))
-                    if len(sub_sections[len(sub_sections) - 1]) != 2:
-                        return None, None
-
-                for i in range(0, int(splits[0]) * len(sub_sections)):
-                    idx = i % len(sub_sections)
-
-                    time = int(sub_sections[idx][1])
-                    if time == 0:
-                        continue
-                    periods.append(
-                        Period(sub_sections[idx][0].replace('_', ' '),
-                               int(time)))
-            else:
-                splits_b = section.split(':')
-                if len(splits_b) != 2:
-                    return None, None
-
-                time = int(splits_b[1])
-                if time == 0:
-                    continue
-                periods.append(Period(splits_b[0].replace('_', ' '), int(time)))
-
-        return periods
-
     def get_period(self):
         return self._current_period
 
@@ -394,4 +355,76 @@ class PomodoroTimer:
 
             self._state = new_state
 
+    def get_server_name(self):
+        return self._interface.get_server_name()
 
+    def get_channel_name(self):
+        return self._interface.get_channel_name()
+
+    def get_users_subscribed(self):
+        return self._interface.subbed
+
+    @staticmethod
+    def parse_format(periods_format: str):
+        """ Parses a string into the corresponding periods.
+
+        :param periods_format:  The string containing the periods and
+            their names, in a format similar to that of a dictionary.
+            Ex.: PeriodA:10,PeriodB:5,PeriodC:15
+                 This will create 3 periods of 10, 5 and 15 minutes each.
+
+            It also accepts segments with the format (nxName1:t1,Name2:t2),
+            which creates n iterations of Name1:t1,Name2:t2 periods (Where
+            Name1 and Name2 are the period names and t1, t2 the respective
+            times).
+            Ex.: (3xPeriodA:10,PeriodB:5),PeriodC:15
+                This will create 7 periods of times 10,5,10,5,10,5 and 15 each.
+        :type periods_format: str
+        """
+        if periods_format is None or ':' not in periods_format:
+            return None
+
+        periods = []
+        if ',' not in periods_format:
+            try:
+                attempt = periods_format.split(':')
+                periods.append(Period(attempt[0], int(attempt[1])))
+
+                return periods
+            except ValueError:
+                return None
+
+        sections = re.sub(r",(?=[^()]*\))", '.', periods_format).split(',')
+
+        for section in sections:
+            if section.startswith('(') and section.endswith(')'):
+
+                section = section.replace('(', '').replace(')', '')
+                splits = section.split('x')
+
+                sub_sections = []
+
+                for s in splits[1].strip().split('.'):
+                    sub_sections.append(s.split(':'))
+                    if len(sub_sections[len(sub_sections) - 1]) != 2:
+                        return None
+
+                for i in range(0, int(splits[0]) * len(sub_sections)):
+                    idx = i % len(sub_sections)
+
+                    time = int(sub_sections[idx][1])
+                    if time == 0:
+                        continue
+                    periods.append(
+                        Period(sub_sections[idx][0].replace('_', ' '),
+                               int(time)))
+            else:
+                splits_b = section.split(':')
+                if len(splits_b) != 2:
+                    return None
+
+                time = int(splits_b[1])
+                if time == 0:
+                    continue
+                periods.append(Period(splits_b[0].replace('_', ' '), int(time)))
+        return periods

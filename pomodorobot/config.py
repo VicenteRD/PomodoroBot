@@ -74,10 +74,24 @@ class Config:
         return self
 
     def get_section(self, path):
-        """ TODO
+        """ Gets a section of the configuration.
+            The path is a list of super-sections, in order, or a string of them
+            separated by dots
+            Ex.: If a config file has the structure
+                server:
+                    channel_1:
+                        person_A:
+                            name: 'John'
+                            last: 'Doe"
 
-        :param path:
-        :return:
+            You can get person_A's section by using the path
+            'server.channel_1.person_A'.
+
+        :param path: The path to the dictionary.
+        :type path: str or list
+
+        :return: The configuration section, as a dictionary, or None if it's not
+            a dictionary type.
         """
         if isinstance(path, str):
             keys = path.split('.')
@@ -93,10 +107,16 @@ class Config:
         return section
 
     def get_element(self, path: str):
-        """ TODO . NOT TYPE SAFE
+        """ Gets the element corresponding to the path.
+            See `get_section` to see how paths work.
 
-        :param path:
-        :return:
+            One should avoid using this method, as it's not type-safe. Instead,
+            use the methods `get_str`, `get_int`, `get_boolean` or `get_list`
+
+        :param path: The path of the element to get.
+        :type path: str
+
+        :return: The configuration element.
         """
         keys = path.split('.')
         element_key = keys.pop(-1)

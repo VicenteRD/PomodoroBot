@@ -80,11 +80,7 @@ class Events:
             .format(config.get_config().get_str('version'),
                     config.get_config().get_str('startup_msg'))
         for server in self.bot.servers:
-            await self.bot.send_message(server, message)\
-
-
-    async def on_message_edit(self, before, after):
-        pass
+            await self.bot.send_message(server, message)
 
     def timer_state_listener(self, e: TimerEvent):
         if isinstance(e, TimerStateEvent):

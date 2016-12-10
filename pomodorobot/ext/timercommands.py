@@ -48,7 +48,7 @@ class TimerCommands:
     @commands.check(checks.whitelisted)
     @commands.check(checks.unlocked_or_allowed)
     async def setup(self, ctx: commands.Context, timer_format="default",
-                    repeat="True", count_back="True"):
+                    repeat=None, count_back=None):
         """ Sets up a timer for the channel in which this command was executed.
             Only allows timers in white-listed channels (Specified in the
             configuration).
@@ -101,10 +101,19 @@ class TimerCommands:
 
         # Parse the countdown and looping arguments with the custom function.
         try:
-            loop = lib.to_boolean(repeat)
-            countdown = lib.to_boolean(count_back)
-        except cmd_err.BadArgument:
-            lib.log("Could not parse boolean arguments '{}' and '{}'"
+            if repeat is None:
+                loop = config.get_config().get_boolean('timer.looping_default')
+            else:
+                loop = lib.to_boolean(repeat)
+
+            if count_back is None:
+                countdown = config.get_config() \
+                    .get_boolean('timer.countdown_default')
+            else:
+                countdown = lib.to_boolean(count_back)
+
+        except TypeError:
+            lib.log("Could not parse boolean arguments '{!s}' and '{!s}'"
                     .format(repeat, count_back), channel_id=channel_id)
             await self.bot.say("Invalid arguments received, please try again.",
                                delete_after=self.bot.ans_lifespan)

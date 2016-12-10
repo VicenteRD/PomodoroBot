@@ -93,7 +93,9 @@ class Events:
         """
 
         if isinstance(e, TimerStateEvent):
-            message = "The timer you're subscribed to has "
+            message = "The timer at {}/{} has".format(e.timer.get_server_name(),
+                                                      e.timer.get_channel_name()
+                                                      )
             if e.new_state == State.RUNNING:
                 if e.old_state == State.PAUSED:
                     message += "resumed!"
@@ -107,12 +109,13 @@ class Events:
                 message += "reset."
 
         elif isinstance(e, TimerPeriodEvent):
-            message = "A timer you're subscribed to has updated!\n\t"
+            message = "A timer you're subscribed to has updated! [ {}/{} ]\n\t"\
+                .format(e.timer.get_server_name(), e.timer.get_channel_name())
 
             if e.old_period is not None:
-                message = "'{}' period over!".format(e.old_period.name)
+                message = "**{}** period over!".format(e.old_period.name)
             if e.new_period is not None:
-                message += " '{}' period now starting ({}).".format(
+                message += " **{}** period now starting ({}).".format(
                     e.new_period.name,
                     lib.pluralize(e.new_period.time, "minute", append="s"))
             message = message.strip()

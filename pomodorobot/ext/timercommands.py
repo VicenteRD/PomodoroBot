@@ -149,7 +149,7 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="sub", pass_context=True)
-    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.whitelisted)
     async def timer_sub(self, ctx: commands.Context):
         """ Adds you to the list of people currently using the timer.
             If you're in this list, you will receive a private message if the
@@ -176,7 +176,7 @@ class TimerCommands:
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="unsub", pass_context=True)
-    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.whitelisted)
     async def timer_unsub(self, ctx: commands.Context):
         """ Removes you from the list of people currently using the timer.
         """

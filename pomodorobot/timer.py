@@ -333,12 +333,29 @@ class PomodoroTimer:
         return p_list
 
     def get_period(self):
+        """ Gives the period index of the period the timer is currently in.
+
+        :return: The index.
+        """
         return self._current_period
 
     def get_state(self):
+        """ Gives the state the timer is currently in.
+
+        :return: The state. See `State`.
+        """
         return self._state
 
     def set_period(self, idx: int):
+        """ Sets the current period to the index specified.
+            It also triggers a TimerPeriodEvent.
+
+        :param idx: The new current period index.
+        :type idx: int. Must be 0 <= idx < len(periods) or -1.
+        """
+
+        if not (idx == -1 or 0 <= idx < len(self.periods)):
+            return
 
         old_period = self.periods[self._current_period] if \
             0 <= self._current_period < len(self.periods) else None
@@ -350,18 +367,37 @@ class PomodoroTimer:
         self._current_period = idx
 
     def set_state(self, new_state: State):
+        """ Sets the timer to a certain state.
+            Also triggers a TimerStateEvent
+
+        :param new_state: The state to set the timer to.
+        :type new_state: State
+        """
         if self._state != new_state:
             TimerStateEvent(self, self._state, new_state).dispatch()
 
             self._state = new_state
 
     def get_server_name(self):
+        """ Gets the name of the server in which this timer is running.
+
+        :return: The server's name.
+        """
         return self._interface.get_server_name()
 
     def get_channel_name(self):
+        """ Gets the name of the channel in which this timer is running.
+
+        :return: The channel's name.
+        """
         return self._interface.get_channel_name()
 
     def get_users_subscribed(self):
+        """ Gets a list of users (discord.Member) subscribed or using this
+            timer.
+
+        :return: The list of members.
+        """
         return self._interface.subbed
 
     @staticmethod

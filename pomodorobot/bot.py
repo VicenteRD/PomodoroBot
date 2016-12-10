@@ -257,8 +257,8 @@ class PomodoroBot(commands.Bot):
             if timer.get_state() == State.RUNNING and \
                timer.curr_time >= timer.periods[timer.get_period()].time * 60:
 
-                say = "'" + timer.periods[timer.get_period()].name
-                say += "' period over!"
+                say = "**{}** period over!"\
+                    .format(timer.periods[timer.get_period()].name)
 
                 timer.curr_time = 0
 
@@ -274,11 +274,11 @@ class PomodoroBot(commands.Bot):
                 timer.set_period((timer.get_period() + 1) % len(timer.periods))
 
                 if timer.action == Action.NONE:
-                    say += (" '" + timer.periods[timer.get_period()].name +
-                            "' period now starting (" +
-                            lib.pluralize(
-                                timer.periods[timer.get_period()].time,
-                                "minute", append="s") + ").")
+                    say += " **{}** period now starting ({})."\
+                        .format(timer.periods[timer.get_period()].name,
+                                lib.pluralize(
+                                    timer.periods[timer.get_period()].time,
+                                    "minute", append="s"))
 
                 lib.log(say, channel_id=channel.id)
                 await self.safe_send(channel, say, tts=interface.tts)

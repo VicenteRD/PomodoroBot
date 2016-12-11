@@ -223,6 +223,21 @@ class Other:
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
+    @commands.command(hidden=True)
+    async def potato(self, time_out=15):
+        """ Come on!
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = ("http://www.lovethispic.com/uploaded_images/156255-I-Am" +
+               "-A-Tiny-Potato-And-I-Believe-In-You-You-Can-Do-The-Thing.jpg")
+        embed = discord.Embed(title="Believe!",
+                              url=url).set_image(url=url)
+
+        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+
 
 def setup(bot: PomodoroBot):
     bot.add_cog(Other(bot))

@@ -482,7 +482,7 @@ class TimerCommands:
                                           lib.get_server(ctx).name)
             attendance_book = open(filename, 'a')
 
-            attendance_book.write("{} | {} || {} [{}]".format(
+            attendance_book.write("{} | {} || {} [{}]\n".format(
                 str(datetime.datetime.utcnow()).split('.')[0],
                 lib.get_channel_name(ctx), lib.get_author_name(ctx, True),
                 detail))

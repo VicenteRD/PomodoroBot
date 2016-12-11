@@ -254,9 +254,10 @@ class TimerCommands:
 
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        if self.bot.get_interface(channel).timer.pause():
+        interface = self.bot.get_interface(channel)
+        if interface.timer.pause():
             log = "Timer will be paused soon."
-            await self.bot.say(log, delete_after=self.bot.timer_step)
+            await self.bot.say(log, delete_after=interface.timer.step)
 
         else:
             log = "Could not pause timer, stopped or already running."
@@ -278,10 +279,14 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         if interface.timer.stop():
             send = "Timer will stop soon."
-            await self.bot.say(send, delete_after=self.bot.timer_step)
+            await self.bot.say(send, delete_after=interface.timer.step)
 
         else:
             await self.bot.remove_messages(channel)
+
+            interface.time_message = None
+            interface.list_message = None
+
             send = "Timer has stopped."
             await self.bot.say(send, tts=interface.tts)
 

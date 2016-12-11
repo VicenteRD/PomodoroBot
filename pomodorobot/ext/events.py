@@ -93,39 +93,36 @@ class Events:
         """
 
         if isinstance(e, TimerStateEvent):
-            message = "The timer at {}/{} has".format(e.timer.get_server_name(),
-                                                      e.timer.get_channel_name()
-                                                      )
+            msg = "**[{}/{}]** The timer has "\
+                .format(e.timer.get_server_name(), e.timer.get_channel_name())
+
             if e.new_state == State.RUNNING:
-                if e.old_state == State.PAUSED:
-                    message += "resumed!"
-                else:
-                    message += "started!"
+                msg += "resumed!" if e.old_state == State.PAUSED else "started!"
             elif e.new_state == State.PAUSED:
-                message += "paused."
+                msg += "paused."
             elif e.new_state == State.STOPPED:
-                message += "stopped."
+                msg += "been set up." if e.old_state is None else "stopped."
             else:
-                message += "reset."
+                msg += "been reset."
 
         elif isinstance(e, TimerPeriodEvent):
-            message = "A timer you're subscribed to has updated! [ {}/{} ]\n\t"\
+            msg = "**[{}/{}]** Timer updated! \n\t"\
                 .format(e.timer.get_server_name(), e.timer.get_channel_name())
 
             if e.old_period is not None:
-                message = "**{}** period over!".format(e.old_period.name)
+                msg += "**{}** period over!".format(e.old_period.name)
             if e.new_period is not None:
-                message += " **{}** period now starting ({}).".format(
+                msg += " **{}** period now starting (_{}_).".format(
                     e.new_period.name,
                     lib.pluralize(e.new_period.time, "minute", append="s"))
-            message = message.strip()
+            msg = msg.strip()
         else:
             return
 
         @asyncio.coroutine
         def reaction():
             for member in e.timer.get_users_subscribed():
-                yield from self.bot.safe_send(member, message)
+                yield from self.bot.safe_send(member, msg)
 
         self.bot.loop.create_task(reaction())
 

@@ -349,14 +349,15 @@ class PomodoroBot(commands.Bot):
             else:
                 break
 
-        timer.curr_time = 0
-        timer.set_period(-1)
-        timer.set_state(State.STOPPED)
+        if timer.get_state() != State.PAUSED:
+            timer.curr_time = 0
+            timer.set_period(-1)
+            timer.set_state(State.STOPPED)
 
-        await self.remove_messages(channel)
+            await self.remove_messages(channel)
 
-        interface.time_message = None
-        interface.list_message = None
+            interface.time_message = None
+            interface.list_message = None
 
         self.timers_running -= 1
         await self.update_status()

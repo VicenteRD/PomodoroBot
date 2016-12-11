@@ -257,7 +257,7 @@ class PomodoroBot(commands.Bot):
             if timer.get_state() == State.RUNNING and \
                timer.curr_time >= timer.periods[timer.get_period()].time * 60:
 
-                say = "**{}** period over!"\
+                say = "'{}' period over!"\
                     .format(timer.periods[timer.get_period()].name)
 
                 timer.curr_time = 0
@@ -274,7 +274,7 @@ class PomodoroBot(commands.Bot):
                 timer.set_period((timer.get_period() + 1) % len(timer.periods))
 
                 if timer.action == Action.NONE:
-                    say += " **{}** period now starting ({})."\
+                    say += " '{}' period now starting ({})."\
                         .format(timer.periods[timer.get_period()].name,
                                 lib.pluralize(
                                     timer.periods[timer.get_period()].time,

@@ -153,7 +153,7 @@ class PomodoroBot(commands.Bot):
 
         if self.has_permission(member) and \
            self.get_interface(channel).spoofed is not None:
-            return self._interfaces[channel]
+            return self._interfaces[channel].spoofed
         return channel
 
     async def update_status(self):

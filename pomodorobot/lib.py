@@ -4,21 +4,24 @@ import logging
 import discord
 
 from discord.ext import commands
-from discord.ext.commands import Context, errors
+from discord.ext.commands import Context
 
 
 class LibLogger:
-    """ Represents a logger with a couple extra checks to add flexbility.
+    """ Represents a logger wrapper
+        with a couple extra checks to add flexibility.
     """
 
-    logger = logging.getLogger()
+    def __init__(self):
+        # The logger itself.
+        self.logger = logging.getLogger()
 
-    # Whether the logger is ready to be used or not, with the setup correctly
-    # in place.
-    ready = False
-    # Whether the logger is in debug mode (meaning its level is set to
-    # logging.DEBUG) or not (meaning the level is at logging.INFO).
-    debug = False
+        # Whether the logger is ready to be used or not, with the setup
+        # correctly in place.
+        self.ready = False
+        # Whether the logger is in debug mode (meaning its level is set to
+        # logging.DEBUG) or not (meaning the level is at logging.INFO).
+        self.debug = False
 
 
 _logger = LibLogger()
@@ -49,6 +52,19 @@ def init_logger():
     _logger.ready = True
 
 
+def get_server(context: Context) -> discord.Server:
+    """ Gets the server to which a command was sent,
+        based on the command's context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :return: The server
+    """
+
+    return context.message.server
+
+
 def get_server_id(context: Context) -> str:
     """ Gets the ID of the server to which a command was sent,
         based on the command's context.
@@ -59,7 +75,21 @@ def get_server_id(context: Context) -> str:
     :return: The server's ID
     """
 
-    return context.message.server.id
+    server = get_server(context)
+    return None if server is None else server.id
+
+
+def get_channel(context: Context) -> discord.Channel:
+    """ Gets a channel to which a command was sent, based on the command's
+        context.
+
+    :param context: The context in which the command was sent.
+    :type context: discord.ext.commands.Context
+
+    :return: The channel
+    """
+
+    return context.message.channel
 
 
 def get_channel_id(context: Context) -> str:
@@ -72,7 +102,7 @@ def get_channel_id(context: Context) -> str:
     :return: The channel's ID
     """
 
-    return context.message.channel.id
+    return get_channel(context).id
 
 
 def get_channel_name(context: Context) -> str:
@@ -84,8 +114,7 @@ def get_channel_name(context: Context) -> str:
 
     :return: The channel's name
     """
-
-    return context.message.channel.name
+    return get_channel(context).name
 
 
 def get_author_id(context: Context) -> str:
@@ -181,6 +210,7 @@ def to_boolean(value) -> bool:
         or 'false', 'off', 'no' or 'n' for False
         and is not case-sensitive (so something like TruE is valid).
     """
+
     if isinstance(value, bool):
         return value
 

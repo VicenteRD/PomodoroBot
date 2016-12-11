@@ -45,8 +45,6 @@ class Other:
         """
 
         self.bot.reload_config(config.get_config().reload())
-        for timer in self.bot.timers.values():
-            timer.step = config.get_config().get_int('timer.time_step')
 
         await self.bot.say("Successfully reloaded configuration.",
                            delete_after=self.bot.ans_lifespan)
@@ -60,25 +58,26 @@ class Other:
             Requires elevated permissions.
         """
 
-        channel_id = lib.get_channel_id(ctx)
+        channel = lib.get_channel(ctx)
+        interface = self.bot.get_interface(channel)
 
-        if channel_id in self.bot.spoofed.keys():
-            channel_id = self.bot.spoofed[channel_id]
+        if interface.spoofed is not None:
+            channel = interface.spoofed
 
-        if channel_id not in self.bot.locked:
-            self.bot.locked.append(channel_id)
-
-            await self.bot.say("Channel locked.",
-                               delete_after=self.bot.ans_lifespan)
-            lib.log(lib.get_author_name(ctx) + " locked the channel.",
-                    channel_id=channel_id)
-        else:
-            self.bot.locked.remove(channel_id)
+        if interface.locked:
+            interface.locked = False
 
             await self.bot.say("Channel unlocked.",
                                delete_after=self.bot.ans_lifespan)
             lib.log(lib.get_author_name(ctx) + " unlocked the channel.",
-                    channel_id=channel_id)
+                    channel_id=channel.id)
+        else:
+            interface.locked = True
+
+            await self.bot.say("Channel locked.",
+                               delete_after=self.bot.ans_lifespan)
+            lib.log(lib.get_author_name(ctx) + " locked the channel.",
+                    channel_id=channel.id)
 
     @admin_cmd.command(name="spoof", pass_context=True)
     async def admin_spoof(self, ctx: commands.Context, spoofed_id=None):
@@ -98,21 +97,23 @@ class Other:
         :type spoofed_id: str
         """
 
-        channel_id = lib.get_channel_id(ctx)
+        channel = lib.get_channel(ctx)
 
-        if channel_id == spoofed_id:
+        if channel.id == spoofed_id:
             await self.bot.say("How about no. " + spoofed_id,
                                delete_after=self.bot.ans_lifespan)
             return
 
+        spoofed_channel = lib.get_server(ctx).get_channel(spoofed_id)
+
         if spoofed_id is not None:
-            self.bot.spoofed[channel_id] = spoofed_id
+            self.bot.get_interface(channel).spoofed = spoofed_channel
 
-            send = "Now acting in channel " + spoofed_id
-            log = "Now acting as if in " + spoofed_id
+            send = "Now acting in channel " + spoofed_channel.name
+            log = "Now acting as if in " + spoofed_channel.name
 
-        elif channel_id in self.bot.spoofed.keys():
-            del self.bot.spoofed[channel_id]
+        elif self.bot.get_interface(channel).spoofed is not None:
+            self.bot.get_interface(channel).spoofed = None
 
             send = "Now acting in current channel"
             log = "Spoofing now off"
@@ -120,7 +121,7 @@ class Other:
             raise commands.MissingRequiredArgument
 
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
-        lib.log(log, channel_id=channel_id)
+        lib.log(log, channel_id=channel.id)
 
     @admin_cmd.command(name="debug")
     @commands.check(checks.is_admin)
@@ -151,16 +152,16 @@ class Other:
         lib.log("Shutting down...")
         await self.bot.say("Hope I did well, bye!")
 
-        for channel_id, p_timer in self.bot.timers.items():
-            if p_timer.state != State.STOPPED:
-                p_timer.stop()
-                if lib.get_channel_id(ctx) != channel_id:
+        for channel, timer in self.bot.valid_timers().items():
+            if timer.get_state() != State.STOPPED:
+                timer.stop()
+                if lib.get_channel(ctx) != channel:
                     await self.bot.safe_send(
-                        channel_id,
+                        channel,
                         "I'm sorry, I have to go. See you later!"
                     )
 
-                    await self.bot.remove_messages(channel_id)
+                    await self.bot.remove_messages(channel)
 
         await self.bot.logout()
 

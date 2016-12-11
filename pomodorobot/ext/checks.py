@@ -53,9 +53,9 @@ def channel_has_timer(ctx: commands.Context) -> bool:
     """
 
     if isinstance(ctx.bot, PomodoroBot):
-        channel_id = ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx))
+        channel = ctx.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        if channel_id in ctx.bot.timers.keys():
+        if ctx.bot.get_interface(channel).timer is not None:
             return True
 
     raise commands.CheckFailure(message="timer not found")
@@ -72,8 +72,9 @@ def unlocked_or_allowed(ctx: commands.Context) -> bool:
     :raises: commands.CheckFailure: If the check fails.
         message : "timer locked"
     """
+
     if isinstance(ctx.bot, PomodoroBot) and \
-       ctx.bot.is_locked(lib.get_channel_id(ctx)) and \
+       ctx.bot.is_locked(lib.get_channel(ctx)) and \
        not ctx.bot.has_permission(ctx.message.author):
             raise commands.CheckFailure(message="timer locked")
     return True
@@ -91,10 +92,11 @@ def whitelisted(ctx: commands.Context) -> bool:
     whitelist = config.get_config().get_section('timer.channel_whitelist')
     server_id = lib.get_server_id(ctx)
 
-    return whitelist is not None and server_id in whitelist.keys() and \
+    return whitelist is not None and server_id is not None and \
+        server_id in whitelist.keys() and \
         isinstance(ctx.bot, PomodoroBot) and \
         isinstance(whitelist[server_id], dict) and \
-        ctx.bot.spoof(ctx.message.author, lib.get_channel_id(ctx)) in \
+        ctx.bot.spoof(ctx.message.author, lib.get_channel(ctx)).id in \
         whitelist[server_id].keys()
 
 

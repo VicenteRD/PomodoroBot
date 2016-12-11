@@ -1,18 +1,21 @@
 import logging
+import asyncio
 
-import discord
 from discord.ext import commands
 
 import pomodorobot.lib as lib
 import pomodorobot.config as config
 
 from pomodorobot.bot import PomodoroBot
+from pomodorobot.timer import TimerEvent, TimerStateEvent, TimerPeriodEvent, State
 
 
 class Events:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
+
+        TimerEvent.add_listener(self.timer_listener)
 
     async def on_command_error(self, error, ctx: commands.Context):
 
@@ -61,10 +64,13 @@ class Events:
             log = str(error)
 
         lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
-        await self.bot.safe_send(ctx.message.channel, send,
+        await self.bot.safe_send(lib.get_channel(ctx), send,
                                  delete_after=self.bot.ans_lifespan)
 
     async def on_ready(self):
+        """ A listener for the event in which the bot is ready to work.
+        """
+
         lib.log("")
         lib.log("Logged in as :")
         lib.log("\t" + self.bot.user.name)
@@ -79,6 +85,51 @@ class Events:
         for server in self.bot.servers:
             await self.bot.send_message(server, message)
 
+    def timer_listener(self, e: TimerEvent):
+        """ Listens to any timer-related events.
+
+        :param e: The timers' events to listen for. Can be either
+            TimerPeriodEvent or TimerStateEvent.
+        """
+
+        if isinstance(e, TimerStateEvent):
+            msg = "**[{}/{}]** The timer has "\
+                .format(e.timer.get_server_name(), e.timer.get_channel_name())
+
+            if e.new_state == State.RUNNING:
+                msg += "resumed!" if e.old_state == State.PAUSED else "started!"
+            elif e.new_state == State.PAUSED:
+                msg += "paused."
+            elif e.new_state == State.STOPPED:
+                msg += "been set up." if e.old_state is None else "stopped."
+            else:
+                msg += "been reset."
+
+        elif isinstance(e, TimerPeriodEvent):
+            msg = "**[{}/{}]** Timer updated! \n\t"\
+                .format(e.timer.get_server_name(), e.timer.get_channel_name())
+
+            if e.old_period is not None:
+                msg += "**{}** period over!".format(e.old_period.name)
+            if e.new_period is not None:
+                msg += " **{}** period now starting (_{}_).".format(
+                    e.new_period.name,
+                    lib.pluralize(e.new_period.time, "minute", append="s"))
+            msg = msg.strip()
+        else:
+            return
+
+        @asyncio.coroutine
+        def reaction():
+            for member in e.timer.get_users_subscribed():
+                yield from self.bot.safe_send(member, msg)
+
+        self.bot.loop.create_task(reaction())
+
 
 def setup(bot: PomodoroBot):
+    """ Sets the cog up.
+
+    :param bot: The bot to add this cog to.
+    """
     bot.add_cog(Events(bot))

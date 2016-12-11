@@ -165,7 +165,7 @@ class Other:
 
         await self.bot.logout()
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def why(self, time_out=15):
         """ For when you question life and decisions.
 
@@ -179,7 +179,7 @@ class Other:
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def howcome(self, time_out=15):
         """ When you just don't understand, this command is your best friend.
 
@@ -195,7 +195,7 @@ class Other:
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
-    @commands.command()
+    @commands.command(hidden=True)
     async def no(self, time_out=15):
         """ For those moments when people don't get it.
 
@@ -209,7 +209,19 @@ class Other:
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
-        # https://media.giphy.com/media/4OowbIsmYHbpu/giphy.gif
+    @commands.command(hidden=True)
+    async def faint(self, time_out=15):
+        """ Can't handle it? Me neither.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = "https://media.giphy.com/media/4OowbIsmYHbpu/giphy.gif"
+        embed = discord.Embed(title="Oh god.",
+                              url=url).set_image(url=url)
+
+        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
 
 def setup(bot: PomodoroBot):

@@ -1,7 +1,7 @@
 import logging
+import datetime
 
 from discord.ext import commands
-from discord.ext.commands import errors as cmd_err
 
 import pomodorobot.ext.checks as checks
 import pomodorobot.config as config
@@ -19,6 +19,8 @@ class TimerCommands:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
+
+        self.att_folder = "attendance"
 
     @commands.group(name="timer", pass_context=True)
     @commands.check(checks.whitelisted)
@@ -156,12 +158,15 @@ class TimerCommands:
             timer's period changes or if it starts/pauses/stops.
         """
 
-        channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
         author = ctx.message.author
+        channel = self.bot.spoof(author, lib.get_channel(ctx))
 
         interface = self.bot.get_interface(channel)
         if author not in interface.subbed:
             interface.subbed.append(author)
+
+            self._add_attendance(ctx, "Subscribed")
+
             log = (lib.get_author_name(ctx, True) +
                    " has subscribed to this timer.")
             send = "You've successfully subscribed to this timer, {}!"\
@@ -187,6 +192,9 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
             interface.subbed.remove(author)
+
+            self._add_attendance(ctx, "Un-Subscribed")
+
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")
             send = "You've successfully un-subscribed to this timer, {}!"\
@@ -467,6 +475,21 @@ class TimerCommands:
 
         if t_list != "":
             await self.bot.say(t_list, delete_after=self.bot.ans_lifespan * 3)
+
+    def _add_attendance(self, ctx, detail):
+        try:
+            filename = "{}/{}.txt".format(self.att_folder,
+                                          lib.get_server(ctx).name)
+            attendance_book = open(filename, 'a')
+
+            attendance_book.write("{} | {} || {} [{}]".format(
+                str(datetime.datetime.utcnow()).split('.')[0],
+                lib.get_channel_name(ctx), lib.get_author_name(ctx, True),
+                detail))
+
+            attendance_book.close()
+        except IOError:
+            lib.log("Failed to write attendance.")
 
 
 def setup(bot: PomodoroBot):

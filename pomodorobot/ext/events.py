@@ -110,13 +110,18 @@ class Events:
         elif isinstance(e, TimerPeriodEvent):
             msg += "Timer updated:\t\t"
 
-            if e.old_period is not None:
-                msg += " **{}** period over!".format(e.old_period.name)
-            if e.new_period is not None:
-                msg += " **{}** period now starting [_{}_]".format(
+            if e.old_period == e.new_period:
+                msg = "**{}** period has been restarted! [_{}_]".format(
                     e.new_period.name,
                     lib.pluralize(e.new_period.time, "minute", append="s"))
-            msg = msg.strip()
+
+            else:
+                if e.old_period is not None:
+                    msg += " **{}** period over!".format(e.old_period.name)
+                if e.new_period is not None:
+                    msg += " **{}** period now starting [_{}_]".format(
+                        e.new_period.name,
+                        lib.pluralize(e.new_period.time, "minute", append="s"))
         else:
             return
 

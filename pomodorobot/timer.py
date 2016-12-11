@@ -95,9 +95,15 @@ class Period:
         It has a name and a duration, in minutes.
     """
 
-    def __init__(self, name, time):
+    def __init__(self, idx: int, name: str, time: int):
+        self.id = idx
         self.name = name
         self.time = time
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and\
+            self.id == other.id and \
+            self.name == other.name and self.time == other.time
 
 
 class PomodoroTimer:
@@ -428,7 +434,7 @@ class PomodoroTimer:
         if ',' not in periods_format:
             try:
                 attempt = periods_format.split(':')
-                periods.append(Period(attempt[0], int(attempt[1])))
+                periods.append(Period(len(periods), attempt[0], int(attempt[1])))
 
                 return periods
             except ValueError:
@@ -455,9 +461,9 @@ class PomodoroTimer:
                     time = int(sub_sections[idx][1])
                     if time == 0:
                         continue
-                    periods.append(
-                        Period(sub_sections[idx][0].replace('_', ' '),
-                               int(time)))
+                    periods.append(Period(len(periods),
+                                   sub_sections[idx][0].replace('_', ' '),
+                                   int(time)))
             else:
                 splits_b = section.split(':')
                 if len(splits_b) != 2:
@@ -466,5 +472,7 @@ class PomodoroTimer:
                 time = int(splits_b[1])
                 if time == 0:
                     continue
-                periods.append(Period(splits_b[0].replace('_', ' '), int(time)))
+                periods.append(Period(len(periods),
+                                      splits_b[0].replace('_', ' '),
+                                      int(time)))
         return periods

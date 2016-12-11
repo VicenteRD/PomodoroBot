@@ -332,12 +332,16 @@ class PomodoroTimer:
 
         return p_list
 
-    def get_period(self):
+    def get_period(self, natural=False):
         """ Gives the period index of the period the timer is currently in.
+
+        :param natural: Whether the given index should be counted from 1 to 'n'
+            (True) or from 0 to 'n' (False).
+        :type natural: bool
 
         :return: The index.
         """
-        return self._current_period
+        return self._current_period + (1 if natural else 0)
 
     def get_state(self):
         """ Gives the state the timer is currently in.

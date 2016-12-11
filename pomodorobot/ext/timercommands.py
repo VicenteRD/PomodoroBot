@@ -309,9 +309,7 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
 
         if period_idx == "next":
-            # it's 2, since idx counts from 1 to n and the timer itself
-            # counts from 0 to n-1
-            idx = interface.timer.get_period() + 2
+            idx = interface.timer.get_period(True) + 1
         else:
             try:
                 idx = int(period_idx)

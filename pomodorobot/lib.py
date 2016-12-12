@@ -143,11 +143,11 @@ def get_author_name(context: Context, nick=False) -> str:
 
     :return: The author's name
     """
+    return get_name(context.message.author, nick)
 
-    condition = nick and context.message.author.nick is not None
 
-    return context.message.author.nick if condition \
-        else context.message.author.name
+def get_name(member: discord.Member, nick=False) -> str:
+    return member.nick if nick and member.nick is not None else member.name
 
 
 def author_has_role(context: commands.Context, role_id: str) -> bool:

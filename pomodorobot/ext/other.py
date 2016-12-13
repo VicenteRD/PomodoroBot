@@ -1,3 +1,4 @@
+import yaml
 import discord
 
 from discord.ext import commands
@@ -122,6 +123,41 @@ class Other:
 
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
         lib.log(log, channel_id=channel.id)
+
+    @admin_cmd.command(name="attendance", pass_context=True)
+    @commands.check(checks.has_permission)
+    async def admin_attendance(self, ctx: commands.Context, name: str):
+        """ Gives the last attendance (timer subscription) of the user
+            to any timer, in the form of the UTC time in which it was
+            registered.
+
+        :param name: The username (Not the nick) of the user of whose
+            attendance you want to know.
+        :return:
+        """
+        file = open(self.bot.attendance_file, 'r')
+        attendance_info = yaml.load(file)
+        file.close()
+
+        server_id = lib.get_server_id(ctx)
+
+        if attendance_info is not None and \
+           server_id in attendance_info.keys() and \
+           name in attendance_info[server_id]:
+            attendance_date = attendance_info[server_id][name]
+        else:
+            attendance_date = None
+
+        log = "{} queried for {}'s attendance. Result was: {}"\
+            .format(lib.get_author_name(ctx, True), name, attendance_date)
+
+        if attendance_date is None:
+            attendance_date = "None found"
+
+        lib.log(log, channel_id=lib.get_channel_id(ctx))
+        await self.bot.say("```\n" + attendance_date + "\n```",
+                           delete_after=self.bot.ans_lifespan * 3)
+
 
     @admin_cmd.command(name="debug")
     @commands.check(checks.is_admin)

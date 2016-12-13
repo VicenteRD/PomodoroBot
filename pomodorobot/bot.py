@@ -35,6 +35,8 @@ class PomodoroBot(commands.Bot):
         # The time after which most command responses get deleted
         self.ans_lifespan = 15
 
+        # The file in which the attendance is saved
+        self.attendance_file = "attendance.txt"
         # The ID of the administrator of the bot
         self.admin_id = ""
         # The ID of the role with permissions over the bot
@@ -42,6 +44,7 @@ class PomodoroBot(commands.Bot):
 
         self.ans_lifespan = response_lifespan
 
+        # So people can still see commands in help.
         self.formatter.show_check_failure = True
 
     def get_interface(self, channel: discord.Channel):

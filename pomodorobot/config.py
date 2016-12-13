@@ -67,7 +67,7 @@ class Config:
 
         :return: Itself to allow easier statement chaining
         """
-        file = open(self._file_name)
+        file = open(self._file_name, 'r')
         self._config_map = yaml.safe_load(file)
         file.close()
 

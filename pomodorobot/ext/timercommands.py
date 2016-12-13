@@ -1,5 +1,6 @@
-import logging
+import yaml
 import datetime
+import logging
 
 from discord.ext import commands
 
@@ -20,7 +21,7 @@ class TimerCommands:
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
 
-        self.att_folder = "attendance"
+
 
     @commands.group(name="timer", pass_context=True)
     @commands.check(checks.whitelisted)
@@ -165,7 +166,7 @@ class TimerCommands:
         if author not in interface.subbed:
             interface.subbed.append(author)
 
-            self._add_attendance(ctx, "Subscribed")
+            self._add_attendance(ctx,)
 
             log = (lib.get_author_name(ctx, True) +
                    " has subscribed to this timer.")
@@ -192,8 +193,6 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
             interface.subbed.remove(author)
-
-            self._add_attendance(ctx, "Un-Subscribed")
 
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")
@@ -479,18 +478,30 @@ class TimerCommands:
         if t_list != "":
             await self.bot.say(t_list, delete_after=self.bot.ans_lifespan * 3)
 
-    def _add_attendance(self, ctx, detail):
+    def _add_attendance(self, ctx):
         try:
-            filename = "{}/{}.txt".format(self.att_folder,
-                                          lib.get_server(ctx).name)
-            attendance_book = open(filename, 'a')
+            file = open(self.bot.attendance_file, 'r')
+            attendance_info = yaml.load(file)
+            file.close()
 
-            attendance_book.write("{} | {} || {} [{}]\n".format(
-                str(datetime.datetime.utcnow()).split('.')[0],
-                lib.get_channel_name(ctx), lib.get_author_name(ctx, True),
-                detail))
+            if attendance_info is None or \
+               not isinstance(attendance_info, dict) or \
+               not attendance_info:
+                attendance_info = {}
 
-            attendance_book.close()
+            server_id = lib.get_server_id(ctx)
+
+            if server_id not in attendance_info.keys():
+                attendance_info[server_id] = {}
+
+            attendance_info[server_id][lib.get_author_name(ctx)] = \
+                "\"{} UTC\""\
+                .format(str(datetime.datetime.utcnow()).split('.')[0])
+
+            file = open(self.bot.attendance_file, 'w')
+            file.write(yaml.dump(attendance_info, default_flow_style=False))
+            file.close()
+
         except IOError:
             lib.log("Failed to write attendance.")
 

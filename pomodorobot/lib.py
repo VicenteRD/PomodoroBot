@@ -1,4 +1,5 @@
 import sys
+import codecs
 import logging
 
 import discord
@@ -35,7 +36,7 @@ def init_logger():
         return
 
     log_fmt = logging.Formatter(
-        fmt=u'[{asctime}][{levelname:^7}] {message}',
+        fmt='[{asctime}][{levelname:^7}] {message}',
         datefmt='%m/%d | %H:%M:%S', style='{')
 
     file_handler = logging.FileHandler(filename='pomodorobot.log',
@@ -278,7 +279,7 @@ def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
         init_logger()
 
     for line in message.split('\n'):
-        _logger.logger.log(level, "[" + channel_id + "] " + line)
+        _logger.logger.log(level, '[{}] {}'.format(channel_id, line))
 
 
 def log_cmd_stacktrace(err: commands.CommandInvokeError):

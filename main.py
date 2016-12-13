@@ -1,4 +1,5 @@
 import sys
+import io
 
 import pomodorobot.config as config
 import pomodorobot.lib as lib
@@ -37,6 +38,10 @@ if __name__ == '__main__':
 
     # Logging
 
+    sys.stdout = sys.__stdout__ = io.TextIOWrapper(sys.stdout.detach(),
+                                                   encoding='utf8',
+                                                   errors='backslashreplace',
+                                                   line_buffering=True)
     lib.init_logger()
 
     # Bot init

@@ -35,7 +35,7 @@ def init_logger():
         return
 
     log_fmt = logging.Formatter(
-        fmt='[{asctime}][{levelname:^7}] {message}',
+        fmt=u'[{asctime}][{levelname:^7}] {message}',
         datefmt='%m/%d | %H:%M:%S', style='{')
 
     file_handler = logging.FileHandler(filename='pomodorobot.log',

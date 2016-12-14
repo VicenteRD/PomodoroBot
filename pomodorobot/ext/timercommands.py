@@ -371,7 +371,7 @@ class TimerCommands:
     @timer.command(name="superreset", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.has_permission)
-    async def timer_forcereset(self, ctx: commands.Context):
+    async def timer_superreset(self, ctx: commands.Context):
         """ Ignores all conditions and resets the channel's timer.
             Requires elevated permissions.
         """
@@ -379,7 +379,7 @@ class TimerCommands:
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
         interface = self.bot.get_interface(channel)
-        if interface.get_state() == State.RUNNING:
+        if interface.timer.get_state() == State.RUNNING:
             self.bot.timers_running -= 1
             await self.bot.update_status()
 
@@ -424,7 +424,7 @@ class TimerCommands:
     @timer.command(name="tts", pass_context=True)
     @commands.check(checks.channel_has_timer)
     @commands.check(checks.unlocked_or_allowed)
-    async def tts(self, ctx: commands.Context, toggle: str = None):
+    async def timer_tts(self, ctx: commands.Context, toggle: str = None):
         """ Sets the TTS option on or off for the channel.
 
         :param toggle: Whether to turn on or off the TTS option. If no option
@@ -464,6 +464,7 @@ class TimerCommands:
     async def timers_list(self):
         """ Shows a list of all active timers.
         """
+        # TODO redo this message
 
         t_list = ""
         for channel, timer in self.bot.valid_timers().items():
@@ -477,6 +478,9 @@ class TimerCommands:
 
         if t_list != "":
             await self.bot.say(t_list, delete_after=self.bot.ans_lifespan * 3)
+        else:
+            await self.bot.say("No timers set up.",
+                               delete_after=self.bot.ans_lifespan)
 
     def _add_attendance(self, ctx):
         try:

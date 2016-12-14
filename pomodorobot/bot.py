@@ -36,7 +36,7 @@ class PomodoroBot(commands.Bot):
         self.ans_lifespan = 15
 
         # The file in which the attendance is saved
-        self.attendance_file = "attendance.txt"
+        self.attendance_file = "attendance.yml"
         # The ID of the administrator of the bot
         self.admin_id = ""
         # The ID of the role with permissions over the bot

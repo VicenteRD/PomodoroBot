@@ -40,7 +40,7 @@ class Other:
         pass
 
     @admin_cmd.command()
-    async def reloadcfg(self):
+    async def admin_reloadcfg(self):
         """ Reloads the configuration.
             Requires elevated permissions.
         """

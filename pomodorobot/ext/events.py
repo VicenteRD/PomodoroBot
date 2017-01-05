@@ -142,7 +142,8 @@ class Events:
             log_to = message.server.get_channel(log_channels[message.server.id])
 
             await self.bot\
-                .safe_send(log_to, "_Message deleted_ || {} | {:%H:%M:%S} || {}"
+                .safe_send(log_to,
+                           "Message deleted || {} | {:%m/%d %H:%M:%S} UTC || {}"
                            .format(lib.get_name(message.author, True),
                                    message.timestamp,
                                    message.content))

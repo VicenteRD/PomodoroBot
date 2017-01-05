@@ -141,18 +141,24 @@ class Other:
 
         server_id = lib.get_server_id(ctx)
 
-        if attendance_info is not None and \
-           server_id in attendance_info.keys() and \
-           name in attendance_info[server_id]:
+        if attendance_info is None or server_id not in attendance_info.keys():
+            return
+
+        if name == "everyone":
+            attendance_date = "\n".join("{}: {}".format(k, v) for k, v
+                                        in attendance_info[server_id].items())
+
+        elif name in attendance_info[server_id]:
             attendance_date = attendance_info[server_id][name]
         else:
             attendance_date = None
 
+        if attendance_date is None:
+            attendance_date = "None found"
+
         log = "{} queried for {}'s attendance. Result was: {}"\
             .format(lib.get_author_name(ctx, True), name, attendance_date)
 
-        if attendance_date is None:
-            attendance_date = "None found"
 
         lib.log(log, channel_id=lib.get_channel_id(ctx))
         await self.bot.say("```\n" + attendance_date + "\n```",
@@ -200,6 +206,22 @@ class Other:
                     await self.bot.remove_messages(channel)
 
         await self.bot.logout()
+
+    @commands.command(pass_context=True)
+    async def howto(self, ctx):
+        """ Tells you how to use the bot.
+        """
+
+        await self.bot.safe_send(ctx.message.author, """
+!timer setup
+!timer sub
+!timer start
+_Use the bot, and when you're done:_
+!timer stop
+!timer unsub
+!timer reset
+(If the prefix is not '!', change it accordingly)
+""")
 
     @commands.command(hidden=True)
     async def why(self, time_out=15):

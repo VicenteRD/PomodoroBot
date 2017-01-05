@@ -95,10 +95,10 @@ class Period:
         It has a name and a duration, in minutes.
     """
 
-    def __init__(self, idx: int, name: str, time: int):
+    def __init__(self, idx: int, name: str, time: float):
         self.id = idx
         self.name = name
-        self.time = time
+        self.time = int(time) if time.is_integer() else time
 
     def __eq__(self, other):
         return isinstance(other, self.__class__) and\
@@ -434,7 +434,8 @@ class PomodoroTimer:
         if ',' not in periods_format:
             try:
                 attempt = periods_format.split(':')
-                periods.append(Period(len(periods), attempt[0], int(attempt[1])))
+                periods.append(Period(len(periods), attempt[0],
+                                      float(attempt[1])))
 
                 return periods
             except ValueError:
@@ -455,24 +456,24 @@ class PomodoroTimer:
                     if len(sub_sections[len(sub_sections) - 1]) != 2:
                         return None
 
-                for i in range(0, int(splits[0]) * len(sub_sections)):
+                for i in range(0, float(splits[0]) * len(sub_sections)):
                     idx = i % len(sub_sections)
 
-                    time = int(sub_sections[idx][1])
+                    time = float(sub_sections[idx][1])
                     if time == 0:
                         continue
                     periods.append(Period(len(periods),
                                    sub_sections[idx][0].replace('_', ' '),
-                                   int(time)))
+                                   time))
             else:
                 splits_b = section.split(':')
                 if len(splits_b) != 2:
                     return None
 
-                time = int(splits_b[1])
+                time = float(splits_b[1])
                 if time == 0:
                     continue
                 periods.append(Period(len(periods),
                                       splits_b[0].replace('_', ' '),
-                                      int(time)))
+                                      time))
         return periods

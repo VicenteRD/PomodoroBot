@@ -225,7 +225,7 @@ def to_boolean(value) -> bool:
         raise TypeError("Could not parse {} to boolean".format(value))
 
 
-def pluralize(amount: int, s_name: str, append="", p_name=""):
+def pluralize(amount, s_name: str, append="", p_name=""):
     """ Pluralizes a string given the amount related to it.
         For example, if I have n minute(s), this will return either
         'n minute' or 'n minutes', depending if n=1 or not.
@@ -233,7 +233,7 @@ def pluralize(amount: int, s_name: str, append="", p_name=""):
         Note that only one of append or p_name can be valid.
 
     :param amount: The amount being evaluated
-    :type amount: int
+    :type amount: numeric (int, float, etc.)
 
     :param s_name: The singular name of the concept.
     :type amount: str

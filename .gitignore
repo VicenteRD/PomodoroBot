@@ -1,6 +1,6 @@
 .idea/
 __pycache__/
 attendance/
-attendance.txt
+attendance.yml
 pomodorobot.log
 run.bat

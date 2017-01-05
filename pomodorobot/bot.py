@@ -29,6 +29,10 @@ class PomodoroBot(commands.Bot):
         # (Indexed by the channel's ID)
         self._interfaces = {}
 
+        # The channels for each server that will be used to display certain
+        # log info
+        self.log_channels = {}
+
         # The amount of timers running.
         self.timers_running = 0
 
@@ -77,6 +81,8 @@ class PomodoroBot(commands.Bot):
 
         self.admin_id = bot_section['bot_admin_id']
         self.role_id = bot_section['bot_role_id']
+
+        self.log_channels = bot_section['log_channels']
 
         for channel, timer in self.valid_timers().items():
             timer.step = cfg.get_int('timer.time_step')

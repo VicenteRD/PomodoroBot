@@ -26,7 +26,7 @@ class Events:
 
             if str(error) == "timer not found":
                 send = "No timer found for this channel."
-                log += " tried to start a nonexistent timer."
+                log += " tried to interact with a nonexistent timer."
 
             elif str(error) == "timer locked":
                 send = "You are not allowed to modify this timer."
@@ -52,7 +52,7 @@ class Events:
                 elif isinstance(command, commands.GroupMixin):
                     for sub_name, sub_command in command.commands.items():
                         if ctx.invoked_with == sub_name:
-                            alt = name + " " + sub_name  # TODO: many found?
+                            alt = name + " " + sub_name
 
             if alt is not None:
                 send += " Did you mean `" + alt + "`?"
@@ -131,6 +131,21 @@ class Events:
                 yield from self.bot.safe_send(member, msg)
 
         self.bot.loop.create_task(reaction())
+
+    async def on_message_delete(self, message):
+        if message.server is None or message.author == self.bot.user:
+            return
+
+        log_channels = self.bot.log_channels
+
+        if log_channels and message.server.id in log_channels.keys():
+            log_to = message.server.get_channel(log_channels[message.server.id])
+
+            await self.bot\
+                .safe_send(log_to, "_Message deleted_ || {} | {:%H:%M:%S} || {}"
+                           .format(lib.get_name(message.author, True),
+                                   message.timestamp,
+                                   message.content))
 
 
 def setup(bot: PomodoroBot):

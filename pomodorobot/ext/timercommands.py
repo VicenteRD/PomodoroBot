@@ -472,6 +472,10 @@ class TimerCommands:
 
             # Current timer setup
             t_list += "\n  Setup       || " + timer.list_periods(True)
+            t_list += ("\n\t Looping  : " +
+                       ("On" if timer.repeat else "Off"))
+            t_list += ("\n\t Countdown: " +
+                       ("On" if timer.countdown else "Off"))
 
             # Current status
             t_list += "\n  Status      || "

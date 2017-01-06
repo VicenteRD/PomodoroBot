@@ -139,7 +139,7 @@ class PomodoroTimer:
         self.repeat = True
         # Whether the timer should count from 0 and show the "elapsed" time,
         # or count back from the period's time and show the remaining time.
-        self._countdown = True
+        self.countdown = True
 
     def setup(self, periods_format: str, on_repeat: bool, reverse: bool):
         """ Sets the pomodoro timer up with its periods, periods' names and
@@ -164,7 +164,7 @@ class PomodoroTimer:
         """
 
         self.repeat = on_repeat
-        self._countdown = reverse
+        self.countdown = reverse
 
         self.periods = PomodoroTimer.parse_format(periods_format)
 
@@ -298,7 +298,7 @@ class PomodoroTimer:
                 self.periods[self._current_period].time,
                 "minute", append='s') + ")"
 
-        if self._countdown:
+        if self.countdown:
             time += "\nRemaining:\t"
             m, s = divmod(
                 (self.periods[self._current_period].time * 60) - self.curr_time,

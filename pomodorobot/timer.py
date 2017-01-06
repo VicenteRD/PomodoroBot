@@ -456,7 +456,7 @@ class PomodoroTimer:
                     if len(sub_sections[len(sub_sections) - 1]) != 2:
                         return None
 
-                for i in range(0, float(splits[0]) * len(sub_sections)):
+                for i in range(0, int(splits[0]) * len(sub_sections)):
                     idx = i % len(sub_sections)
 
                     time = float(sub_sections[idx][1])

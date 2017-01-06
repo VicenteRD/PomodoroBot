@@ -467,11 +467,11 @@ class TimerCommands:
         # TODO redo this message
 
         t_list = ""
-        for channel, timer in self.bot.valid_timers().items():
+        for channel, timer in sorted(self.bot.valid_timers().items()):
             t_list += (channel.mention + ": " + ", "
                        .join(lib.get_name(m, True)
-                             for m in timer.get_users_subscribed())
-                       + ".")
+                             for m in timer.get_users_subscribed()))
+            t_list += "." if (timer.get_users_subscribed()) > 0 else ""
             t_list += "\n\tSetup: " + timer.list_periods(True) + "\n\n"
             t_list += "\n".join('\t\t' + l for l in timer.time().split('\n'))
             t_list += "\n\n"

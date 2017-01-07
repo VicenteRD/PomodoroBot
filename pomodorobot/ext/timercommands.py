@@ -416,7 +416,7 @@ class TimerCommands:
 
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        send = self.bot.get_interface(channel).status()
+        send = self.bot.get_interface(channel).timer.status()
 
         lib.log(send, channel_id=channel.id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)

@@ -86,7 +86,7 @@ class TimerCommands:
             await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
             return
 
-        channel = lib.get_channel(ctx)
+        channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
         # Load default if the option was opted for.
         if timer_format == "default":

@@ -209,11 +209,20 @@ class Other:
         await self.bot.logout()
 
     @commands.command(pass_context=True)
-    async def howto(self, ctx):
+    async def howto(self, ctx, specific=None):
         """ Tells you how to use the bot.
         """
 
-        await self.bot.safe_send(ctx.message.author, """
+        if specific is not None and specific == "admin":
+            howto = """
+I will show you the world...
+
+... Just let me get inspired and I'll finish this, I promise!
+
+... Some day.
+"""
+        else:
+            howto = """
 !timer setup
 !timer sub
 !timer start
@@ -222,7 +231,9 @@ _Use the bot, and when you're done:_
 !timer unsub
 !timer reset
 (If the prefix is not '!', change it accordingly)
-""")
+"""
+
+        await self.bot.safe_send(ctx.message.author, howto)
 
     @commands.command(hidden=True)
     async def why(self, time_out=15):
@@ -293,6 +304,20 @@ _Use the bot, and when you're done:_
         url = ("http://www.lovethispic.com/uploaded_images/156255-I-Am" +
                "-A-Tiny-Potato-And-I-Believe-In-You-You-Can-Do-The-Thing.jpg")
         embed = discord.Embed(title="Believe!",
+                              url=url).set_image(url=url)
+
+        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+
+    @commands.command(hidden=True)
+    async def fine(self, time_out=15):
+        """ Come on!
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = "http://i.imgur.com/c4jt321.png"
+        embed = discord.Embed(title="Don't worry about it.",
                               url=url).set_image(url=url)
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))

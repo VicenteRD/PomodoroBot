@@ -214,26 +214,12 @@ class Other:
         """
 
         if specific is not None and specific == "admin":
-            howto = """
-I will show you the world...
-
-... Just let me get inspired and I'll finish this, I promise!
-
-... Some day.
-"""
+            filename = "howto_admin.txt"
         else:
-            howto = """
-!timer setup
-!timer sub
-!timer start
-_Use the bot, and when you're done:_
-!timer stop
-!timer unsub
-!timer reset
-(If the prefix is not '!', change it accordingly)
-"""
+            filename = "howto.txt"
 
-        await self.bot.safe_send(ctx.message.author, howto)
+        with open(filename, 'r') as the_file:
+            await self.bot.safe_send(ctx.message.author, the_file.read())
 
     @commands.command(hidden=True)
     async def why(self, time_out=15):

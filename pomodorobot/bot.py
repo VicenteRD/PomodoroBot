@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from datetime import datetime
 
 import discord
@@ -290,10 +291,14 @@ class PomodoroBot(commands.Bot):
                                     "minute", append="s"))
 
                 lib.log(say, channel_id=channel.id)
-                await self.safe_send(channel, say, tts=interface.tts)
+                try:
+                    await self.safe_send(channel, say, tts=interface.tts)
 
-                await self.edit_message(interface.list_message,
-                                        timer.list_periods())
+                    await self.edit_message(interface.list_message,
+                                            timer.list_periods())
+                except d_err.HTTPException:
+                    lib.log("Skipped updating periods due to HTTPException",
+                            channel_id=channel.id, level=logging.WARN)
 
             if timer.action == Action.STOP:
                 timer.action = Action.NONE
@@ -342,8 +347,11 @@ class PomodoroBot(commands.Bot):
                 if interface.time_message is not None:
                     await self.edit_message(interface.time_message,
                                             timer.time())
-            except (d_err.NotFound, d_err.HTTPException):
+            except d_err.NotFound:
                 pass
+            except d_err.HTTPException:
+                lib.log("Skipped editing the time message due to HTTPException",
+                        channel_id=channel.id, level=logging.WARN)
 
             if timer.get_state() == State.RUNNING:
                 iter_end = datetime.now()

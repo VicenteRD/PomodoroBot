@@ -342,14 +342,8 @@ class PomodoroBot(commands.Bot):
                 if interface.time_message is not None:
                     await self.edit_message(interface.time_message,
                                             timer.time())
-            except d_err.NotFound:
+            except (d_err.NotFound, d_err.HTTPException):
                 pass
-            except d_err.HTTPException:
-                timer.action = Action.PAUSE
-                await self.safe_send(channel,
-                                     "@here\n"
-                                     "Connection interrupted, please resume!")
-                continue
 
             if timer.get_state() == State.RUNNING:
                 iter_end = datetime.now()

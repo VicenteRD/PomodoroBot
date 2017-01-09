@@ -344,6 +344,11 @@ class PomodoroBot(commands.Bot):
                                             timer.time())
             except d_err.NotFound:
                 pass
+            except d_err.HTTPException:
+                timer.action = Action.PAUSE
+                await self.bot.say("@here\n"
+                                   "Connection interrupted, please resume! (2)")
+                continue
 
             if timer.get_state() == State.RUNNING:
                 iter_end = datetime.now()

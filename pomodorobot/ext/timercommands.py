@@ -229,7 +229,7 @@ class TimerCommands:
                 await self.bot.run_timer(channel, period_idx - 1)
             except discord.errors.HTTPException:
                 await self.bot.say("@here\n"
-                                   "Connection interrupted, please resume!")
+                                   "Connection interrupted, please resume! (1)")
                 self.bot.get_interface(channel).timer.pause()
         else:
             lib.log(lib.get_author_name(ctx) +

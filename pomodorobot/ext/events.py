@@ -133,7 +133,9 @@ class Events:
         self.bot.loop.create_task(reaction())
 
     async def on_message_delete(self, message):
-        if message.server is None or message.author == self.bot.user:
+        if message.server is None or\
+           message.author == self.bot.user or\
+           message.content.startswith(self.bot.command_prefix + "timer"):
             return
 
         log_channels = self.bot.log_channels
@@ -141,12 +143,14 @@ class Events:
         if log_channels and message.server.id in log_channels.keys():
             log_to = message.server.get_channel(log_channels[message.server.id])
 
+            unfmtd = "Message deleted || {} | {} | {:%m/%d %H:%M:%S} UTC || {}"
+
             await self.bot\
                 .safe_send(log_to,
-                           "Message deleted || {} | {:%m/%d %H:%M:%S} UTC || {}"
-                           .format(lib.get_name(message.author, True),
-                                   message.timestamp,
-                                   message.content))
+                           unfmtd.format(message.channel.mention,
+                                         lib.get_name(message.author, True),
+                                         message.timestamp,
+                                         message.content))
 
 
 def setup(bot: PomodoroBot):

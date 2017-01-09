@@ -1,6 +1,7 @@
 import yaml
 import datetime
 import logging
+import discord.errors
 
 from discord.ext import commands
 
@@ -224,7 +225,12 @@ class TimerCommands:
             if not 0 < period_idx <= len(timer.periods):
                 period_idx = 1
 
-            await self.bot.run_timer(channel, period_idx - 1)
+            try:
+                await self.bot.run_timer(channel, period_idx - 1)
+            except discord.errors.HTTPException:
+                await self.bot.say("@here\n"
+                                   "Connection interrupted, please resume!")
+                self.bot.get_interface(channel).timer.pause()
         else:
             lib.log(lib.get_author_name(ctx) +
                     " tried to start a timer that was already running.",

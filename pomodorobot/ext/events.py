@@ -132,6 +132,10 @@ class Events:
 
         self.bot.loop.create_task(reaction())
 
+    async def on_member_join(self, member):
+        await self.bot.safe_send(member.server, "Welcome, {}!"
+                                 .format(member.mention))
+
     async def on_message_delete(self, message):
         if message.server is None or\
            message.author == self.bot.user or\
@@ -150,7 +154,7 @@ class Events:
                            unfmtd.format(message.channel.mention,
                                          lib.get_name(message.author, True),
                                          message.timestamp,
-                                         message.content))
+                                         message.clean_content()))
 
 
 def setup(bot: PomodoroBot):

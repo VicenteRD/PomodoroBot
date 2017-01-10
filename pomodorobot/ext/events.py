@@ -133,8 +133,11 @@ class Events:
         self.bot.loop.create_task(reaction())
 
     async def on_member_join(self, member):
-        await self.bot.safe_send(member.server, "Welcome, {}!"
-                                 .format(member.mention))
+        await self\
+            .bot.safe_send(member.server,
+                           "Welcome, {}! Please checkout #readme-faq and "
+                           "#check-this-now as well as introduce yourself "
+                           "in #directory :smiley:".format(member.mention))
 
     async def on_message_delete(self, message):
         if message.server is None or\

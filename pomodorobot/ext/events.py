@@ -154,7 +154,7 @@ class Events:
                            unfmtd.format(message.channel.mention,
                                          lib.get_name(message.author, True),
                                          message.timestamp,
-                                         message.clean_content()))
+                                         message.clean_content))
 
 
 def setup(bot: PomodoroBot):

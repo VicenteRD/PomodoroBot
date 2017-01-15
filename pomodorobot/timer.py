@@ -441,7 +441,7 @@ class PomodoroTimer:
             except ValueError:
                 return None
 
-        sections = re.sub(r",(?=[^()]*\))", '.', periods_format).split(',')
+        sections = re.sub(r",(?=[^()]*\))", ';', periods_format).split(',')
 
         for section in sections:
             if section.startswith('(') and section.endswith(')'):
@@ -451,7 +451,7 @@ class PomodoroTimer:
 
                 sub_sections = []
 
-                for s in splits[1].strip().split('.'):
+                for s in splits[1].strip().split(';'):
                     sub_sections.append(s.split(':'))
                     if len(sub_sections[len(sub_sections) - 1]) != 2:
                         return None

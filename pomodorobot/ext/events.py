@@ -135,7 +135,8 @@ class Events:
     async def on_member_join(self, member):
         await self\
             .bot.safe_send(member.server,
-                           "Welcome, {}! Please checkout #readme-faq and "
+                           "Welcome, {}! Please checkout "
+                           "#---------about-us---- and "
                            "#check-this-now as well as introduce yourself "
                            "in #directory :smiley:".format(member.mention))
 

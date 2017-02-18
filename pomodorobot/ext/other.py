@@ -15,6 +15,7 @@ class Other:
 
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
+        
 
     @commands.command(aliases=['about'])
     async def aboot(self):
@@ -296,7 +297,7 @@ class Other:
 
     @commands.command(hidden=True)
     async def fine(self, time_out=15):
-        """ Come on!
+        """ Everything is fine
 
             :param time_out: The time you want the message to stay for.
             :type time_out: int; 0 <= timeout <= 60
@@ -304,6 +305,20 @@ class Other:
 
         url = "http://i.imgur.com/c4jt321.png"
         embed = discord.Embed(title="Don't worry about it.",
+                              url=url).set_image(url=url)
+
+        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+
+    @commands.command(hidden=True)
+    async def whale(self, time_out=15):
+        """ Interesting stuff
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = "http://i.imgur.com/jKhEXp6.jpg"
+        embed = discord.Embed(title="Interesting",
                               url=url).set_image(url=url)
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))

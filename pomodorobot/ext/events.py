@@ -141,7 +141,7 @@ class Events:
 
         await self\
             .bot.safe_send(member.server,
-                           "Welcome, {}!\n Please read and follow "
+                           "Welcome, {}!\nPlease read and follow "
                            "the instructions on {} "
                            "as well as introducing yourself "
                            "in {} :smiley:"

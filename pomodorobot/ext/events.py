@@ -142,12 +142,12 @@ class Events:
         await self\
             .bot.safe_send(member.server,
                            "Welcome, {}!\n Please read and follow "
-                           "the instructions on {}"
+                           "the instructions on {} "
                            "as well as introducing yourself "
                            "in {} :smiley:"
                            .format(member.mention,
-                                   member.server.get_channel("273608455372144642"),
-                                   member.server.get_channel("233069263248818178")
+                                   member.server.get_channel("273608455372144642").mention,
+                                   member.server.get_channel("233069263248818178").mention
                                   )
                           )
 

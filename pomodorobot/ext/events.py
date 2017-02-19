@@ -137,7 +137,7 @@ class Events:
         url = "http://i.imgur.com/jKhEXp6.jpg"
         embed = discord.Embed(url=url).set_image(url=url)
 
-        await self.bot.safe_send(member.server, embed=embed)
+        await self.bot.send_message(member.server, embed=embed)
 
         await self\
             .bot.safe_send(member.server,

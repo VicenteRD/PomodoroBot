@@ -73,6 +73,7 @@ class Events:
         """
 
         lib.log("")
+        lib.log("Using discord.py version: " + discord.__version__)
         lib.log("Logged in as :")
         lib.log("\t" + self.bot.user.name)
         lib.log("\t" + self.bot.user.id)

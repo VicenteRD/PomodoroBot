@@ -33,6 +33,9 @@ class Other:
                            config.get_config().get_str('author_name'),
                            delete_after=self.bot.ans_lifespan * 4)
 
+        await self.bot.say("Please consider donating at: https://goo.gl/sSiaX3",
+                           delete_after=self.bot.ans_lifespan * 4)
+
     @commands.group(name="admin", pass_context=True)
     @commands.check(checks.has_permission)
     async def admin_cmd(self, ctx: commands.Context):

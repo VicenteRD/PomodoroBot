@@ -144,11 +144,11 @@ class Events:
 
         msg = "Welcome, {}!".format(member.mention)
 
-        welcome_channels = self.bot.log_channels
+        channels = config.get_config().get_section(
+            'bot.new_member_channels.' + server.id
+        )
 
-        if welcome_channels and server.id in welcome_channels.keys():
-            channels = welcome_channels[server.id]
-
+        if channels:
             msg += "\nPlease read and follow the instructions on {}, " \
                    "as well as introducing yourself in {} :smiley:"\
                 .format(server.get_channel(channels['info']).mention,

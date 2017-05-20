@@ -1,4 +1,4 @@
-version: 0.6.5b
+version: 0.7.0b
 source: https://github.com/VicenteRD/PomodoroBot/
 author_name: Sherpa#5493
 
@@ -21,6 +21,7 @@ bot:
     "231989318363774976": "268229579850645504"
     # Sherpa's Dev Realm
     "248116963140829195": "248982730656710667"
+
   new_member_channels:
     # Study group
     "231989318363774976":

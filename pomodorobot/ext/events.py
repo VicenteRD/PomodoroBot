@@ -135,22 +135,29 @@ class Events:
         self.bot.loop.create_task(reaction())
 
     async def on_member_join(self, member):
+        server = member.server
+
         url = "http://i.imgur.com/jKhEXp6.jpg"
         embed = discord.Embed(url=url).set_image(url=url)
 
         await self.bot.send_message(member.server, embed=embed)
 
-        await self\
-            .bot.safe_send(member.server,
-                           "Welcome, {}!\nPlease read and follow "
-                           "the instructions on {} "
-                           "as well as introducing yourself "
-                           "in {} :smiley:"
-                           .format(member.mention,
-                                   member.server.get_channel("273608455372144642").mention,
-                                   member.server.get_channel("233069263248818178").mention
-                                  )
-                          )
+        msg = "Welcome, {}!".format(member.mention)
+
+        welcome_channels = self.bot.log_channels
+
+        if welcome_channels and server.id in welcome_channels.keys():
+            channels = welcome_channels[server.id]
+
+            msg += "\nPlease read and follow the instructions on {}, " \
+                   "as well as introducing yourself in {} :smiley:"\
+                .format(server.get_channel(channels['info']).mention,
+                        server.get_channel(channels['directory']).mention
+                        )
+
+            await self.bot.safe_send(server.get_channel(channels['log']), msg)
+
+        await self.bot.safe_send(member.server, msg)
 
     async def on_message_delete(self, message):
         if message.server is None or\

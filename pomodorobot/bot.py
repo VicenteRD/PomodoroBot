@@ -33,6 +33,12 @@ class PomodoroBot(commands.Bot):
         # The channels for each server that will be used to display certain
         # log info
         self.log_channels = {}
+        # The channels that each server uses / mentions when welcoming new
+        # members. This contains 'log', 'info' and 'directory' per server
+        #   log: Where the welcoming message gets logged.
+        #   info: Where the server information is listed for new members.
+        #   directory: Where new members introduce themselves
+        self.welcome_channels = {}
 
         # The amount of timers running.
         self.timers_running = 0
@@ -84,6 +90,7 @@ class PomodoroBot(commands.Bot):
         self.role_id = bot_section['bot_role_id']
 
         self.log_channels = bot_section['log_channels']
+        self.welcome_channels = bot_section['new_member_channels']
 
         for channel, timer in self.valid_timers().items():
             timer.step = cfg.get_int('timer.time_step')

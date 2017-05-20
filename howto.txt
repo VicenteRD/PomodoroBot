@@ -1,1 +1,75 @@
-This needs fixing.
+__Guide to using MarinaraBot Timer__
+
+Another way to see the functions of the bot is to type `!help`
+
+------ Checking Existing Timers ------
+
+**!timers**
+```
+    With this, you'll be able to see the active timers, and check if any of them suit the
+    way you want to study.
+    If you decide to join one that's already active, skip to step 4.
+    Else, follow the 'How to Set Up' secion
+```
+
+
+------ How to Set Up ------
+
+**!timer setup**
+
+```
+    This command is used to set up the channel's timer to suit your needs.
+    If you do not specify a setup, or if your specified setup is 'default' (No quotes),
+    the default one for the channel will be used.
+    The defaults are:
+        #1_study-session - 32/8/15  (2x)
+        #2_study-session - 45/15/20 (2x)
+        #3_unmuted-study - 32/8/15  (2x)
+
+    Custom timer setups are achieved by executing '!timer setup <string>'
+    Where <string> is a list of 'Name:Time' pairs separated by commas, each representing a period.
+    It also supports repeating groups, in the format of (Nx<PAIRS>), which results in N sets of the
+    specified <PAIRS>. (Ex: (3xA:5,B:10,C:15) results in a period sequence of 5,10,15,5,10,15,5,10,15
+    with their respective names).
+
+    An example for a custom setup would be:
+        (2xStudy:32,Break:8),Study:32,Long_Break:15
+
+    Which would give the same as the default for session channels 1 and 3. It is recommended
+    that if you do not understand how to apply custom setups, modify the example given, or simply do
+    '!timer setup' (Again, no quotes).
+```
+
+
+
+------ Getting Notified ------
+
+**!timer sub**
+
+```
+    Do this at the start of your study session.
+```
+
+**!timer unsub**
+
+```
+    Do this at the end of your study session.
+```
+
+---- How to Use ----
+
+**!timer start**
+
+```
+    As the name implies, this will start a timer. It must be correctly setup to start.
+```
+
+• !timer status [Tells whether the timer is stopped, running or paused]
+• !timer time [Gives the user the current period and time of the timer]
+• !timer tts [Sets the TTS option on or off for the channel]
+• !timer goto [Skips to the n-th period, assuming the periods' indexes go]
+• !timer pause [Pauses the timer, if it's running. Keeps all the current settings]
+• !timer resume [Resumes a paused timer]
+• !timer stop [Stops the timer, if it's running]
+• !timer reset [Resets the timer setup]
+• !timer superreset [Ignores all conditions and resets the channel's timer] please do @BotFriend if this happens

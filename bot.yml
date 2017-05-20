@@ -1,4 +1,4 @@
-version: 0.6.0b
+version: 0.6.5b
 source: https://github.com/VicenteRD/PomodoroBot/
 author_name: Sherpa#5493
 
@@ -21,6 +21,17 @@ bot:
     "231989318363774976": "268229579850645504"
     # Sherpa's Dev Realm
     "248116963140829195": "248982730656710667"
+  new_member_channels:
+    # Study group
+    "231989318363774976":
+      log: "309539856181362699"
+      info: "314658553409437696"
+      directory: "233069263248818178"
+    # Sherpa's Dev Realm
+    "248116963140829195":
+      log: "248982730656710667"
+      info: "248982730656710667"
+      directory: "248982730656710667"
 
 # Timer settings
 timer:

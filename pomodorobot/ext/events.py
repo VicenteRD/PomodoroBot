@@ -142,22 +142,26 @@ class Events:
 
         await self.bot.send_message(member.server, embed=embed)
 
-        msg = "Welcome, {}!".format(member.mention)
+        welcome = "Welcome, {}!".format(member.mention)
+
+        await self.bot.safe_send(server,
+                                 welcome)
 
         channels = config.get_config().get_section(
             'bot.new_member_channels.' + server.id
         )
 
-        if channels:
-            msg += "\nPlease read and follow the instructions on {}, " \
-                   "as well as introducing yourself in {} :smiley:"\
-                .format(server.get_channel(channels['info']).mention,
-                        server.get_channel(channels['directory']).mention
-                        )
+        if not channels:
+            return
 
-            await self.bot.safe_send(server.get_channel(channels['log']), msg)
+        await self.bot.safe_send(server.get_channel(channels['log']), welcome)
 
-        await self.bot.safe_send(member.server, msg)
+        instructions = "\nPlease read and follow the instructions on {}, " \
+                       "as well as introducing yourself in {} :smiley:"\
+            .format(server.get_channel(channels['info']).mention,
+                    server.get_channel(channels['directory']).mention)
+
+        await self.bot.safe_send(server, instructions)
 
     async def on_message_delete(self, message):
         if message.server is None or\

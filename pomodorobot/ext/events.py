@@ -175,7 +175,7 @@ class Events:
 
     async def on_message_delete(self, message):
         if message.server is None or\
-           message.author == self.bot.user or\
+           message.author.bot is True or\
            message.content.startswith(self.bot.command_prefix + "timer"):
             return
 

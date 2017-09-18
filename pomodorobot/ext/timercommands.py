@@ -225,6 +225,7 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         timer = interface.timer
 
+        toggle = lib.to_boolean(toggle)
         if timer.repeat == toggle:
             return  # No need to edit it if it's the same.
         timer.toggle_looping(toggle)
@@ -251,6 +252,7 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         timer = interface.timer
 
+        toggle = lib.to_boolean(toggle)
         if timer.countdown == toggle:
             return  # No need to edit it if it's the same.
         timer.toggle_countdown(toggle)

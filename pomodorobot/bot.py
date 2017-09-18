@@ -231,8 +231,10 @@ class PomodoroBot(commands.Bot):
                 await self.delete_message(interface.list_message)
 
         except d_err.NotFound:
-            interface.time_message = None
-            interface.list_message = None
+            pass
+
+        interface.time_message = None
+        interface.list_message = None
 
     def valid_timers(self):
         """ Gives a list of all instantiated timers and the channels they
@@ -378,10 +380,13 @@ class PomodoroBot(commands.Bot):
             timer.set_period(-1)
             timer.set_state(State.STOPPED)
 
-            await self.remove_messages(channel)
+            if len(timer.periods) == 0:
+                timer.set_state(None)
+                interface.timer = None
+                await self.safe_send(channel, "Timer has been reset.",
+                                     delete_after=self.bot.ans_lifespan)
 
-            interface.time_message = None
-            interface.list_message = None
+            await self.remove_messages(channel)
 
         self.timers_running -= 1
         await self.update_status()

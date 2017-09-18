@@ -8,7 +8,8 @@ import pomodorobot.lib as lib
 import pomodorobot.config as config
 
 from pomodorobot.bot import PomodoroBot
-from pomodorobot.timer import TimerEvent, TimerStateEvent, TimerPeriodEvent, State
+from pomodorobot.timer import TimerEvent, TimerStateEvent, TimerPeriodEvent,\
+    TimerModifiedEvent, State
 
 
 class Events:
@@ -110,20 +111,29 @@ class Events:
                 msg += "been reset."
 
         elif isinstance(e, TimerPeriodEvent):
-            msg += "Timer updated:\t\t"
+            msg += "Timer updated:\t\t "
 
             if e.old_period == e.new_period:
-                msg = "**{}** period has been restarted! [_{}_]".format(
+                msg += "**{}** period has been restarted! [_{}_]".format(
                     e.new_period.name,
                     lib.pluralize(e.new_period.time, "minute", append="s"))
 
             else:
                 if e.old_period is not None:
-                    msg += " **{}** period over!".format(e.old_period.name)
+                    msg += "**{}** period over!".format(e.old_period.name)
                 if e.new_period is not None:
-                    msg += " **{}** period now starting [_{}_]".format(
+                    msg += "**{}** period now starting [_{}_]".format(
                         e.new_period.name,
                         lib.pluralize(e.new_period.time, "minute", append="s"))
+
+        elif isinstance(e, TimerModifiedEvent):
+            msg += "Timer modified by {} periods!"\
+                .format(e.action)
+            if e.final_period is not None:
+                msg += " Now at {} [_{}_]"\
+                    .format(e.final_period.name,
+                            lib.pluralize(e.final_period.time,
+                                          "minute", append="s"))
         else:
             return
 

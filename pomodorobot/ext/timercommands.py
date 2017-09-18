@@ -12,7 +12,7 @@ import pomodorobot.lib as lib
 from pomodorobot.bot import PomodoroBot
 from pomodorobot.timer import PomodoroTimer, State
 
-SAFE_DEFAULT_FMT = "(2xStudy:32,Break:8),Study:32,Long_Break:15"
+SAFE_DEFAULT_FMT = "(2xStudy/Work:32,Break:8),Study/Work:32,Long_Break:15"
 
 
 class TimerCommands:
@@ -22,12 +22,10 @@ class TimerCommands:
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
 
-
-
     @commands.group(name="timer", pass_context=True)
     @commands.check(checks.whitelisted)
     async def timer(self, ctx):
-        """ Controls the channel's timer. Do '!help timer' for sub-commands
+        """ Controls the channel's timer. Do '!help timer' for sub-commands.
             None of the sub-commands will really work without using `setup`
             first.
         """
@@ -78,43 +76,22 @@ class TimerCommands:
                 remaining (True) or elapsed (False) time. Defaults to True.
         """
 
-        if timer_format == "help":
-            send = "**Example:**\n\t {}setup {}" \
-                .format(self.bot.command_prefix, SAFE_DEFAULT_FMT)
-
-            send += "\n\t_This will give you a sequence of {}_" \
-                .format(PomodoroTimer.parse_format(SAFE_DEFAULT_FMT))
-            await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
-            return
-
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        # Load default if the option was opted for.
-        if timer_format == "default":
-
-            channel_default = config.get_config().get_str(
-                'timer.channel_whitelist.' +
-                lib.get_server_id(ctx) + '.' + channel.id)
-
-            if channel_default is not None:
-                timer_format = channel_default
-            else:
-                lib.log("No setup configured for this channel. Using the " +
-                        "safe default option", channel_id=channel.id)
-                timer_format = SAFE_DEFAULT_FMT
+        timer_format = await self._translate_keyword(timer_format,
+                                                     lib.get_server_id(ctx),
+                                                     channel.id)
+        if timer_format is None:
+            return
 
         # Parse the countdown and looping arguments with the custom function.
         try:
-            if repeat is None:
-                loop = config.get_config().get_boolean('timer.looping_default')
-            else:
-                loop = lib.to_boolean(repeat)
+            loop = config.get_config().get_boolean('timer.looping_default') if \
+                repeat is None else lib.to_boolean(repeat)
 
-            if count_back is None:
-                countdown = config.get_config() \
-                    .get_boolean('timer.countdown_default')
-            else:
-                countdown = lib.to_boolean(count_back)
+            countdown = config.get_config() \
+                .get_boolean('timer.countdown_default') if count_back is None \
+                else lib.to_boolean(count_back)
 
         except TypeError:
             lib.log("Could not parse boolean arguments '{!s}' and '{!s}'"
@@ -126,31 +103,162 @@ class TimerCommands:
         interface = self.bot.get_interface(channel)
         if interface.timer is None:
             interface.timer = PomodoroTimer(interface)
-
             times = interface.timer.setup(timer_format, loop, countdown)
 
             if times is not None:
-                send = log = (
-                    "Correctly set up timer config: " + times + "." +
-                    "\nLooping is **" + ("ON" if loop else "OFF") +
-                    "**\nCountdown is **" +
-                    ("ON" if countdown else "OFF") + "**")
+                log = ("Correctly set up timer config: {}."
+                       "\nLooping is **{}**\nCountdown is **{}**") \
+                    .format(times, "ON" if loop else "OFF",
+                            "ON" if countdown else "OFF")
+                send = log
             else:
                 interface.timer = None
-
-                log = ("Could not set the periods correctly, " +
+                log = ("Could not set the periods correctly, "
                        "command 'setup' failed.")
-                send = ("I did not understand what you wanted, " +
+                send = ("I did not understand what you wanted, "
                         "please try again!")
 
         else:  # channel_id is in p_timers.keys()
-            log = ("Rejecting setup command, there is a period set already " +
+            log = ("Rejecting setup command, there is a period set already "
                    "established.")
-            send = ("I'm already set and ready to go, please use the reset " +
+            send = ("I'm already set and ready to go, please use the reset "
                     "command if you want to change the timer configuration.")
 
         lib.log(log, channel_id=channel.id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
+
+    @timer.command(name="add", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def add_timer_period(self, ctx: commands.Context, period_info: str,
+                               index='n'):
+        """ Adds a period with the given information after the given index.
+
+        :param period_info: The information of the period(s) you want to add,
+            that must follow the same rules that the setup command requires.
+            For example: `Study:30` will add a 30-minute period with the name
+            Study.
+        :param index: The index at which the period should be added,
+            counting from `0` to `n`, where `n` is the current number of periods
+            available. If the index given is negative, it will count backwards.
+            Thus, if 0 is given, it will be added as the first period,
+            and with `n` it will be added as the last one (using `-n` is
+            the same as using 0).
+            If a literal `n` is given, it will translate to whatever the amount
+            of periods is currently.
+        """
+
+        author = ctx.message.author
+        channel = self.bot.spoof(author, lib.get_channel(ctx))
+
+        interface = self.bot.get_interface(channel)
+        timer = interface.timer
+
+        amount = timer.add_periods(index, period_info)
+        if amount == 0:
+            await self.bot.say(
+                "Could not add the period(s)."
+                " Failed to parse the given information",
+                delete_after=self.bot.ans_lifespan)
+            return
+
+        period_str = 'period' if amount == 1 else 'periods'
+
+        if interface.timer.get_state() != State.STOPPED:
+            await self.bot.edit_message(interface.list_message,
+                                        timer.list_periods())
+
+        await self.bot.say("Successfully added the new {}!".format(period_str),
+                           delete_after=self.bot.ans_lifespan)
+
+    @timer.command(name="remove", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def remove_timer_period(self, ctx: commands.Context, index: int,
+                                  amount=1):
+        """ Removes the period(s) from the given index
+
+        :param index: The index to remove from, counting from `1` to `n`.
+        :param amount: The amount of periods to remove.
+        """
+
+        author = ctx.message.author
+        channel = self.bot.spoof(author, lib.get_channel(ctx))
+
+        interface = self.bot.get_interface(channel)
+        timer = interface.timer
+
+        if index > len(timer.periods) or index <= 0:
+            await self.bot.say(
+                "Unable to remove the specified period(s)",
+                delete_after=self.bot.ans_lifespan)
+            return
+
+        if timer.remove_periods(index - 1, amount):
+            period_str = 'period' if amount == 1 else 'periods'
+
+            if timer.get_state() != State.STOPPED:
+                await self.bot.edit_message(interface.list_message,
+                                            timer.list_periods())
+
+            await self.bot.say("Successfully removed the {}!"
+                               .format(period_str),
+                               delete_after=self.bot.ans_lifespan)
+        else:
+            await self.bot.say(("If you want to remove all periods,"
+                                " use the reset command!"),
+                               delete_after=self.bot.ans_lifespan)
+
+    @timer.command(name="repeat", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def toggle_repeat(self, ctx: commands.Context, toggle=None):
+        """ Turns the timer's looping setting on or off. If no state is
+            specified, it will toggle it
+
+        :param toggle: True, yes or on to turn the setting on. False, no or off
+            to turn the setting off. If not specified, or None is given,
+             it will toggle the setting.
+        """
+        author = ctx.message.author
+        channel = self.bot.spoof(author, lib.get_channel(ctx))
+        interface = self.bot.get_interface(channel)
+        timer = interface.timer
+
+        if timer.repeat == toggle:
+            return  # No need to edit it if it's the same.
+        timer.toggle_looping(toggle)
+
+        await self.bot.edit_message(interface.list_message,
+                                    timer.list_periods())
+        await self.bot.say("Successfully toggled the looping setting {}!"
+                           .format("on" if timer.repeat else "off"),
+                           delete_after=self.bot.ans_lifespan)
+
+    @timer.command(name="countdown", pass_context=True)
+    @commands.check(checks.channel_has_timer)
+    @commands.check(checks.unlocked_or_allowed)
+    async def toggle_countdown(self, ctx: commands.Context, toggle=None):
+        """ Turns the timer's countdown setting on or off. If no state is
+            specified, it will toggle it
+
+        :param toggle: True, yes or on to turn the setting on. False, no or off
+            to turn the setting off. If not specified, or None is given,
+             it will toggle the setting.
+        """
+        author = ctx.message.author
+        channel = self.bot.spoof(author, lib.get_channel(ctx))
+        interface = self.bot.get_interface(channel)
+        timer = interface.timer
+
+        if timer.countdown == toggle:
+            return  # No need to edit it if it's the same.
+        timer.toggle_countdown(toggle)
+
+        await self.bot.edit_message(interface.time_message, timer.time())
+        await self.bot.say("Successfully toggled the countdown setting {}!"
+                           .format("on" if timer.countdown else "off"),
+                           delete_after=self.bot.ans_lifespan)
 
     @timer.command(name="sub", pass_context=True)
     @commands.check(checks.whitelisted)
@@ -167,11 +275,11 @@ class TimerCommands:
         if author not in interface.subbed:
             interface.subbed.append(author)
 
-            self._add_attendance(ctx,)
+            self._add_attendance(ctx)
 
             log = (lib.get_author_name(ctx, True) +
                    " has subscribed to this timer.")
-            send = "You've successfully subscribed to this timer, {}!"\
+            send = "You've successfully subscribed to this timer, {}!" \
                 .format(lib.get_author_name(ctx, True))
         else:
             log = (lib.get_author_name(ctx, True) + " tried to subscribe to " +
@@ -197,7 +305,7 @@ class TimerCommands:
 
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")
-            send = "You've successfully un-subscribed to this timer, {}!"\
+            send = "You've successfully un-subscribed to this timer, {}!" \
                 .format(lib.get_author_name(ctx, True))
         else:
             log = (lib.get_author_name(ctx, True) + " tried to un-subscribe " +
@@ -297,9 +405,6 @@ class TimerCommands:
         else:
             await self.bot.remove_messages(channel)
 
-            interface.time_message = None
-            interface.list_message = None
-
             send = "Timer has stopped."
             await self.bot.say(send, tts=interface.tts)
 
@@ -334,12 +439,13 @@ class TimerCommands:
         if label is not None:
             log = send = "Moved to period number {!s} ({})".format(idx, label)
 
-            await self.bot.edit_message(interface.list_message,
-                                        interface.timer.list_periods())
+            if interface.timer.get_state() != State.STOPPED:
+                await self.bot.edit_message(interface.list_message,
+                                            interface.timer.list_periods())
 
-            if interface.timer.get_state() == State.PAUSED:
-                await self.bot.edit_message(interface.time_message,
-                                            interface.timer.time())
+                if interface.timer.get_state() == State.PAUSED:
+                    await self.bot.edit_message(interface.time_message,
+                                                interface.timer.time())
         else:
             log = "Invalid period number entered when trying goto command."
             send = "Invalid period number."
@@ -367,8 +473,8 @@ class TimerCommands:
             log = lib.get_author_name(ctx) + " reset the timer."
             send = "Successfully reset session configuration."
         else:
-            log = (lib.get_author_name(ctx) + " tried resetting a timer that " +
-                   "was running or paused.")
+            log = (lib.get_author_name(ctx) + " tried resetting a timer that "
+                                              "was running or paused.")
             send = "Cannot do that while the timer is not stopped."
 
         lib.log(log, channel_id=channel.id)
@@ -392,8 +498,6 @@ class TimerCommands:
         await self.bot.remove_messages(channel)
 
         interface.timer = None
-        interface.time_message = None
-        interface.list_message = None
 
         lib.log("Successfully forced a reset on this channel's timer.",
                 channel_id=channel.id)
@@ -422,7 +526,7 @@ class TimerCommands:
 
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        send = self.bot.get_interface(channel).timer.status()
+        send = self.bot.get_interface(channel).timer.show_status()
 
         lib.log(send, channel_id=channel.id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan * 2)
@@ -474,32 +578,54 @@ class TimerCommands:
         t_list = ""
         for channel, timer in self.bot.valid_timers().items():
             # Channel name
-            t_list += channel.mention + ":\n```"
-
-            # Current timer setup
-            t_list += "\n  Setup       || " + timer.list_periods(True)
-            t_list += ("\n\t Looping  : " +
-                       ("On" if timer.repeat else "Off"))
-            t_list += ("\n\t Countdown: " +
-                       ("On" if timer.countdown else "Off"))
-
-            # Current status
-            t_list += "\n  Status      || "
-            t_list += "\n\t\t\t\t ".join(l for l in timer.time().split('\n'))
-
-            # Users subscribed
-            t_list += "\n  Subscribed  || "
-            t_list += ", ".join(lib.get_name(m, True)
-                                for m in timer.get_users_subscribed())
-            t_list += "." if len(timer.get_users_subscribed()) > 0 else ""
-
-            t_list += "\n```\n"
+            t_list += channel.mention + ":\n" + timer.show_status() + "\n"
 
         if t_list != "":
             await self.bot.say(t_list, delete_after=self.bot.ans_lifespan * 3)
         else:
             await self.bot.say("No timers set up.",
                                delete_after=self.bot.ans_lifespan)
+
+    async def _translate_keyword(self, keyword: str, server_id: str,
+                                 channel_id: str):
+        if keyword == "help":
+            example_periods = ', '.join(str(period.time) for period in
+                                        PomodoroTimer
+                                        .parse_format(SAFE_DEFAULT_FMT))
+            await self.bot.say(("**Example:**\n\t {}setup {}\n\t"
+                                "_This will give you a sequence of {}_")
+                               .format(self.bot.command_prefix,
+                                       SAFE_DEFAULT_FMT,
+                                       example_periods),
+                               delete_after=self.bot.ans_lifespan * 2)
+
+            return None
+
+        if keyword == 'default':
+            # fetch default setup string from config,
+            # or fallback to "Safe Default"
+            translation = config.get_config().get_str(
+                'timer.channel_whitelist.' + server_id + '.' + channel_id)
+            if translation is None:
+                lib.log("No setup configured for this channel. Using the " +
+                        "safe default option", channel_id=channel_id)
+                translation = SAFE_DEFAULT_FMT
+
+            return translation
+        if keyword == 'blank':
+            pass
+
+        keys = keyword.split(':', 1)
+        if keys[0] == 'typical':
+            durations = keys[1].split(',', 2)
+            return '(2xStudy/Work:{x},Break:{y}),Study/Work:{x},Long_Break:{z}' \
+                .format(x=durations[0], y=durations[1], z=durations[2])
+
+        if keys[0] == 'saved':
+            translation = config.get_config().get_str(
+                'timer.saved_formats.' + keys[1])
+            return translation
+        return keyword
 
     def _add_attendance(self, ctx):
         try:
@@ -508,8 +634,8 @@ class TimerCommands:
             file.close()
 
             if attendance_info is None or \
-               not isinstance(attendance_info, dict) or \
-               not attendance_info:
+                    not isinstance(attendance_info, dict) or \
+                    not attendance_info:
                 attendance_info = {}
 
             server_id = lib.get_server_id(ctx)
@@ -518,8 +644,8 @@ class TimerCommands:
                 attendance_info[server_id] = {}
 
             attendance_info[server_id][lib.get_author_name(ctx)] = \
-                "\"{} UTC\""\
-                .format(str(datetime.datetime.utcnow()).split('.')[0])
+                "\"{} UTC\"" \
+                    .format(str(datetime.datetime.utcnow()).split('.')[0])
 
             file = open(self.bot.attendance_file, 'w')
             file.write(yaml.dump(attendance_info, default_flow_style=False))

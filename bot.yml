@@ -1,4 +1,4 @@
-version: 0.7.2b
+version: 0.8.0b
 source: https://github.com/VicenteRD/PomodoroBot/
 author_name: Sherpa#5493
 
@@ -69,3 +69,8 @@ timer:
       # pomodoro-land
       "248982730656710667": (2xStudy:45,Break:15),Study:45,Long_Break:20
 
+  saved_formats:
+
+    programming: (2xProgramming:52,Break:17),Programming:52,Long_Break:30
+    # vertabrett's timer
+    verta: (2xWorkTask:13,HomeTask:9,Break:8),FocusedWork:21,Break:9

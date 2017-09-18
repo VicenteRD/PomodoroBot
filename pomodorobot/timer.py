@@ -90,6 +90,18 @@ class TimerPeriodEvent(TimerEvent):
         self.new_period = new_period
 
 
+class TimerModifiedEvent(TimerEvent):
+    """ A timer event that represents a modification of said timer.
+        It is triggered when a user adds or removes a period or periods
+    """
+
+    def __init__(self, timer, action, final_period):
+        super().__init__(timer)
+
+        self.final_period = final_period
+        self.action = action
+
+
 class Period:
     """ Represents a Pomodoro Timer period.
         It has a name and a duration, in minutes.
@@ -171,6 +183,96 @@ class PomodoroTimer:
         return ", ".join(str(period.time) for period in self.periods) if \
             self.periods is not None else None
 
+    def add_periods(self, index, periods_info):
+        """ Adds a set of periods, created by parsing the given periods_info, at
+            the given index.
+
+        :param index: The index to add the periods at.
+        :param periods_info: The info used to create the new periods
+        :return: the amount of periods added
+        """
+
+        new_periods = PomodoroTimer.parse_format(periods_info)
+
+        if new_periods is None:
+            return 0
+
+        index = len(self.periods) if index == 'n' else int(index)
+
+        self.periods[index: (len(new_periods) - 1)] = new_periods
+
+        if index <= self._current_period:
+            self._current_period += len(new_periods)
+
+        TimerModifiedEvent(self, "adding " + (
+            "period" if len(new_periods) == 1 else "periods"), None) \
+            .dispatch()
+
+        return len(new_periods)
+
+    def remove_periods(self, index, amount):
+        """ Removes a given amount of periods, from a given index.
+            If instead of removing the periods, the timer should be reset,
+            the method will do nothing but return False.
+
+        :param index: The index of the first period to remove (0 to n).
+        :param amount: The amount of periods to remove
+        :return: True if the periods were successfully removed, False otherwise,
+            e.g.: The amount of periods being removed is the same or higher than
+                the amount of periods available (use reset instead).
+        """
+
+        if index == 0 and amount >= len(self.periods):
+            return False
+
+        regulate = index <= self._current_period
+
+        del self.periods[index:(index + amount)]
+
+        final_period = None
+        if regulate:
+            if index + (amount - 1) < self._current_period:
+                # current period is not deleted
+                self._current_period -= amount
+            else:
+                # current period gets deleted
+                self._current_period = min(index, len(self.periods) - 1)
+                self.curr_time = 0
+                final_period = self.periods[self._current_period]
+
+        TimerModifiedEvent(self, "removing " + (
+            "period" if amount == 1 else "periods"), final_period).dispatch()
+
+        return True
+
+    def toggle_countdown(self, toggle=None):
+        """ Toggles the timer's countdown setting on or off.
+
+        :param toggle: True to turn it on, False to turn it off, None to toggle.
+        """
+        if toggle is None:
+            toggle = not self.countdown
+        if self.countdown == toggle:
+            return
+
+        self.countdown = toggle
+        TimerModifiedEvent(self, "toggling countdown" + (
+            "on" if self.countdown else "off"), None).dispatch()
+
+    def toggle_looping(self, toggle=None):
+        """ Toggles the timer's looping setting on or off.
+
+        :param toggle: True to turn it on, False to turn it off, None to toggle.
+        """
+        if toggle is None:
+            toggle = not self.repeat
+        if self.repeat == toggle:
+            return
+
+        self.repeat = toggle
+        TimerModifiedEvent(self, "toggling looping" + (
+            "on" if self.repeat else "off"), None).dispatch()
+
     def start(self) -> bool:
         """ Starts the timer.
 
@@ -230,18 +332,20 @@ class PomodoroTimer:
 
             return False
 
-    def goto(self, idx: int):
+    def goto(self, idx: int, reset=True):
         """ Skips to the n-th period, assuming the periods are counted 1 -> n
             (Thus it actually jumps to [idx-1]).
 
         :param idx: The index of the period to jump to.
+        :param reset: Whether the current time should be reset to 0 or not.
         :return: If successful, returns the name of the new current period.
             If not, returns None.
         """
 
         if 0 < idx <= len(self.periods):
             self.set_period(idx - 1)
-            self.curr_time = 0
+            if reset:
+                self.curr_time = 0
             return self.periods[self._current_period].name
         return None
 
@@ -337,6 +441,31 @@ class PomodoroTimer:
                 p_list += "\t-> _You are here!_"
 
         return p_list
+
+    def show_status(self) -> str:
+        """ Show the timer's status, including the setup, time, and users
+            subscribed.
+
+        :return: The status of the timer.
+        """
+        status = "```\n  Setup       || " + self.list_periods(True)
+
+        status += ("\n\t Looping  : " +
+                   ("On" if self.repeat else "Off"))
+        status += ("\n\t Countdown: " +
+                   ("On" if self.countdown else "Off"))
+
+        # Current status
+        status += "\n  Status      || "
+        status += "\n\t\t\t\t ".join(l for l in self.time().split('\n'))
+
+        # Users subscribed
+        status += "\n  Subscribed  || "
+        status += ", ".join(lib.get_name(m, True)
+                            for m in self.get_users_subscribed())
+        status += "." if len(self.get_users_subscribed()) > 0 else ""
+
+        return status + "\n```"
 
     def get_period(self, natural=False):
         """ Gives the period index of the period the timer is currently in.

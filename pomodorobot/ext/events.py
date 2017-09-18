@@ -173,6 +173,36 @@ class Events:
 
         await self.bot.safe_send(server, instructions)
 
+    async def on_member_remove(self, member):
+        server = member.server
+
+        channels = config.get_config().get_section(
+            'bot.new_member_channels.' + server.id
+        )
+        if not channels:
+            return
+
+        await self.bot.safe_send(server.get_channel(channels['log']),
+                                 "{} has left the server, farewell!"
+                                 .format(member.mention))
+
+    async def on_member_update(self, before, after):
+        if before.nick == after.nick:
+            return
+
+        server = after.server
+        channels = config.get_config().get_section(
+            'bot.new_member_channels.' + server.id
+        )
+        if not channels:
+            return
+
+        old_name = before.name if before.nick is None else before.nick
+        new_name = after.name if after.nick is None else after.nick
+        await self.bot.safe_send(server.get_channel(channels['log']),
+                                 "{} is now {}. Why tho..."
+                                 .format(old_name, new_name))
+
     async def on_message_delete(self, message):
         if message.server is None or\
            message.author.bot is True or\

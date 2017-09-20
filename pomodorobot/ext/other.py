@@ -164,11 +164,9 @@ class Other:
         log = "{} queried for {}'s attendance. Result was: {}"\
             .format(lib.get_author_name(ctx, True), name, attendance_date)
 
-
         lib.log(log, channel_id=lib.get_channel_id(ctx))
         await self.bot.say("```\n" + attendance_date + "\n```",
                            delete_after=self.bot.ans_lifespan * 3)
-
 
     @admin_cmd.command(name="debug")
     @commands.check(checks.is_admin)

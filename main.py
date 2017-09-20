@@ -33,19 +33,19 @@ if __name__ == '__main__':
         exit(-2)
 
     # Config
-
     config.load('bot.yml')
 
     # Logging
-
     sys.stdout = sys.__stdout__ = io.TextIOWrapper(sys.stdout.detach(),
                                                    encoding='utf8',
                                                    errors='backslashreplace',
                                                    line_buffering=True)
     lib.init_logger()
 
-    # Bot init
+    # Setup SQL connection
+    lib.init_sqlalchemy()
 
+    # Bot init
     bot.reload_config(config.get_config())
     bot.load_extension('pomodorobot.ext.timercommands')
     bot.load_extension('pomodorobot.ext.events')

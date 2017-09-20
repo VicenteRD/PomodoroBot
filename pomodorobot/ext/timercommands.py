@@ -279,6 +279,8 @@ class TimerCommands:
 
             self._add_attendance(ctx)
 
+            interface.restart_inactivity()
+
             log = (lib.get_author_name(ctx, True) +
                    " has subscribed to this timer.")
             send = "You've successfully subscribed to this timer, {}!" \
@@ -301,9 +303,20 @@ class TimerCommands:
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
         author = ctx.message.author
 
+        inactive = False
+        stopped = False
+
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
             interface.subbed.remove(author)
+
+            if len(interface.subbed) == 0:
+                if interface.timer.get_state() == State.PAUSED:
+                    interface.timer.stop()
+                    await self.bot.remove_messages(channel)
+                    stopped = True
+                if interface.timer.get_state() == State.RUNNING:
+                    inactive = interface.restart_inactivity()
 
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")
@@ -316,6 +329,14 @@ class TimerCommands:
 
         lib.log(log, channel_id=channel.id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
+        if inactive:
+            await self.bot.say("Timer now has no subs. Will stop after {} "
+                               "minutes unless someone subscribes!"
+                               .format(self.bot.inactivity_allowed),
+                               delete_after=self.bot.ans_lifespan)
+        if stopped:
+            await self.bot.say("Timer has stopped since it was paused and "
+                               "everyone un-subscribed")
 
     @timer.command(name="start", pass_context=True)
     @commands.check(checks.channel_has_timer)
@@ -330,17 +351,24 @@ class TimerCommands:
 
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
-        timer = self.bot.get_interface(channel).timer
+        interface = self.bot.get_interface(channel)
+        timer = interface.timer
         if timer.start():
             if not 0 < period_idx <= len(timer.periods):
                 period_idx = 1
 
             try:
+                if interface.restart_inactivity():
+                    await self.bot.say("Timer has no subs. Will stop after"
+                                       " {} minutes unless someone subscribes!"
+                                       .format(self.bot.inactivity_allowed),
+                                       delete_after=self.bot.ans_lifespan)
+
                 await self.bot.run_timer(channel, period_idx - 1)
             except discord.errors.HTTPException:
                 await self.bot.say("@here\n"
                                    "Connection interrupted, please resume! (1)")
-                self.bot.get_interface(channel).timer.pause()
+                timer.pause()
         else:
             lib.log(lib.get_author_name(ctx) +
                     " tried to start a timer that was already running.",
@@ -378,7 +406,18 @@ class TimerCommands:
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
         interface = self.bot.get_interface(channel)
-        if interface.timer.pause():
+        if len(interface.subbed) == 0:
+            if interface.timer.stop():
+                send = "No subs detected, timer will instead stop soon."
+                await self.bot.say(send, delete_after=interface.timer.step)
+            else:
+                await self.bot.remove_messages(channel)
+
+                send = "No subs detected, timer has stopped instead."
+                await self.bot.say(send, tts=interface.tts)
+            log = ("Attempted to pause the timer, but due to the lack of subs, "
+                   "it will be stopped instead")
+        elif interface.timer.pause():
             log = "Timer will be paused soon."
             await self.bot.say(log, delete_after=interface.timer.step)
 
@@ -645,9 +684,9 @@ class TimerCommands:
             if server_id not in attendance_info.keys():
                 attendance_info[server_id] = {}
 
-            attendance_info[server_id][lib.get_author_name(ctx)] = \
-                "\"{} UTC\"" \
-                    .format(str(datetime.datetime.utcnow()).split('.')[0])
+            attendance_info[server_id][lib.get_author_name(ctx)] = (
+                "\"{} UTC\""
+                .format(str(datetime.datetime.utcnow()).split('.')[0]))
 
             file = open(self.bot.attendance_file, 'w')
             file.write(yaml.dump(attendance_info, default_flow_style=False))

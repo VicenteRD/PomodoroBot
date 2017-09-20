@@ -52,6 +52,12 @@ def init_logger():
     _logger.ready = True
 
 
+def init_sqlalchemy():
+    """ Initializes SQLAlchemy stuff.
+    """
+    pass
+
+
 def get_server(context: Context) -> discord.Server:
     """ Gets the server to which a command was sent,
         based on the command's context.

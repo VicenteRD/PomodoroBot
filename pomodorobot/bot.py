@@ -11,7 +11,7 @@ from discord.ext import commands
 import pomodorobot.lib as lib
 
 from pomodorobot.config import Config
-from pomodorobot.timer import State, Action
+from pomodorobot.timer import Action, State
 from pomodorobot.channeltimerinterface import ChannelTimerInterface
 
 
@@ -42,6 +42,9 @@ class PomodoroBot(commands.Bot):
 
         # The amount of timers running.
         self.timers_running = 0
+        # The amount of time timers are allowed to have no subs for
+        # (value is configurable).
+        self.inactivity_allowed = 30
 
         # The time after which most command responses get deleted
         self.ans_lifespan = 15
@@ -91,6 +94,8 @@ class PomodoroBot(commands.Bot):
 
         self.log_channels = bot_section['log_channels']
         self.welcome_channels = bot_section['new_member_channels']
+
+        self.inactivity_allowed = cfg.get_int('timer.inactivity_allowed')
 
         for channel, timer in self.valid_timers().items():
             timer.step = cfg.get_int('timer.time_step')
@@ -372,6 +377,13 @@ class PomodoroBot(commands.Bot):
 
                 await asyncio.sleep(sleep_time / 1000000.0)
                 timer.curr_time += timer.step
+
+                if interface.check_inactivity(self.inactivity_allowed):
+                    lib.log("Timer will stop due to inactivity.",
+                            channel_id=channel.id, level=logging.INFO)
+                    await self.safe_send(channel,
+                                         "Timer will stop due to inactivity!",
+                                         delete_after=self.ans_lifespan)
             else:
                 break
 

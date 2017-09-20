@@ -275,7 +275,7 @@ class TimerCommands:
 
         interface = self.bot.get_interface(channel)
         if author not in interface.subbed:
-            interface.subbed.append(author)
+            interface.subbed[author] = datetime.datetime.now()
 
             self._add_attendance(ctx)
 
@@ -308,7 +308,7 @@ class TimerCommands:
 
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
-            interface.subbed.remove(author)
+            del interface.subbed[author]
 
             if len(interface.subbed) == 0:
                 if interface.timer.get_state() == State.PAUSED:
@@ -332,7 +332,7 @@ class TimerCommands:
         if inactive:
             await self.bot.say("Timer now has no subs. Will stop after {} "
                                "minutes unless someone subscribes!"
-                               .format(self.bot.inactivity_allowed),
+                               .format(self.bot.timer_inactivity_allowed),
                                delete_after=self.bot.ans_lifespan)
         if stopped:
             await self.bot.say("Timer has stopped since it was paused and "
@@ -361,7 +361,8 @@ class TimerCommands:
                 if interface.restart_inactivity():
                     await self.bot.say("Timer has no subs. Will stop after"
                                        " {} minutes unless someone subscribes!"
-                                       .format(self.bot.inactivity_allowed),
+                                       .format(self.bot
+                                               .timer_inactivity_allowed),
                                        delete_after=self.bot.ans_lifespan)
 
                 await self.bot.run_timer(channel, period_idx - 1)

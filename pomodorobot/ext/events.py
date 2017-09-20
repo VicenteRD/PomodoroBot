@@ -1,6 +1,7 @@
 import discord
 import logging
 import asyncio
+from datetime import datetime
 
 from discord.ext import commands
 
@@ -202,6 +203,12 @@ class Events:
         await self.bot.safe_send(server.get_channel(channels['log']),
                                  "{} is now {}. Why tho..."
                                  .format(old_name, new_name))
+
+    async def on_message(self, message):
+        author = message.author
+        if author.bot:
+            return
+        self.bot.mark_active(message.channel, author, datetime.now())
 
     async def on_message_delete(self, message):
         if message.server is None or\

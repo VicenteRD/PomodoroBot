@@ -16,7 +16,7 @@ class ChannelTimerInterface:
         self.timer = None
 
         # The list of people subscribed to this timer.
-        self.subbed = []
+        self.subbed = {}
 
         # Whether this timer is locked or not.
         self.locked = False
@@ -50,11 +50,29 @@ class ChannelTimerInterface:
 
         return self._inactivity is not None
 
-    def check_inactivity(self, time: int):
+    def check_inactivity(self, timer_time: int, user_time: int):
         if self._inactivity is None:
-            return False
+            return self.check_inactive_subs(user_time)
 
-        if self._inactivity + timedelta(minutes=time) <= datetime.now():
-            # timer ahs been inactive for 30 minutes
+        if self._inactivity + timedelta(minutes=timer_time) <= datetime.now():
+            # timer has been inactive for `timer_time` minutes
             self.timer.stop()
+            print('success')
             return True
+
+    def check_inactive_subs(self, time: int):
+        unsubbed = []
+        allowed_time = datetime.now() - timedelta(minutes=time)
+
+        for sub, last_activity in self.subbed.items():
+            # print(sub.name + ": " + str(last_activity) + "\n" +
+            #       str(allowed_time))
+            if last_activity <= allowed_time:
+                unsubbed.append(sub)
+        for sub in unsubbed:
+            del self.subbed[sub]
+
+        if len(self.subbed) == 0:
+            self._inactivity = datetime.now()
+
+        return unsubbed

@@ -44,7 +44,10 @@ class PomodoroBot(commands.Bot):
         self.timers_running = 0
         # The amount of time timers are allowed to have no subs for
         # (value is configurable).
-        self.inactivity_allowed = 30
+        self.timer_inactivity_allowed = 30
+        # The amount of time users are allowed to stay away for before being
+        # automatically un-subscribed (value is configurable).
+        self.user_inactivity_allowed = 60
 
         # The time after which most command responses get deleted
         self.ans_lifespan = 15
@@ -95,7 +98,10 @@ class PomodoroBot(commands.Bot):
         self.log_channels = bot_section['log_channels']
         self.welcome_channels = bot_section['new_member_channels']
 
-        self.inactivity_allowed = cfg.get_int('timer.inactivity_allowed')
+        self.timer_inactivity_allowed = cfg.get_int(
+            'timer.timer_inactivity_allowed')
+        self.user_inactivity_allowed = cfg.get_int(
+            'timer.user_inactivity_allowed')
 
         for channel, timer in self.valid_timers().items():
             timer.step = cfg.get_int('timer.time_step')
@@ -119,6 +125,7 @@ class PomodoroBot(commands.Bot):
             def delete():
                 yield from asyncio.sleep(delete_after)
                 yield from self.delete_message(message)
+
             asyncio.ensure_future(delete(), loop=self.loop)
 
     def is_admin(self, member: discord.Member) -> bool:
@@ -174,7 +181,7 @@ class PomodoroBot(commands.Bot):
         """
 
         if self.has_permission(member) and \
-           self.get_interface(channel).spoofed is not None:
+                        self.get_interface(channel).spoofed is not None:
             return self._interfaces[channel].spoofed
         return channel
 
@@ -251,6 +258,19 @@ class PomodoroBot(commands.Bot):
         return dict((c, i.timer) for c, i in self._interfaces.items() if
                     i.timer is not None)
 
+    def mark_active(self, channel, author, time):
+        """ Marks a user as active within a channel, giving them a
+            last-active-at timestamp.
+            :param channel: The channel in which to mark the user as active at.
+            :param author: The user to mark as active.
+            :param time: The last-active-at time.
+        """
+        if channel not in self._interfaces:
+            return
+        subs = self.get_interface(channel).subbed
+        if author in subs:
+            subs[author] = time
+
     async def run_timer(self, channel: discord.Channel, start_idx=0):
         """ Makes a timer run.
 
@@ -279,16 +299,16 @@ class PomodoroBot(commands.Bot):
             start_micro = iter_start.second * 1000000 + iter_start.microsecond
 
             if timer.get_state() == State.RUNNING and \
-               timer.curr_time >= timer.periods[timer.get_period()].time * 60:
+                    timer.curr_time >= timer.periods[timer.get_period()]\
+                    .time * 60:
 
-                say = "'{}' period over!"\
+                say = "'{}' period over!" \
                     .format(timer.periods[timer.get_period()].name)
 
                 timer.curr_time = 0
 
                 if timer.get_period() + 1 >= len(timer.periods) and \
-                   not timer.repeat:
-
+                        not timer.repeat:
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel.id)
                     await self.safe_send(channel, say, tts=interface.tts)
@@ -298,7 +318,7 @@ class PomodoroBot(commands.Bot):
                 timer.set_period((timer.get_period() + 1) % len(timer.periods))
 
                 if timer.action == Action.NONE:
-                    say += " '{}' period now starting ({})."\
+                    say += " '{}' period now starting ({})." \
                         .format(timer.periods[timer.get_period()].name,
                                 lib.pluralize(
                                     timer.periods[timer.get_period()].time,
@@ -378,12 +398,28 @@ class PomodoroBot(commands.Bot):
                 await asyncio.sleep(sleep_time / 1000000.0)
                 timer.curr_time += timer.step
 
-                if interface.check_inactivity(self.inactivity_allowed):
-                    lib.log("Timer will stop due to inactivity.",
-                            channel_id=channel.id, level=logging.INFO)
-                    await self.safe_send(channel,
-                                         "Timer will stop due to inactivity!",
+                inactive = interface.check_inactivity(
+                    self.timer_inactivity_allowed,
+                    self.user_inactivity_allowed)
+
+                if isinstance(inactive, bool) and inactive:
+                    send = "Timer will stop due to inactivity."
+                    lib.log(send, channel_id=channel.id, level=logging.INFO)
+                    await self.safe_send(channel, send,
                                          delete_after=self.ans_lifespan)
+                elif isinstance(inactive, list):
+                    for user in inactive:
+                        notice = ("{}, you have been un-subscribed due to"
+                                  " inactivity!").format(user.mention)
+                        await self.safe_send(channel, notice,
+                                             delete_after=self.ans_lifespan)
+                        await self.safe_send(user, notice)
+                        if interface.restart_inactivity():
+                            send = ("Timer has no subs. Will stop after {} "
+                                    "minutes unless someone subscribes!")\
+                                .format(self.timer_inactivity_allowed)
+                            await self.safe_send(channel, send,
+                                                 delete_after=self.ans_lifespan)
             else:
                 break
 

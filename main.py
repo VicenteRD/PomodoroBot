@@ -42,9 +42,6 @@ if __name__ == '__main__':
                                                    line_buffering=True)
     lib.init_logger()
 
-    # Setup SQL connection
-    lib.init_sqlalchemy()
-
     # Bot init
     bot.reload_config(config.get_config())
     bot.load_extension('pomodorobot.ext.timercommands')

@@ -235,7 +235,7 @@ def pluralize(amount, s_name: str, append="", p_name=""):
     :type amount: numeric (int, float, etc.)
 
     :param s_name: The singular name of the concept.
-    :type amount: str
+    :type s_name: str
 
     :param append: If the concept is a regular plural, this indicates the
         pluralization of the singular name (ex: 's' or 'es').

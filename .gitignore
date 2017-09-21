@@ -4,3 +4,4 @@ attendance/
 attendance.yml
 pomodorobot.log
 run.bat
+*.db

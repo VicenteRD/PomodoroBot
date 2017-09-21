@@ -1,5 +1,5 @@
 import yaml
-import datetime
+from datetime import datetime
 import logging
 import discord.errors
 
@@ -275,9 +275,7 @@ class TimerCommands:
 
         interface = self.bot.get_interface(channel)
         if author not in interface.subbed:
-            interface.subbed[author] = datetime.datetime.now()
-
-            self._add_attendance(ctx)
+            interface.add_sub(author, datetime.utcnow())
 
             interface.restart_inactivity()
 
@@ -303,20 +301,11 @@ class TimerCommands:
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
         author = ctx.message.author
 
-        inactive = False
-        stopped = False
+        result = 0
 
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
-            del interface.subbed[author]
-
-            if len(interface.subbed) == 0:
-                if interface.timer.get_state() == State.PAUSED:
-                    interface.timer.stop()
-                    await self.bot.remove_messages(channel)
-                    stopped = True
-                if interface.timer.get_state() == State.RUNNING:
-                    inactive = interface.restart_inactivity()
+            result = interface.remove_sub(author, datetime.utcnow())
 
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")
@@ -329,12 +318,12 @@ class TimerCommands:
 
         lib.log(log, channel_id=channel.id)
         await self.bot.say(send, delete_after=self.bot.ans_lifespan)
-        if inactive:
+        if result == -1:
             await self.bot.say("Timer now has no subs. Will stop after {} "
                                "minutes unless someone subscribes!"
                                .format(self.bot.timer_inactivity_allowed),
                                delete_after=self.bot.ans_lifespan)
-        if stopped:
+        elif result == -2:
             await self.bot.say("Timer has stopped since it was paused and "
                                "everyone un-subscribed")
 
@@ -668,33 +657,6 @@ class TimerCommands:
                 'timer.saved_formats.' + keys[1])
             return translation
         return keyword
-
-    def _add_attendance(self, ctx):
-        try:
-            file = open(self.bot.attendance_file, 'r')
-            attendance_info = yaml.load(file)
-            file.close()
-
-            if attendance_info is None or \
-                    not isinstance(attendance_info, dict) or \
-                    not attendance_info:
-                attendance_info = {}
-
-            server_id = lib.get_server_id(ctx)
-
-            if server_id not in attendance_info.keys():
-                attendance_info[server_id] = {}
-
-            attendance_info[server_id][lib.get_author_name(ctx)] = (
-                "\"{} UTC\""
-                .format(str(datetime.datetime.utcnow()).split('.')[0]))
-
-            file = open(self.bot.attendance_file, 'w')
-            file.write(yaml.dump(attendance_info, default_flow_style=False))
-            file.close()
-
-        except IOError:
-            lib.log("Failed to write attendance.")
 
 
 def setup(bot: PomodoroBot):

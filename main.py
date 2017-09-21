@@ -4,6 +4,7 @@ import io
 import pomodorobot.config as config
 import pomodorobot.lib as lib
 
+from pomodorobot.dbmanager import db_manager
 from pomodorobot.bot import PomodoroBot
 
 
@@ -47,5 +48,6 @@ if __name__ == '__main__':
     bot.load_extension('pomodorobot.ext.timercommands')
     bot.load_extension('pomodorobot.ext.events')
     bot.load_extension('pomodorobot.ext.other')
+    bot.load_extension('pomodorobot.ext.registry')
 
     bot.run(TOKEN)

@@ -180,8 +180,8 @@ class PomodoroBot(commands.Bot):
             as channel_id
         """
 
-        if self.has_permission(member) and \
-                        self.get_interface(channel).spoofed is not None:
+        if self.has_permission(member) and self.get_interface(channel).spoofed\
+                is not None:
             return self._interfaces[channel].spoofed
         return channel
 
@@ -269,7 +269,7 @@ class PomodoroBot(commands.Bot):
             return
         subs = self.get_interface(channel).subbed
         if author in subs:
-            subs[author] = time
+            subs[author]['last'] = time
 
     async def run_timer(self, channel: discord.Channel, start_idx=0):
         """ Makes a timer run.
@@ -420,6 +420,7 @@ class PomodoroBot(commands.Bot):
                                 .format(self.timer_inactivity_allowed)
                             await self.safe_send(channel, send,
                                                  delete_after=self.ans_lifespan)
+                interface.add_sub_time(timer.step)
             else:
                 break
 

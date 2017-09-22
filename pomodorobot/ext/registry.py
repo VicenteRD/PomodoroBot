@@ -35,6 +35,8 @@ class Registry:
 
         if name == "all":
             result = '\n'.join("{}: {}".format(record.name.split('#')[0],
+                                               "None found." if
+                                               record.last_seen is None else
                                                record.last_seen
                                                .strftime("%m-%d-%y %H:%M"))
                                for record in db_manager.get_all_records())
@@ -61,6 +63,8 @@ class Registry:
             Must use the name#discriminator format.
         """
         time_str = printable_time(db_manager.get_user_last_session(name))
+        if time_str is None:
+            time_str = "None found."
 
         lib.log("{} queried for {}'s last session time. Result: {}"
                 .format(lib.get_author_name(ctx, True),
@@ -76,6 +80,8 @@ class Registry:
         """
         time_str = printable_time(db_manager
                                   .get_user_last_session(ctx.message.author))
+        if time_str is None:
+            time_str = "None found."
 
         lib.log("{} queried for their last session time. Result: {}"
                 .format(lib.get_author_name(ctx, True), time_str))
@@ -95,6 +101,9 @@ class Registry:
             name = ctx.message.author
 
         time_str = printable_time(db_manager.get_user_total(name))
+        if time_str is None:
+            time_str = "None found."
+
         name = str(name)
         lib.log("{} queried for {}'s last session time. Result: {}"
                 .format(lib.get_author_name(ctx, True),
@@ -110,6 +119,8 @@ class Registry:
         """
         result = '\n' \
             .join("{} - {}".format(record.name.split('#')[0],
+                                   "None found." if
+                                   record.total_recorded is None else
                                    printable_time(record.total_recorded))
                   for record in db_manager.get_leaderboard())
 
@@ -126,6 +137,9 @@ def printable_time(time):
     :param time: The number representing the amount of seconds.
     :return: The formatted string.
     """
+    if time is None:
+        return None
+
     m, s = divmod(time, 60)
     h, m = divmod(m, 60)
     return "%d:%02d:%02d" % (h, m, s)

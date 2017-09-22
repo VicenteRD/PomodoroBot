@@ -305,7 +305,7 @@ class TimerCommands:
 
         interface = self.bot.get_interface(channel)
         if author in interface.subbed:
-            result = interface.remove_sub(author, datetime.utcnow())
+            result = interface.remove_sub(author)
 
             log = (lib.get_author_name(ctx, True) +
                    " has un-subscribed to this timer.")

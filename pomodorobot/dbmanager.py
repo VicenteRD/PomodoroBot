@@ -67,7 +67,8 @@ class SqlManager:
         return self._sql_session.query(TimerUser)
 
     def get_leaderboard(self):
-        return self.get_all_records().order_by(TimerUser.total_recorded).all()
+        return self.get_all_records().order_by(TimerUser.total_recorded.desc())\
+            .all()
 
     def get_user_attendance(self, user):
         record = self.get_record_by_name(user) if isinstance(user, str) \
@@ -78,9 +79,13 @@ class SqlManager:
     def get_user_last_session(self, user: User):
         record = self.get_record_by_name(user) if isinstance(user, str) \
             else self.get_record(user)
+
         return record.last_session if record is not None else None
 
     def get_user_total(self, user: User):
+        record = self.get_record_by_name(user) if isinstance(user, str) \
+            else self.get_record(user)
+
         return self.get_record(user).total_recorded
 
     def set_user_attendance(self, user: User, attendance: datetime):

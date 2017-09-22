@@ -10,7 +10,7 @@ class ChannelTimerInterface:
         use of.
     """
 
-    def __init__(self,channel: discord.Channel):
+    def __init__(self, channel: discord.Channel):
         # The channel this interface is linked to.
         self._channel = channel
 
@@ -56,12 +56,11 @@ class ChannelTimerInterface:
 
         db_manager.set_user_attendance(user, time)
 
-    def remove_sub(self, user, time):
+    def remove_sub(self, user):
         """ Removes a user from the subscribed list, with a timestamp.
             Returns the status of the timer
 
         :param user: The user to remove from the list.
-        :param time: Time time at which the user un-subscribed at.
         :return: 0 if the timer is active, -1 if it's inactive, -2 if it was
             stopped due to inactivity or -3 if there's no timer
         """
@@ -135,7 +134,7 @@ class ChannelTimerInterface:
             if times['last'] <= allowed_time:
                 unsubbed.append(sub)
         for sub in unsubbed:
-            self.remove_sub(sub, datetime.utcnow())
+            self.remove_sub(sub)
 
         if len(self.subbed) == 0:
             self._inactivity = datetime.now()

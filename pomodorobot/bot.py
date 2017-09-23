@@ -64,17 +64,23 @@ class PomodoroBot(commands.Bot):
         # So people can still see commands in help.
         self.formatter.show_check_failure = True
 
-    def get_interface(self, channel: discord.Channel):
+    def get_interface(self, channel: discord.Channel, generate=True):
         """ Retrieves a channel interface. If none found for the channel, a new
-            one is created with its default values.
+            one is created with its default values (if generate is True).
 
         :param channel: The channel the interface belongs to.
         :type channel: discord.Channel
+
+        :param generate: Whether the interface should be auto-generated if none
+            is found or not.
+        :type generate: bool
 
         :return: The interface belonging to the channel, new or old.
         """
 
         if channel not in self._interfaces:
+            if not generate:
+                return None
             self._interfaces[channel] = ChannelTimerInterface(channel)
         return self._interfaces[channel]
 
@@ -258,18 +264,31 @@ class PomodoroBot(commands.Bot):
         return dict((c, i.timer) for c, i in self._interfaces.items() if
                     i.timer is not None)
 
-    def mark_active(self, channel, author, time):
+    def mark_active(self, channel: discord.Channel, author: discord.Member,
+                    time: datetime):
         """ Marks a user as active within a channel, giving them a
             last-active-at timestamp.
+
             :param channel: The channel in which to mark the user as active at.
+            :type channel: discord.Channel
+
             :param author: The user to mark as active.
+            :type author: discord.Member
+
             :param time: The last-active-at time.
+            :type time: datetime
         """
-        if channel not in self._interfaces:
-            return
-        subs = self.get_interface(channel).subbed
-        if author in subs:
-            subs[author]['last'] = time
+
+        interface = self.get_interface(channel, generate=False)
+        if interface is not None and author in interface.subbed:
+            interface.subbed[author]['last'] = time
+
+    def unsub_all(self):
+        """ Unsubscribes all members from all timers.
+        """
+        for interface in self._interfaces:
+            for sub in interface.subbed:
+                interface.remove_sub(sub)
 
     async def run_timer(self, channel: discord.Channel, start_idx=0):
         """ Makes a timer run.

@@ -42,7 +42,7 @@ timer:
   # The time that timers are allowed to go by without people subscribed to them, in minutes.
   timer_inactivity_allowed: 30
   # The time that a user is allowed to go inactive for before being unsubscribed.
-  user_inactivity_allowed: 30
+  user_inactivity_allowed: 60
   # Whether period looping should be set to 'on' or 'off' by default
   looping_default: True
   # Whether countdown mode should be enabled or disabled by default

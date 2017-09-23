@@ -647,9 +647,11 @@ class TimerCommands:
             pass
 
         keys = keyword.split(':', 1)
+        if len(keys) < 2:
+            return keyword
         if keys[0] == 'typical':
             durations = keys[1].split(',', 2)
-            return '(2xStudy/Work:{x},Break:{y}),Study/Work:{x},Long_Break:{z}' \
+            return "(2xStudy/Work:{x},Break:{y}),Study/Work:{x},Long_Break:{z}"\
                 .format(x=durations[0], y=durations[1], z=durations[2])
 
         if keys[0] == 'saved':

@@ -48,6 +48,7 @@ if __name__ == '__main__':
     bot.load_extension('pomodorobot.ext.timercommands')
     bot.load_extension('pomodorobot.ext.events')
     bot.load_extension('pomodorobot.ext.other')
+    bot.load_extension('pomodorobot.ext.admin')
     bot.load_extension('pomodorobot.ext.registry')
 
     bot.run(TOKEN)

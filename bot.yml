@@ -64,7 +64,7 @@ timer:
       # 2_study_session
       "247545704971632641": (2xStudy:45,Break:15),Study:45,Long_Break:20
       # 3_study_session
-      "308312741251121173": (2xStudy:52,Break:13),Study:52,Long_Break:23
+      "308312741251121173": (2xStudy:25,Break:5),Study:25,Long_Break:15
       # 4_unmuted_study
       "251780383484411904": (2xStudy:32,Break:8),Study:32,Long_Break:15
 
@@ -75,6 +75,6 @@ timer:
 
   saved_formats:
 
-    programming: (2xProgramming:52,Break:17),Programming:52,Long_Break:30
+    programming: (2xProgramming:52,Break:13),Programming:52,Long_Break:23
     # vertabrett's timer
     verta: (2xWorkWork:16,HomeWork:8,Break:6),FocusedWork:23,Break:7

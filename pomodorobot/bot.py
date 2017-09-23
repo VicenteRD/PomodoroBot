@@ -428,11 +428,13 @@ class PomodoroBot(commands.Bot):
                                          delete_after=self.ans_lifespan)
                 elif isinstance(inactive, list):
                     for user in inactive:
-                        notice = ("{}, you have been un-subscribed due to"
-                                  " inactivity!").format(user.mention)
-                        await self.safe_send(channel, notice,
+                        notice = ("ou have been un-subscribed due to"
+                                  " inactivity!")
+                        # Yes, there's a typo, but there's also a hacky solution
+                        await self.safe_send(channel, "{}, y{}"
+                                             .format(user.mention, notice),
                                              delete_after=self.ans_lifespan)
-                        await self.safe_send(user, notice)
+                        await self.safe_send(user, "Y" + notice)
                         if interface.restart_inactivity():
                             send = ("Timer has no subs. Will stop after {} "
                                     "minutes unless someone subscribes!")\

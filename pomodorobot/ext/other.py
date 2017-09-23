@@ -144,6 +144,20 @@ class Other:
 
         await self.bot.say(embed=embed, delete_after=min(time_out, 60))
 
+    @commands.command(hidden=True)
+    async def skillz(self, time_out=15):
+        """ For when you've been programming your sanity off.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = "https://i.imgur.com/iGNKTpw.png"
+        embed = discord.Embed(title="Mad comp sci skillz",
+                              url=url).set_image(url=url)
+
+        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+
 
 def setup(bot: PomodoroBot):
     bot.add_cog(Other(bot))

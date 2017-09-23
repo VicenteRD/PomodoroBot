@@ -78,6 +78,9 @@ class Admin:
         :type channel_id: str
         """
 
+        if channel_id is None:
+            channel_id = lib.get_channel(ctx).id
+
         server = lib.get_server(ctx)
         user = server.get_member(user_id)
 
@@ -94,7 +97,7 @@ class Admin:
                     channel_id=channel_id)
             await self.bot.say("Channel not found or invalid.",
                                delete_after=self.bot.ans_lifespan)
-        if user is None:
+        elif user is None:
             lib.log("{} tried to forcefully subscribe an invalid member"
                     .format(author_name), channel_id=channel_id)
             await self.bot.say("User is invalid. Are you sure its his ID?",
@@ -108,7 +111,7 @@ class Admin:
                     channel_id=channel_id)
             await self.bot.say("Member subscribed!",
                                delete_after=self.bot.ans_lifespan)
-            await self.bot.say("{}, has subscribed you to this channel's "
+            await self.bot.say("{}, {} has subscribed you to this channel's "
                                "timer!".format(member_name, author_name),
                                delete_after=self.bot.ans_lifespan)
 
@@ -126,6 +129,9 @@ class Admin:
         :type channel_id: str
         """
 
+        if channel_id is None:
+            channel_id = lib.get_channel(ctx).id
+
         server = lib.get_server(ctx)
         user = server.get_member(user_id)
 
@@ -142,7 +148,7 @@ class Admin:
                     channel_id=channel_id)
             await self.bot.say("Channel not found or invalid.",
                                delete_after=self.bot.ans_lifespan)
-        if user is None:
+        elif user is None:
             lib.log("{} tried to forcefully unsubscribe an invalid member"
                     .format(author_name), channel_id=channel_id)
             await self.bot.say("User is invalid. Are you sure its his ID?",
@@ -156,8 +162,8 @@ class Admin:
                     channel_id=channel_id)
             await self.bot.say("Member unsubscribed!",
                                delete_after=self.bot.ans_lifespan)
-            await self.bot.say("{}, has unsubscribed you from this channel's "
-                               "timer!".format(member_name, author_name),
+            await self.bot.say("{}, {} has unsubscribed you from this channel's"
+                               " timer!".format(member_name, author_name),
                                delete_after=self.bot.ans_lifespan)
 
     @admin_cmd.command(name="spoof", pass_context=True)

@@ -286,7 +286,7 @@ class PomodoroBot(commands.Bot):
     def unsub_all(self):
         """ Unsubscribes all members from all timers.
         """
-        for interface in self._interfaces:
+        for _, interface in self._interfaces.items():
             for sub in interface.subbed:
                 interface.remove_sub(sub)
 

@@ -37,6 +37,7 @@ class TimerUser(SqlBase):
             .format(self.id, self.discord_id, self.name,
                     self.last_seen, self.last_session, self.total_recorded)
 
+
 SqlBase.metadata.create_all(engine)
 SqlSession = sessionmaker(bind=engine)
 
@@ -86,7 +87,7 @@ class SqlManager:
         record = self.get_record_by_name(user) if isinstance(user, str) \
             else self.get_record(user)
 
-        return self.get_record(user).total_recorded
+        return record.total_recorded
 
     def set_user_attendance(self, user: User, attendance: datetime):
         record = self.get_record(user)

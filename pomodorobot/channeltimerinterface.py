@@ -43,12 +43,19 @@ class ChannelTimerInterface:
     def get_channel_name(self) -> str:
         return self._channel.name
 
-    def add_sub(self, user, time):
+    def add_sub(self, user, time, refresh=False):
         """ Adds a user to the subscribed list, with a timestamp.
 
         :param user: The user to add to the list.
         :param time: The time at which the user subscribed at.
+        :param refresh: Whether the user should be
+            un-subscribed and re-subscribed if he's already subscribed.
         """
+        if user in self.subbed:
+            if not refresh:
+                return None
+            self.remove_sub(user)
+
         self.subbed[user] = {}
         self.subbed[user]['start'] = time
         self.subbed[user]['last'] = time

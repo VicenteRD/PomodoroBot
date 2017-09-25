@@ -103,6 +103,16 @@ class Admin:
             await self.bot.say("User is invalid. Are you sure its his ID?",
                                delete_after=self.bot.ans_lifespan)
         else:
+            if user in interface.subbed:
+                await self.bot.say("User is already subscribed!",
+                                   delete_after=self.bot.ans_lifespan)
+                lib.log("{} tried to subscribe {} to {}, but user is already "
+                        "subscribed".format(author_name, member_name,
+                                            "this channel" if channel_id is None
+                                            else "channel with id=" + channel_id
+                                            ), channel_id=channel_id)
+                return
+
             interface.add_sub(user, datetime.now())
             lib.log("{} forcefully subscribed {} to {}."
                     .format(author_name, member_name, "this channel" if

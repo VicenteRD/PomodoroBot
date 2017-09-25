@@ -430,12 +430,14 @@ class PomodoroTimer:
         if compact:
             return ', '.join(str(period.time) for period in self.periods)
 
-        p_list = "**Period list (Loop is " + (
-                 "ON" if self.repeat else "OFF") + "):**"
+        p_list = "**Period list (Loop is {}):**".format("ON" if self.repeat
+                                                        else "OFF")
         for i in range(0, len(self.periods)):
             period = self.periods[i]
-            p_list += ("\n" + period.name + ": " +
-                       lib.pluralize(period.time, "minute", append='s'))
+            p_list += ("\n`{}` {}: {}"
+                       .format(str(i + 1), period.name,
+                               lib.pluralize(period.time,
+                                             "minute", append='s')))
 
             if i == self._current_period:
                 p_list += "\t-> _You are here!_"

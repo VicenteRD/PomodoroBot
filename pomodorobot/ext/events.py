@@ -123,6 +123,8 @@ class Events:
                 if e.old_period is not None:
                     msg += "**{}** period over!".format(e.old_period.name)
                 if e.new_period is not None:
+                    if e.old_period is not None:
+                        msg += " "
                     msg += "**{}** period now starting [_{}_]".format(
                         e.new_period.name,
                         lib.pluralize(e.new_period.time, "minute", append="s"))

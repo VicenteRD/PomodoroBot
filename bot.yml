@@ -7,7 +7,7 @@ startup_msg: "Beep boop. I'm back online, ready to ~~take over the world~~ help 
 
 # Bot settings
 bot:
-  description: A marinara timer bot that can be configured to your needs.
+  description: A pomodoro timer bot that can be configured to your needs.
 
   bot_admin_id: "87387330037448704"
   bot_role_id: "249727962214039554"

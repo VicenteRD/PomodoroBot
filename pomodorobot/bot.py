@@ -287,7 +287,7 @@ class PomodoroBot(commands.Bot):
         """ Unsubscribes all members from all timers.
         """
         for _, interface in self._interfaces.items():
-            for sub in interface.subbed:
+            for sub in list(interface.subbed.keys()):
                 interface.remove_sub(sub)
 
     async def run_timer(self, channel: discord.Channel, start_idx=0):

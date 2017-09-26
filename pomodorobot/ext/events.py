@@ -55,10 +55,10 @@ class Events:
                 elif isinstance(command, commands.GroupMixin):
                     for sub_name, sub_command in command.commands.items():
                         if ctx.invoked_with == sub_name:
-                            alt = name + " " + sub_name
+                            alt = "{} {}".format(name, sub_name)
 
             if alt is not None:
-                send += " Did you mean `" + alt + "`?"
+                send += " Did you mean `{}`?".format(alt)
 
         elif isinstance(error, commands.CommandInvokeError):
             lib.log_cmd_stacktrace(error)
@@ -67,8 +67,7 @@ class Events:
             log = str(error)
 
         lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
-        await self.bot.safe_send(lib.get_channel(ctx), send,
-                                 delete_after=self.bot.ans_lifespan)
+        await ctx.send(send, delete_after=self.bot.ans_lifespan)
 
     async def on_ready(self):
         """ A listener for the event in which the bot is ready to work.
@@ -78,7 +77,7 @@ class Events:
         lib.log("Using discord.py version: " + discord.__version__)
         lib.log("Logged in as :")
         lib.log("\t" + self.bot.user.name)
-        lib.log("\t" + self.bot.user.id)
+        lib.log("\t" + str(self.bot.user.id))
         lib.log("")
 
         await self.bot.update_status()
@@ -86,8 +85,9 @@ class Events:
         message = "**[{}]** {}"\
             .format(config.get_config().get_str('version'),
                     config.get_config().get_str('startup_msg'))
-        for server in self.bot.servers:
-            await self.bot.send_message(server, message)
+        for guild in self.bot.guilds:
+            # Temporary solution
+            await guild.text_channels[0].send(message)
 
     def timer_listener(self, e: TimerEvent):
         """ Listens to any timer-related events.
@@ -115,9 +115,10 @@ class Events:
             msg += "Timer updated:\t\t "
 
             if e.old_period == e.new_period:
-                msg += "**{}** period has been restarted! [_{}_]".format(
+                msg += "**{}** period has been restarted! [_{} {}_]".format(
                     e.new_period.name,
-                    lib.pluralize(e.new_period.time, "minute", append="s"))
+                    e.new_period.time,
+                    "minute" if e.new_period.time == 1 else "minutes")
 
             else:
                 if e.old_period is not None:
@@ -125,86 +126,82 @@ class Events:
                 if e.new_period is not None:
                     if e.old_period is not None:
                         msg += " "
-                    msg += "**{}** period now starting [_{}_]".format(
+                    msg += "**{}** period now starting [_{} {}_]".format(
                         e.new_period.name,
-                        lib.pluralize(e.new_period.time, "minute", append="s"))
+                        e.new_period.time,
+                        "minute" if e.new_period.time == 1 else "minutes")
 
         elif isinstance(e, TimerModifiedEvent):
             msg += "Timer modified by {} periods!"\
                 .format(e.action)
             if e.final_period is not None:
-                msg += " Now at {} [_{}_]"\
+                msg += " Now at {} [_{} {}_]"\
                     .format(e.final_period.name,
-                            lib.pluralize(e.final_period.time,
-                                          "minute", append="s"))
+                            e.final_period.time,
+                            "minute" if e.final_period.time == 1 else "minutes")
         else:
             return
 
         @asyncio.coroutine
         def reaction():
             for member in e.timer.get_users_subscribed():
-                yield from self.bot.safe_send(member, msg)
+                yield from member.send(msg)
 
         self.bot.loop.create_task(reaction())
 
     async def on_member_join(self, member):
-        server = member.server
+        guild = member.guild
 
         url = "http://i.imgur.com/jKhEXp6.jpg"
         embed = discord.Embed(url=url).set_image(url=url)
-
-        await self.bot.send_message(member.server, embed=embed)
-
         welcome = "Welcome, {}!".format(member.mention)
 
-        await self.bot.safe_send(server,
-                                 welcome)
+        await guild.text_channels[0].send(member.server, embed=embed)
+        await guild.text_channels[0].send(welcome)
 
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + server.id
+            'bot.new_member_channels.' + guild.id
         )
 
         if not channels:
             return
 
-        await self.bot.safe_send(server.get_channel(channels['log']), welcome)
+        await self.bot.safe_send(guild.get_channel(channels['log']), welcome)
 
         instructions = "\nPlease read and follow the instructions on {}, " \
                        "as well as introducing yourself in {} :smiley:"\
-            .format(server.get_channel(channels['info']).mention,
-                    server.get_channel(channels['directory']).mention)
+            .format(guild.get_channel(channels['info']).mention,
+                    guild.get_channel(channels['directory']).mention)
 
-        await self.bot.safe_send(server, instructions)
+        await guild.text_channels[0].send(instructions)
 
     async def on_member_remove(self, member):
-        server = member.server
+        guild = member.server
 
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + server.id
+            'bot.new_member_channels.' + guild.id
         )
         if not channels:
             return
 
-        await self.bot.safe_send(server.get_channel(channels['log']),
-                                 "{} has left the server, farewell!"
-                                 .format(member.mention))
+        await guild.get_channel(channels['log'])\
+            .send("{} has left the guild, farewell!".format(member.mention))
 
     async def on_member_update(self, before, after):
         if before.nick == after.nick:
             return
 
-        server = after.server
+        guild = after.server
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + server.id
+            'bot.new_member_channels.' + guild.id
         )
         if not channels:
             return
 
         old_name = before.name if before.nick is None else before.nick
         new_name = after.name if after.nick is None else after.nick
-        await self.bot.safe_send(server.get_channel(channels['log']),
-                                 "{} is now {}. Why tho..."
-                                 .format(old_name, new_name))
+        await guild.get_channel(channels['log'])\
+            .send("{} is now {}. Why tho...".format(old_name, new_name))
 
     async def on_message(self, message):
         author = message.author
@@ -213,24 +210,23 @@ class Events:
         self.bot.mark_active(message.channel, author, datetime.now())
 
     async def on_message_delete(self, message):
-        if message.server is None or\
-           message.author.bot is True or\
+        guild = message.guild
+
+        if guild is None or message.author.bot is True or\
            message.content.startswith(self.bot.command_prefix + "timer"):
             return
 
         log_channels = self.bot.log_channels
 
-        if log_channels and message.server.id in log_channels.keys():
-            log_to = message.server.get_channel(log_channels[message.server.id])
+        if log_channels and guild.id in log_channels.keys():
+            log_to = guild.get_channel(log_channels[guild.id])
 
-            unfmtd = "Message deleted || {} | {} | {:%m/%d %H:%M:%S} UTC || {}"
-
-            await self.bot\
-                .safe_send(log_to,
-                           unfmtd.format(message.channel.mention,
-                                         lib.get_name(message.author, True),
-                                         message.timestamp,
-                                         message.clean_content))
+            msg = "Message deleted || {} | {} | {:%m/%d %H:%M:%S} UTC || {}"\
+                .format(message.channel.mention,
+                        lib.get_name(message.author, True),
+                        message.timestamp,
+                        message.clean_content)
+            await log_to.send(msg)
 
 
 def setup(bot: PomodoroBot):

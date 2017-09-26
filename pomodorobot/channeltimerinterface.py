@@ -10,7 +10,7 @@ class ChannelTimerInterface:
         use of.
     """
 
-    def __init__(self, channel: discord.Channel):
+    def __init__(self, channel: discord.TextChannel):
         # The channel this interface is linked to.
         self._channel = channel
 
@@ -38,7 +38,7 @@ class ChannelTimerInterface:
         self._inactivity = None
 
     def get_server_name(self) -> str:
-        return self._channel.server.name
+        return self._channel.guild.name
 
     def get_channel_name(self) -> str:
         return self._channel.name

@@ -79,7 +79,7 @@ class TimerCommands:
         channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
 
         timer_format = await self._translate_keyword(timer_format,
-                                                     lib.get_server_id(ctx),
+                                                     lib.get_guild_id(ctx),
                                                      channel.id)
         if timer_format is None:
             return
@@ -573,7 +573,7 @@ class TimerCommands:
         :type toggle: str
         """
 
-        channel = self.bot.spoof(ctx.message.author, lib.get_channel(ctx))
+        channel = self.bot.spoof(ctx.author, lib.get_channel(ctx))
         interface = self.bot.get_interface(channel)
 
         log = send = None

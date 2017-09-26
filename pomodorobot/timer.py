@@ -183,12 +183,16 @@ class PomodoroTimer:
         return ", ".join(str(period.time) for period in self.periods) if \
             self.periods is not None else None
 
-    def add_periods(self, index, periods_info):
+    def add_periods(self, idx, periods_info):
         """ Adds a set of periods, created by parsing the given periods_info, at
             the given index.
 
-        :param index: The index to add the periods at.
+        :param idx: The index to add the periods at.
+        :type idx: int || 'n'
+        
         :param periods_info: The info used to create the new periods
+        :type periods_info: str
+        
         :return: the amount of periods added
         """
 
@@ -197,11 +201,11 @@ class PomodoroTimer:
         if new_periods is None:
             return 0
 
-        index = len(self.periods) if index == 'n' else int(index)
+        idx = len(self.periods) if idx == 'n' else int(idx)
 
-        self.periods[index: (len(new_periods) - 1)] = new_periods
+        self.periods[idx: (len(new_periods) - 1)] = new_periods
 
-        if index <= self._current_period:
+        if idx <= self._current_period:
             self._current_period += len(new_periods)
 
         TimerModifiedEvent(self, "adding " + (
@@ -210,33 +214,37 @@ class PomodoroTimer:
 
         return len(new_periods)
 
-    def remove_periods(self, index, amount):
+    def remove_periods(self, idx, amount):
         """ Removes a given amount of periods, from a given index.
             If instead of removing the periods, the timer should be reset,
             the method will do nothing but return False.
 
-        :param index: The index of the first period to remove (0 to n).
+        :param idx: The index of the first period to remove (0 to n).
+        :type idx: int
+        
         :param amount: The amount of periods to remove
+        :type amount: int
+        
         :return: True if the periods were successfully removed, False otherwise,
             e.g.: The amount of periods being removed is the same or higher than
                 the amount of periods available (use reset instead).
         """
 
-        if index == 0 and amount >= len(self.periods):
+        if idx == 0 and amount >= len(self.periods):
             return False
 
-        regulate = index <= self._current_period
+        regulate = idx <= self._current_period
 
-        del self.periods[index:(index + amount)]
+        del self.periods[idx:(idx + amount)]
 
         final_period = None
         if regulate:
-            if index + (amount - 1) < self._current_period:
+            if idx + (amount - 1) < self._current_period:
                 # current period is not deleted
                 self._current_period -= amount
             else:
                 # current period gets deleted
-                self._current_period = min(index, len(self.periods) - 1)
+                self._current_period = min(idx, len(self.periods) - 1)
                 self.curr_time = 0
                 final_period = self.periods[self._current_period]
 
@@ -249,7 +257,9 @@ class PomodoroTimer:
         """ Toggles the timer's countdown setting on or off.
 
         :param toggle: True to turn it on, False to turn it off, None to toggle.
+        :type toggle: bool || None
         """
+
         if toggle is None:
             toggle = not self.countdown
         if self.countdown == toggle:
@@ -263,7 +273,9 @@ class PomodoroTimer:
         """ Toggles the timer's looping setting on or off.
 
         :param toggle: True to turn it on, False to turn it off, None to toggle.
+        :type toggle: bool || None
         """
+
         if toggle is None:
             toggle = not self.repeat
         if self.repeat == toggle:
@@ -337,7 +349,11 @@ class PomodoroTimer:
             (Thus it actually jumps to [idx-1]).
 
         :param idx: The index of the period to jump to.
+        :type idx: int
+
         :param reset: Whether the current time should be reset to 0 or not.
+        :type reset: bool
+
         :return: If successful, returns the name of the new current period.
             If not, returns None.
         """
@@ -388,6 +404,8 @@ class PomodoroTimer:
 
         :param extended: Whether it should display extra information (True)
             or keep it simple (False).
+        :type extended: bool
+
         :return: The string with the current period and the remaining or elapsed
             time (Depending on the value of _countdown, see PomodoroTimer.setup)
         """
@@ -397,15 +415,16 @@ class PomodoroTimer:
 
         time = "**On " + self.periods[self._current_period].name + " period** "
 
+        period_time = self.periods[self._current_period].time
+
         if extended:
-            time += "(Duration: " + lib.pluralize(
-                self.periods[self._current_period].time,
-                "minute", append='s') + ")"
+            time += "(Duration: {} {}".format(period_time, "minute" if
+                                              period_time == 1 else "minutes")
 
         if self.countdown:
             time += "\nRemaining:\t"
             m, s = divmod(
-                (self.periods[self._current_period].time * 60) - self.curr_time,
+                (period_time * 60) - self.curr_time,
                 60)
         else:
             time += "\nElapsed:\t"
@@ -424,6 +443,7 @@ class PomodoroTimer:
     def list_periods(self, compact=False):
         """ Generates a list of the periods as a string, flagging the
             current one.
+
         :return: The list of periods, specifying which one is the current one.
         """
 
@@ -434,10 +454,10 @@ class PomodoroTimer:
                                                         else "OFF")
         for i in range(0, len(self.periods)):
             period = self.periods[i]
-            p_list += ("\n`{}` {}: {}"
+            p_list += ("\n`{}` {}: {} {}"
                        .format(str(i + 1), period.name,
-                               lib.pluralize(period.time,
-                                             "minute", append='s')))
+                               period.time,
+                               "minute" if period.time == 1 else "minutes"))
 
             if i == self._current_period:
                 p_list += "\t-> _You are here!_"
@@ -492,7 +512,7 @@ class PomodoroTimer:
             It also triggers a TimerPeriodEvent.
 
         :param idx: The new current period index.
-        :type idx: int. Must be 0 <= idx < len(periods) or -1.
+        :type idx: int. 0 <= idx < len(periods) || idx = -1.
         """
 
         if not (idx == -1 or 0 <= idx < len(self.periods)):

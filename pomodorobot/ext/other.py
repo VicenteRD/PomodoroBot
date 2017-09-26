@@ -12,26 +12,26 @@ class Other:
         self.bot = bot
 
     @commands.command(aliases=['about'])
-    async def aboot(self):
+    async def aboot(self, ctx: commands.Context):
         """ Information about me!
         """
 
-        await self.bot.say("Current version: {}\nSource: {}"
-                           .format(config.get_config().get_str('version'),
-                                   config.get_config().get_str('source')),
-                           delete_after=self.bot.ans_lifespan * 4)
+        await ctx.send("Current version: {}\nSource: {}"
+                       .format(config.get_config().get_str('version'),
+                               config.get_config().get_str('source')),
+                       delete_after=self.bot.ans_lifespan * 4)
 
-        await self.bot.say("Questions, suggestions, bug to report?\n" +
-                           "Open an issue on the Github page, " +
-                           "or send me a message on Discord! " +
-                           config.get_config().get_str('author_name'),
-                           delete_after=self.bot.ans_lifespan * 4)
+        await ctx.send("Questions, suggestions, bug to report?\n"
+                       "Open an issue on the Github page, "
+                       "or send me a message on Discord! " +
+                       config.get_config().get_str('author_name'),
+                       delete_after=self.bot.ans_lifespan * 4)
 
-        await self.bot.say("Please consider donating at: https://goo.gl/sSiaX3",
-                           delete_after=self.bot.ans_lifespan * 4)
+        await ctx.send("Please consider donating at: https://goo.gl/sSiaX3",
+                       delete_after=self.bot.ans_lifespan * 4)
 
-    @commands.command(pass_context=True)
-    async def howto(self, ctx, specific=None):
+    @commands.command()
+    async def howto(self, ctx: commands.Context, specific=None):
         """ Tells you how to use the bot.
         """
 
@@ -41,10 +41,10 @@ class Other:
             filename = "howto.txt"
 
         with open(filename, 'r') as the_file:
-            await self.bot.safe_send(ctx.message.author, the_file.read())
+            await ctx.author.send(the_file.read())
 
     @commands.command(hidden=True)
-    async def why(self, time_out=15):
+    async def why(self, ctx: commands.Context, time_out=15):
         """ For when you question life and decisions.
 
             :param time_out: The time you want the message to stay for.
@@ -55,10 +55,10 @@ class Other:
         embed = discord.Embed(title="Why, you ask...",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def howcome(self, time_out=15):
+    async def howcome(self, ctx: commands.Context, time_out=15):
         """ When you just don't understand, this command is your best friend.
 
             :param time_out: The time you want the message to stay for.
@@ -71,10 +71,10 @@ class Other:
         embed = discord.Embed(title="How come...?",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def no(self, time_out=15):
+    async def no(self, ctx: commands.Context, time_out=15):
         """ For those moments when people don't get it.
 
             :param time_out: The time you want the message to stay for.
@@ -85,10 +85,10 @@ class Other:
         embed = discord.Embed(title="NO!",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def faint(self, time_out=15):
+    async def faint(self, ctx: commands.Context, time_out=15):
         """ Can't handle it? Me neither.
 
             :param time_out: The time you want the message to stay for.
@@ -99,10 +99,10 @@ class Other:
         embed = discord.Embed(title="Oh god.",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def potato(self, time_out=15):
+    async def potato(self, ctx: commands.Context, time_out=15):
         """ Come on!
 
             :param time_out: The time you want the message to stay for.
@@ -114,10 +114,10 @@ class Other:
         embed = discord.Embed(title="Believe!",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def fine(self, time_out=15):
+    async def fine(self, ctx: commands.Context, time_out=15):
         """ Everything is fine
 
             :param time_out: The time you want the message to stay for.
@@ -128,10 +128,10 @@ class Other:
         embed = discord.Embed(title="Don't worry about it.",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def whale(self, time_out=15):
+    async def whale(self, ctx: commands.Context, time_out=15):
         """ Interesting stuff
 
             :param time_out: The time you want the message to stay for.
@@ -142,10 +142,10 @@ class Other:
         embed = discord.Embed(title="Interesting",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
-    async def skillz(self, time_out=15):
+    async def skillz(self, ctx: commands.Context, time_out=15):
         """ For when you've been programming your sanity off.
 
             :param time_out: The time you want the message to stay for.
@@ -156,7 +156,7 @@ class Other:
         embed = discord.Embed(title="Mad comp sci skillz",
                               url=url).set_image(url=url)
 
-        await self.bot.say(embed=embed, delete_after=min(time_out, 60))
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
 
 def setup(bot: PomodoroBot):

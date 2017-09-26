@@ -52,44 +52,44 @@ def init_logger():
     _logger.ready = True
 
 
-def get_server(context: Context) -> discord.Server:
-    """ Gets the server to which a command was sent,
+def get_guild(context: Context) -> discord.Guild:
+    """ Gets the guild to which a command was sent,
         based on the command's context.
 
     :param context: The context in which the command was sent.
     :type context: discord.ext.commands.Context
 
-    :return: The server
+    :return: The guild.
     """
 
-    return context.message.server
+    return context.guild
 
 
-def get_server_id(context: Context) -> str:
-    """ Gets the ID of the server to which a command was sent,
+def get_guild_id(context: Context) -> int:
+    """ Gets the ID of the guild to which a command was sent,
         based on the command's context.
 
     :param context: The context in which the command was sent.
     :type context: discord.ext.commands.Context
 
-    :return: The server's ID
+    :return: The guild's ID.
     """
 
-    server = get_server(context)
-    return None if server is None else server.id
+    guild = get_guild(context)
+    return None if guild is None else guild.id
 
 
-def get_channel(context: Context) -> discord.Channel:
+def get_channel(context: Context) -> discord.TextChannel:
     """ Gets a channel to which a command was sent, based on the command's
         context.
 
     :param context: The context in which the command was sent.
     :type context: discord.ext.commands.Context
 
-    :return: The channel
+    :return: The channel.
     """
 
-    return context.message.channel
+    return context.channel
 
 
 def get_channel_id(context: Context) -> str:
@@ -101,8 +101,7 @@ def get_channel_id(context: Context) -> str:
 
     :return: The channel's ID
     """
-
-    return get_channel(context).id
+    return context.channel.id
 
 
 def get_channel_name(context: Context) -> str:
@@ -114,7 +113,7 @@ def get_channel_name(context: Context) -> str:
 
     :return: The channel's name
     """
-    return get_channel(context).name
+    return context.channel.name
 
 
 def get_author_id(context: Context) -> str:
@@ -126,28 +125,39 @@ def get_author_id(context: Context) -> str:
 
     :return: The author's ID
     """
+    return context.author.id
 
-    return context.message.author.id
 
-
-def get_author_name(context: Context, nick=False) -> str:
+def get_author_name(context: Context, display_name=False) -> str:
     """ Gets the name of the author of a command, based on the command's
         context.
 
     :param context: The context in which the command was sent.
     :type context: discord.ext.commands.Context
 
-    :param nick: Whether the given value should be the real user name,
+    :param display_name: Whether the given value should be the real user name,
         or the member's nick (if available). Defaults to False
-    :type nick: bool
+    :type display_name: bool
 
     :return: The author's name
     """
-    return get_name(context.message.author, nick)
+    return get_name(context.author, display_name)
 
 
-def get_name(member: discord.Member, nick=False) -> str:
-    return member.nick if nick and member.nick is not None else member.name
+def get_name(member: discord.Member, display_name=False) -> str:
+    """ Gets the name of a member, or the nick, if nick is True and a nick
+        exists
+
+    :param member: The member to get the name of.
+    :type member: discord.Member
+
+    :param display_name: Whether it should return the nickname of the member, if
+        available. Defaults to False.
+    :type display_name: bool
+
+    :return: The name, or nickname.
+    """
+    return member.display_name if display_name else member.name
 
 
 def author_has_role(context: commands.Context, role_id: str) -> bool:
@@ -163,7 +173,7 @@ def author_has_role(context: commands.Context, role_id: str) -> bool:
     :return: True if the author has a role with the given ID, false otherwise.
     """
 
-    return has_role(context.message.author, role_id)
+    return has_role(context.author, role_id)
 
 
 def has_role(member: discord.Member, role_id: str):
@@ -177,11 +187,7 @@ def has_role(member: discord.Member, role_id: str):
 
     :return: True if the member has a role with the given ID, false otherwise
     """
-
-    for role in member.roles:
-        if role.id == role_id:
-            return True
-    return False
+    return role_id in [role.id for role in member.roles]
 
 
 def as_object(obj_id: str) -> discord.Object:
@@ -224,42 +230,6 @@ def to_boolean(value) -> bool:
         raise TypeError("Could not parse {} to boolean".format(value))
 
 
-def pluralize(amount, s_name: str, append="", p_name=""):
-    """ Pluralizes a string given the amount related to it.
-        For example, if I have n minute(s), this will return either
-        'n minute' or 'n minutes', depending if n=1 or not.
-
-        Note that only one of append or p_name can be valid.
-
-    :param amount: The amount being evaluated
-    :type amount: numeric (int, float, etc.)
-
-    :param s_name: The singular name of the concept.
-    :type s_name: str
-
-    :param append: If the concept is a regular plural, this indicates the
-        pluralization of the singular name (ex: 's' or 'es').
-    :type append: str
-
-    :param p_name: If the concept is an irregular plural, this indicates the
-        plural name of the concept, which overrides the singular name.
-    :type p_name: str
-
-    :return: The value and the concept name merged in a string, or None if both
-        an append value and a plural name were given, or neither.
-    """
-
-    if append != "" and p_name != "":
-        return None
-    if append == "" and p_name == "":
-        return None
-
-    if append != "":
-        return str(amount) + " " + (s_name if amount == 1 else s_name + append)
-    if p_name != "":
-        return str(amount) + " " + (s_name if amount == 1 else p_name)
-
-
 def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
     """ Logs a message with a given format, specifying the channel originating
         the message, or if its a global message.
@@ -273,7 +243,6 @@ def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
 
     :param level: The logging level. Defaults to logging.INFO
     """
-
     if not _logger.ready:
         init_logger()
 
@@ -286,7 +255,6 @@ def log_cmd_stacktrace(err: commands.CommandInvokeError):
 
     :param err:
     """
-
     if not _logger.ready:
         init_logger()
 
@@ -298,7 +266,6 @@ def is_logger_debug():
 
     :return: True if the logger is on debug mode, False otherwise.
     """
-
     return _logger.debug
 
 

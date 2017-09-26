@@ -20,7 +20,7 @@ class PomodoroBot(commands.Bot):
         and methods to run Pomodoro Timers on a series of channels.
     """
 
-    def __init__(self, command_prefix, formatter=None, description=None,
+    def __init__(self, command_prefix: str, formatter=None, description=None,
                  pm_help=False, response_lifespan=15, **options):
 
         super().__init__(command_prefix, formatter,
@@ -64,12 +64,12 @@ class PomodoroBot(commands.Bot):
         # So people can still see commands in help.
         self.formatter.show_check_failure = True
 
-    def get_interface(self, channel: discord.Channel, generate=True):
+    def get_interface(self, channel: discord.TextChannel, generate=True):
         """ Retrieves a channel interface. If none found for the channel, a new
             one is created with its default values (if generate is True).
 
         :param channel: The channel the interface belongs to.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
 
         :param generate: Whether the interface should be auto-generated if none
             is found or not.
@@ -122,15 +122,14 @@ class PomodoroBot(commands.Bot):
         tts = kwargs.pop('tts', False)
         delete_after = kwargs.pop('delete_after', 0)
 
-        message = await self.send_message(
-            lib.as_object(dest) if isinstance(dest, str) else dest,
-            content, tts=tts)
+        destination = lib.as_object(dest) if isinstance(dest, str) else dest
+        message = await destination.send(content, tts=tts)
 
         if message and delete_after > 0:
             @asyncio.coroutine
             def delete():
                 yield from asyncio.sleep(delete_after)
-                yield from self.delete_message(message)
+                yield from message.delete()
 
             asyncio.ensure_future(delete(), loop=self.loop)
 
@@ -159,18 +158,18 @@ class PomodoroBot(commands.Bot):
 
         return self.is_admin(member) or lib.has_role(member, self.role_id)
 
-    def is_locked(self, channel: discord.Channel) -> bool:
+    def is_locked(self, channel: discord.TextChannel) -> bool:
         """ Checks if a certain channel is locked for normal users or not.
 
         :param channel: The channel to check.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
 
         :return: True if the channel is locked, false otherwise.
         """
 
         return self.get_interface(channel).locked
 
-    def spoof(self, member: discord.Member, channel: discord.Channel):
+    def spoof(self, member: discord.Member, channel: discord.TextChannel):
         """ Spoofs a channel ID if there's a set channel to spoof from
             the one where the command was executed. Also checks for the
             author's permissions to see if they can spoof commands.
@@ -179,7 +178,7 @@ class PomodoroBot(commands.Bot):
         :type member: discord.Member
 
         :param channel: The channel from which the command to spoof was sent.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
 
         :return: If there's a registered ID to spoof and the author has elevated
             permissions, returns the spoofed ID. If not, returns the same ID
@@ -195,23 +194,25 @@ class PomodoroBot(commands.Bot):
         """ Updates the status of the bot user to display the amount of
             timers running, if any, or show the bot as idle if none are.
         """
+        lib.log("Updating status.")
 
         if self.timers_running == 0:
             await self.change_presence(game=None, status=Status.idle)
 
         else:
             game = discord.Game()
-            channels = lib.pluralize(self.timers_running, "channel", append="s")
+            channels = "{} {}".format(self.timers_running, "channel" if
+                                      self.timers_running == 1 else "channels")
             game.name = ("on " + channels)
 
             await self.change_presence(game=game, status=Status.online)
 
-    async def _generate_messages(self, channel: discord.Channel):
+    async def _generate_messages(self, channel: discord.TextChannel):
         """ Generates and pins the messages for the given channel.
 
         :param channel: The channel in which the messages will be
             generated and pinned.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
 
         :raises: discord.errors.Forbidden: if the client doesn't have
             permissions to pin messages.
@@ -221,32 +222,30 @@ class PomodoroBot(commands.Bot):
         if interface.timer is None:
             return
 
-        interface.time_message = await self.send_message(
-            channel, "Generating status...")
-
-        interface.list_message = await self.send_message(
-            channel, interface.timer.list_periods())
+        interface.time_message = await channel.send("Generating status...")
+        interface.list_message = await channel.send(interface
+                                                    .timer.list_periods())
 
         # The last message pinned ends up in the top
-        await self.pin_message(interface.time_message)
-        await self.pin_message(interface.list_message)
+        await interface.time_message.pin()
+        await interface.list_message.pin()
 
-    async def remove_messages(self, channel: discord.Channel):
+    async def remove_messages(self, channel: discord.TextChannel):
         """ Deletes the time and periods list messages
             in the channel given.
 
         :param channel: The channel for which the messages will be
             deleted.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
         """
 
         interface = self.get_interface(channel)
         try:
             if interface.time_message is not None:
-                await self.delete_message(interface.time_message)
+                await interface.time_message.delete()
 
             if interface.list_message is not None:
-                await self.delete_message(interface.list_message)
+                await interface.list_message.delete()
 
         except d_err.NotFound:
             pass
@@ -264,13 +263,13 @@ class PomodoroBot(commands.Bot):
         return dict((c, i.timer) for c, i in self._interfaces.items() if
                     i.timer is not None)
 
-    def mark_active(self, channel: discord.Channel, author: discord.Member,
+    def mark_active(self, channel: discord.TextChannel, author: discord.Member,
                     time: datetime):
         """ Marks a user as active within a channel, giving them a
             last-active-at timestamp.
 
             :param channel: The channel in which to mark the user as active at.
-            :type channel: discord.Channel
+            :type channel: discord.TextChannel
 
             :param author: The user to mark as active.
             :type author: discord.Member
@@ -290,11 +289,11 @@ class PomodoroBot(commands.Bot):
             for sub in list(interface.subbed.keys()):
                 interface.remove_sub(sub)
 
-    async def run_timer(self, channel: discord.Channel, start_idx=0):
+    async def run_timer(self, channel: discord.TextChannel, start_idx=0):
         """ Makes a timer run.
 
         :param channel: The channel where the timer that is being ran is.
-        :type channel: discord.Channel
+        :type channel: discord.TextChannel
 
         :param start_idx: The index of the period from which the timer should
             start from. Defaults to 0, or is 0 if it's outside the valid range.
@@ -330,25 +329,23 @@ class PomodoroBot(commands.Bot):
                         not timer.repeat:
                     say += "\nI have ran out of periods, and looping is off."
                     lib.log(say, channel_id=channel.id)
-                    await self.safe_send(channel, say, tts=interface.tts)
+                    await channel.send(say, tts=interface.tts)
 
                     break
 
                 timer.set_period((timer.get_period() + 1) % len(timer.periods))
 
                 if timer.action == Action.NONE:
-                    say += " '{}' period now starting ({})." \
+                    period_time = timer.periods[timer.get_period()].time
+                    say += " '{}' period now starting ({} {})." \
                         .format(timer.periods[timer.get_period()].name,
-                                lib.pluralize(
-                                    timer.periods[timer.get_period()].time,
-                                    "minute", append="s"))
+                                period_time,
+                                "minute" if period_time == 1 else "minutes")
 
                 lib.log(say, channel_id=channel.id)
                 try:
-                    await self.safe_send(channel, say, tts=interface.tts)
-
-                    await self.edit_message(interface.list_message,
-                                            timer.list_periods())
+                    await channel.send(say, tts=interface.tts)
+                    await interface.list_message.edit(timer.list_periods())
                 except d_err.HTTPException:
                     lib.log("Skipped updating periods due to HTTPException",
                             channel_id=channel.id, level=logging.WARN)
@@ -357,7 +354,7 @@ class PomodoroBot(commands.Bot):
                 timer.action = Action.NONE
 
                 lib.log("Timer has stopped.", channel_id=channel.id)
-                await self.safe_send(channel, "Timer has stopped.")
+                await channel.send("Timer has stopped.")
 
                 break
 
@@ -366,7 +363,7 @@ class PomodoroBot(commands.Bot):
                 timer.set_state(State.PAUSED)
 
                 lib.log("Timer has paused.", channel_id=channel.id)
-                await self.safe_send(channel, "Timer has paused.")
+                await channel.send("Timer has paused.")
 
             elif timer.action == Action.RUN:
                 timer.action = Action.NONE
@@ -384,7 +381,7 @@ class PomodoroBot(commands.Bot):
                     say_action += " (from period n." + str(start_idx + 1) + ")"
 
                 lib.log(say_action, channel_id=channel.id)
-                await self.safe_send(channel, say_action)
+                await channel.send(say_action)
 
                 if interface.time_message is None:
                     try:
@@ -394,12 +391,11 @@ class PomodoroBot(commands.Bot):
                         kitty = ("I tried to pin a message and failed." +
                                  " Can I haz permission to pin messages?" +
                                  " https://goo.gl/tYYD7s")
-                        await self.safe_send(channel, kitty)
+                        await channel.send(kitty)
 
             try:
                 if interface.time_message is not None:
-                    await self.edit_message(interface.time_message,
-                                            timer.time())
+                    await interface.time_message.edit(timer.time())
             except d_err.NotFound:
                 pass
             except d_err.HTTPException:
@@ -424,23 +420,22 @@ class PomodoroBot(commands.Bot):
                 if isinstance(inactive, bool) and inactive:
                     send = "Timer will stop due to inactivity."
                     lib.log(send, channel_id=channel.id, level=logging.INFO)
-                    await self.safe_send(channel, send,
-                                         delete_after=self.ans_lifespan)
+                    await channel.send(send, delete_after=self.ans_lifespan)
                 elif isinstance(inactive, list):
                     for user in inactive:
                         notice = ("ou have been un-subscribed due to"
                                   " inactivity!")
                         # Yes, there's a typo, but there's also a hacky solution
-                        await self.safe_send(channel, "{}, y{}"
-                                             .format(user.mention, notice),
-                                             delete_after=self.ans_lifespan)
-                        await self.safe_send(user, "Y" + notice)
+                        await channel.send("{}, y{}"
+                                           .format(user.mention, notice),
+                                           delete_after=self.ans_lifespan)
+                        await user.send("Y" + notice)
                         if interface.restart_inactivity():
                             send = ("Timer has no subs. Will stop after {} "
                                     "minutes unless someone subscribes!")\
                                 .format(self.timer_inactivity_allowed)
-                            await self.safe_send(channel, send,
-                                                 delete_after=self.ans_lifespan)
+                            await channel.send(send,
+                                               delete_after=self.ans_lifespan)
                 interface.add_sub_time(timer.step)
             else:
                 break
@@ -453,8 +448,8 @@ class PomodoroBot(commands.Bot):
             if len(timer.periods) == 0:
                 timer.set_state(None)
                 interface.timer = None
-                await self.safe_send(channel, "Timer has been reset.",
-                                     delete_after=self.bot.ans_lifespan)
+                await channel.send("Timer has been reset.",
+                                   delete_after=self.ans_lifespan)
 
             await self.remove_messages(channel)
 

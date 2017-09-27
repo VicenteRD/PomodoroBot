@@ -483,7 +483,7 @@ class PomodoroTimer:
 
         # Users subscribed
         status += "\n  Subscribed  || "
-        status += ", ".join(lib.get_name(m, True)
+        status += ", ".join(m.display_name
                             for m in self.get_users_subscribed())
         status += "." if len(self.get_users_subscribed()) > 0 else ""
 
@@ -539,12 +539,12 @@ class PomodoroTimer:
 
             self._state = new_state
 
-    def get_server_name(self):
+    def get_guild_name(self):
         """ Gets the name of the server in which this timer is running.
 
         :return: The server's name.
         """
-        return self._interface.get_server_name()
+        return self._interface.get_guild_name()
 
     def get_channel_name(self):
         """ Gets the name of the channel in which this timer is running.

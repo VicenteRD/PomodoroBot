@@ -51,18 +51,18 @@ class Admin:
 
             await ctx.send("Channel unlocked.",
                            delete_after=self.bot.ans_lifespan)
-            lib.log(ctx.author + " unlocked the channel.",
+            lib.log(ctx.author.display_name + " unlocked the channel.",
                     channel_id=channel.id)
         else:
             interface.locked = True
 
             await ctx.send("Channel locked.",
                            delete_after=self.bot.ans_lifespan)
-            lib.log(ctx.author + " locked the channel.",
+            lib.log(ctx.author.display_name + " locked the channel.",
                     channel_id=channel.id)
 
     @admin_cmd.command(name="sub")
-    async def admin_sub(self, ctx: commands.Context, user_id: str,
+    async def admin_sub(self, ctx: commands.Context, user_id: int,
                         channel_id=None):
         """ Forcefully subscribes a member to a timer.
 
@@ -74,6 +74,10 @@ class Admin:
             sent to.
         :type channel_id: str
         """
+
+        if ctx.author.id == user_id:
+            await ctx.send("Lol, nice try.", delete_after=self.bot.ans_lifespan)
+            return
 
         if channel_id is None:
             channel_id = ctx.channel.id
@@ -89,7 +93,7 @@ class Admin:
                     "but the channel was not found or had no interface"
                     .format(author_name, member_name,  "this channel" if
                             channel_id is None else "channel with id=" +
-                                                    channel_id),
+                                                    str(channel_id)),
                     channel_id=channel_id)
             await ctx.send("Channel not found or invalid.",
                            delete_after=self.bot.ans_lifespan)
@@ -105,15 +109,16 @@ class Admin:
                 lib.log("{} tried to subscribe {} to {}, but user is already "
                         "subscribed".format(author_name, member_name,
                                             "this channel" if channel_id is None
-                                            else "channel with id=" + channel_id
-                                            ), channel_id=channel_id)
+                                            else "channel with id=" +
+                                                 str(channel_id)),
+                        channel_id=channel_id)
                 return
 
             interface.add_sub(user, datetime.now())
             lib.log("{} forcefully subscribed {} to {}."
                     .format(author_name, member_name, "this channel" if
                             channel_id is None else "channel with id=" +
-                                                    channel_id),
+                                                    str(channel_id)),
                     channel_id=channel_id)
             await ctx.send("Member subscribed!",
                            delete_after=self.bot.ans_lifespan)
@@ -122,7 +127,7 @@ class Admin:
                            delete_after=self.bot.ans_lifespan)
 
     @admin_cmd.command(name="unsub")
-    async def admin_unsub(self, ctx: commands.Context, user_id: str,
+    async def admin_unsub(self, ctx: commands.Context, user_id: int,
                           channel_id=None):
         """ Forcefully unsubscribes a member to a timer.
 
@@ -134,6 +139,10 @@ class Admin:
             was sent to.
         :type channel_id: str
         """
+
+        if ctx.author.id == user_id:
+            await ctx.send("Lol, nice try.", delete_after=self.bot.ans_lifespan)
+            return
 
         if channel_id is None:
             channel_id = ctx.channel.id
@@ -149,7 +158,7 @@ class Admin:
                     "but the channel was not found or had no interface"
                     .format(author_name, member_name,  "this channel" if
                             channel_id is None else "channel with id=" +
-                                                    channel_id),
+                                                    str(channel_id)),
                     channel_id=channel_id)
             await ctx.send("Channel not found or invalid.",
                            delete_after=self.bot.ans_lifespan)
@@ -163,7 +172,7 @@ class Admin:
             lib.log("{} forcefully unsubscribed {} from {}."
                     .format(author_name, member_name, "this channel" if
                             channel_id is None else "channel with id=" +
-                                                    channel_id),
+                                                    str(channel_id)),
                     channel_id=channel_id)
             await ctx.send("Member unsubscribed!",
                            delete_after=self.bot.ans_lifespan)
@@ -172,7 +181,7 @@ class Admin:
                            delete_after=self.bot.ans_lifespan)
 
     @admin_cmd.command(name="spoof")
-    async def admin_spoof(self, ctx: commands.Context, spoofed_id=None):
+    async def admin_spoof(self, ctx: commands.Context, spoofed_id: int=None):
         """ Enables spoof-mode on a channel.
             Spoof mode allows users with permissions to modify another specified
             channel's timer from the one in which this command
@@ -186,19 +195,19 @@ class Admin:
 
         :param spoofed_id: The ID of the channel that instructions will be
             sent to.
-        :type spoofed_id: str
+        :type spoofed_id: int
         """
 
         channel = ctx.channel
 
         if channel.id == spoofed_id:
-            await ctx.send("How about no. " + spoofed_id,
+            await ctx.send("How about no.",
                            delete_after=self.bot.ans_lifespan)
             return
 
         spoofed_channel = ctx.guild.get_channel(spoofed_id)
 
-        if spoofed_id is not None:
+        if spoofed_channel is not None:
             self.bot.get_interface(channel).spoofed = spoofed_channel
 
             send = "Now acting in channel " + spoofed_channel.name

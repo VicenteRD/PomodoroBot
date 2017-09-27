@@ -32,7 +32,7 @@ class Other:
 
     @commands.command()
     async def howto(self, ctx: commands.Context, specific=None):
-        """ Tells you how to use the bot.
+        """ Tells you how to use the bot. [WIP]
         """
 
         if specific is not None and specific == "admin":

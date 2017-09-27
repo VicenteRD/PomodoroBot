@@ -20,9 +20,9 @@ class Events:
 
         TimerEvent.add_listener(self.timer_listener)
 
-    async def on_command_error(self, error, ctx: commands.Context):
+    async def on_command_error(self, ctx: commands.Context, error):
 
-        log = lib.get_author_name(ctx)
+        log = ctx.author.display_name
         send = None
 
         if isinstance(error, commands.CheckFailure):
@@ -49,11 +49,11 @@ class Events:
                 .format(ctx.invoked_with)
 
             alt = None
-            for name, command in self.bot.commands.items():
+            for name, command in self.bot.all_commands.items():
                 if ctx.invoked_with == name:
                     alt = name
                 elif isinstance(command, commands.GroupMixin):
-                    for sub_name, sub_command in command.commands.items():
+                    for sub_name, sub_command in command.all_commands.items():
                         if ctx.invoked_with == sub_name:
                             alt = "{} {}".format(name, sub_name)
 
@@ -66,7 +66,7 @@ class Events:
         else:
             log = str(error)
 
-        lib.log(log, channel_id=lib.get_channel_id(ctx), level=logging.WARN)
+        lib.log(log, channel_id=ctx.channel.id, level=logging.WARN)
         await ctx.send(send, delete_after=self.bot.ans_lifespan)
 
     async def on_ready(self):
@@ -92,12 +92,12 @@ class Events:
     def timer_listener(self, e: TimerEvent):
         """ Listens to any timer-related events.
 
-        :param e: The timers' events to listen for. Can be either
-            TimerPeriodEvent or TimerStateEvent.
+        :param e: The timers' events to listen for.
+        :type e: TimerPeriodEvent || TimerStateEvent || TimerModifiedEvent
         """
 
         msg = "{} | **{}** || "\
-            .format(e.timer.get_server_name(), e.timer.get_channel_name())
+            .format(e.timer.get_guild_name(), e.timer.get_channel_name())
 
         if isinstance(e, TimerStateEvent):
             msg += "The timer has "
@@ -166,7 +166,7 @@ class Events:
         if not channels:
             return
 
-        await self.bot.safe_send(guild.get_channel(channels['log']), welcome)
+        guild.get_channel(channels['log']).send(welcome)
 
         instructions = "\nPlease read and follow the instructions on {}, " \
                        "as well as introducing yourself in {} :smiley:"\
@@ -191,9 +191,9 @@ class Events:
         if before.nick == after.nick:
             return
 
-        guild = after.server
+        guild = after.guild
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + guild.id
+            'bot.new_member_channels.' + str(guild.id)
         )
         if not channels:
             return
@@ -218,13 +218,14 @@ class Events:
 
         log_channels = self.bot.log_channels
 
-        if log_channels and guild.id in log_channels.keys():
-            log_to = guild.get_channel(log_channels[guild.id])
+        guild_id = str(guild.id)
+        if log_channels and guild_id in log_channels.keys():
+            log_to = guild.get_channel(log_channels[guild_id])
 
             msg = "Message deleted || {} | {} | {:%m/%d %H:%M:%S} UTC || {}"\
                 .format(message.channel.mention,
-                        lib.get_name(message.author, True),
-                        message.timestamp,
+                        message.author.display_name,
+                        message.created_at,
                         message.clean_content)
             await log_to.send(msg)
 

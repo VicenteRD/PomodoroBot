@@ -12,13 +12,14 @@ class Registry:
     def __init__(self, bot: PomodoroBot):
         self.bot = bot
 
-    @commands.group(name="registry", pass_context=True)
+    @commands.group(name="registry")
     async def registry_cmd(self, ctx: commands.Context):
         """ Attendance, high-scores and registries! '!help registry' for more.
         """
+
         pass
 
-    @registry_cmd.command(name="attendance", pass_context=True)
+    @registry_cmd.command(name="attendance")
     @commands.check(checks.has_permission)
     async def attendance(self, ctx: commands.Context, name=None):
         """ Gives the last attendance (timer subscription) of the user
@@ -27,9 +28,10 @@ class Registry:
 
         :param name: The username (Not the nick) of the user of whose
             attendance you want to know. Must use the name#discriminator format.
-        :return:
+        :type name: str || None
         """
-        author = ctx.message.author
+
+        author = ctx.author
         if name is None:
             name = str(author)
 
@@ -46,92 +48,98 @@ class Registry:
                 .strftime("%m-%d-%y %H:%M")
 
         log = "{} queried for {} attendance. Result was: {}"\
-            .format(lib.get_name(author, True),
+            .format(author.display_name,
                     "their" if name == str(author) else (name + "'s"), result)
 
-        lib.log(log, channel_id=lib.get_channel_id(ctx))
+        lib.log(log, channel_id=ctx.channel.id)
 
-        await self.bot.say("```\n{}\n```".format(result),
-                           delete_after=self.bot.ans_lifespan * 3)
+        await ctx.send("```\n{}\n```".format(result),
+                       delete_after=self.bot.ans_lifespan * 3)
 
-    @registry_cmd.command(name="checklast", pass_context=True)
+    @registry_cmd.command(name="checklast")
     @commands.check(checks.has_permission)
     async def check_last(self, ctx: commands.Context, name):
         """ Shows you how long other users' last session lasted.
 
             :param name: The name (not the nick) of the person to check.
             Must use the name#discriminator format.
+            :type name: str
         """
-        time_str = printable_time(db_manager.get_user_last_session(name))
+
+        time_str = _printable_time(db_manager.get_user_last_session(name))
         if time_str is None:
             time_str = "None found."
 
-        lib.log("{} queried for {}'s last session time. Result: {}"
-                .format(lib.get_author_name(ctx, True),
-                        "their" if name == str(ctx.message.author)
+        lib.log("{} queried for {} last session time. Result: {}"
+                .format(ctx.author.display_name,
+                        "their" if name == str(ctx.author)
                         else (name + "'s"), time_str))
 
-        await self.bot.say("```{}```".format(time_str),
-                           delete_after=self.bot.ans_lifespan * 3)
+        await ctx.send("```{}```".format(time_str),
+                       delete_after=self.bot.ans_lifespan * 3)
 
-    @registry_cmd.command(name="last", pass_context=True)
+    @registry_cmd.command(name="last")
     async def last(self, ctx: commands.Context):
         """ Shows you how long your last session lasted.
         """
-        time_str = printable_time(db_manager
-                                  .get_user_last_session(ctx.message.author))
+
+        time_str = _printable_time(db_manager
+                                   .get_user_last_session(ctx.author))
         if time_str is None:
             time_str = "None found."
 
         lib.log("{} queried for their last session time. Result: {}"
-                .format(lib.get_author_name(ctx, True), time_str))
+                .format(ctx.author.display_name, time_str))
 
-        await self.bot.say("```{}```".format(time_str),
-                           delete_after=self.bot.ans_lifespan * 3)
+        await ctx.send("```{}```".format(time_str),
+                       delete_after=self.bot.ans_lifespan * 3)
 
-    @registry_cmd.command(name="total", pass_context=True)
+    @registry_cmd.command(name="total")
     async def total(self, ctx: commands.Context, name=None):
         """ Shows you the total time a user has used the timer for.
 
             :param name: The name (not the nick) of the person to check.
             Must use the name#discriminator format. If none is provided, it will
             check your own record.
+            :type name: str || None
         """
-        if name is None:
-            name = ctx.message.author
 
-        time_str = printable_time(db_manager.get_user_total(name))
+        if name is None:
+            name = ctx.author
+
+        time_str = _printable_time(db_manager.get_user_total(name))
         if time_str is None:
             time_str = "None found."
 
         name = str(name)
         lib.log("{} queried for {}'s last session time. Result: {}"
-                .format(lib.get_author_name(ctx, True),
-                        "their" if name == str(ctx.message.author)
+                .format(ctx.author.display_name,
+                        "their" if name == str(ctx.author)
                         else (name + "'s"), time_str))
 
-        await self.bot.say("```{}```".format(time_str),
-                           delete_after=self.bot.ans_lifespan * 3)
+        await ctx.send("```{}```".format(time_str),
+                       delete_after=self.bot.ans_lifespan * 3)
 
-    @registry_cmd.command(name="leaderboard", pass_context=True)
+    @registry_cmd.command(name="leaderboard")
     async def leaderboard(self, ctx: commands.Context):
         """ Shows the highest recorded times
         """
+
         result = '\n' \
             .join("{} - {}".format(record.name.split('#')[0],
                                    "None found." if
                                    record.total_recorded is None else
-                                   printable_time(record.total_recorded))
+                                   _printable_time(record.total_recorded))
                   for record in db_manager.get_leaderboard())
 
         lib.log("{} queried for the leaderboard. Result: {}"
-                .format(lib.get_author_name(ctx, True), result))
+                .format(ctx.author.display_name, result))
 
-        await self.bot.say("```\n{}\n```".format(result),
-                           delete_after=self.bot.ans_lifespan * 3)
+        await ctx.send("```\n{}\n```".format(result),
+                       delete_after=self.bot.ans_lifespan * 3)
 
 
-def printable_time(time):
+def _printable_time(time):
     """ Prints a number of seconds as H:MM:SS.
 
     :param time: The number representing the amount of seconds.

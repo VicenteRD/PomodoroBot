@@ -88,11 +88,11 @@ def whitelisted(ctx: commands.Context) -> bool:
     """
 
     whitelist = config.get_config().get_section('timer.channel_whitelist')
-    guild_id = ctx.guild.id
+    guild_id = str(ctx.guild.id)
 
     return whitelist is not None and guild_id is not None and \
         guild_id in whitelist.keys() and \
         isinstance(ctx.bot, PomodoroBot) and \
         isinstance(whitelist[guild_id], dict) and \
-        ctx.bot.spoof(ctx.author, ctx.channel).id in \
+        str(ctx.bot.spoof(ctx.author, ctx.channel).id) in \
         whitelist[guild_id].keys()

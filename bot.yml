@@ -1,4 +1,4 @@
-version: rc1.0.0
+version: rc1.5.0
 source: https://github.com/VicenteRD/PomodoroBot/
 author_name: Sherpa#5493
 
@@ -9,8 +9,8 @@ startup_msg: "Beep boop. I'm back online, ready to ~~take over the world~~ help 
 bot:
   description: A pomodoro timer bot that can be configured to your needs.
 
-  bot_admin_id: "87387330037448704"
-  bot_role_id: "249727962214039554"
+  bot_admin_id: 87387330037448704
+  bot_role_id: 249727962214039554
 
   command_prefix: '!'
 
@@ -18,21 +18,21 @@ bot:
 
   log_channels:
     # Study group
-    "231989318363774976": "268229579850645504"
+    "231989318363774976": 268229579850645504
     # Sherpa's Dev Realm
-    "248116963140829195": "248982730656710667"
+    "248116963140829195": 248982730656710667
 
   new_member_channels:
     # Study group
     "231989318363774976":
-      log: "309539856181362699"
-      info: "314658553409437696"
-      directory: "233069263248818178"
+      log: 309539856181362699
+      info: 314658553409437696
+      directory: 233069263248818178
     # Sherpa's Dev Realm
     "248116963140829195":
-      log: "248982730656710667"
-      info: "248982730656710667"
-      directory: "248982730656710667"
+      log: 248982730656710667
+      info: 248982730656710667
+      directory: 248982730656710667
 
 # Timer settings
 timer:
@@ -58,15 +58,15 @@ timer:
   channel_whitelist:
 
     # Study Group
-    "231989318363774976":
+    231989318363774976:
       # 1_study_session
-      "254352302352236544": (2xStudy:32,Break:8),Study:32,Long_Break:15
+      254352302352236544: (2xStudy:32,Break:8),Study:32,Long_Break:15
       # 2_study_session
-      "247545704971632641": (2xStudy:45,Break:15),Study:45,Long_Break:20
+      247545704971632641: (2xStudy:45,Break:15),Study:45,Long_Break:20
       # 3_study_session
-      "308312741251121173": (2xStudy:25,Break:5),Study:25,Long_Break:15
+      308312741251121173: (2xStudy:25,Break:5),Study:25,Long_Break:15
       # 4_unmuted_study
-      "251780383484411904": (2xStudy:32,Break:8),Study:32,Long_Break:15
+      251780383484411904: (2xStudy:32,Break:8),Study:32,Long_Break:15
 
     # Sherpa's Dev Realm
     "248116963140829195":

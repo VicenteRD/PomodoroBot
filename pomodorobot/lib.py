@@ -52,130 +52,6 @@ def init_logger():
     _logger.ready = True
 
 
-def get_guild(context: Context) -> discord.Guild:
-    """ Gets the guild to which a command was sent,
-        based on the command's context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The guild.
-    """
-
-    return context.guild
-
-
-def get_guild_id(context: Context) -> int:
-    """ Gets the ID of the guild to which a command was sent,
-        based on the command's context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The guild's ID.
-    """
-
-    guild = get_guild(context)
-    return None if guild is None else guild.id
-
-
-def get_channel(context: Context) -> discord.TextChannel:
-    """ Gets a channel to which a command was sent, based on the command's
-        context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The channel.
-    """
-
-    return context.channel
-
-
-def get_channel_id(context: Context) -> str:
-    """ Gets the ID of the channel to which a command was sent,
-        based on the command's context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The channel's ID
-    """
-    return context.channel.id
-
-
-def get_channel_name(context: Context) -> str:
-    """ Gets the name of the channel to which a command was sent,
-        based on the command's context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The channel's name
-    """
-    return context.channel.name
-
-
-def get_author_id(context: Context) -> str:
-    """ Gets the ID of the author of a command, based on the command's
-        context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :return: The author's ID
-    """
-    return context.author.id
-
-
-def get_author_name(context: Context, display_name=False) -> str:
-    """ Gets the name of the author of a command, based on the command's
-        context.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :param display_name: Whether the given value should be the real user name,
-        or the member's nick (if available). Defaults to False
-    :type display_name: bool
-
-    :return: The author's name
-    """
-    return get_name(context.author, display_name)
-
-
-def get_name(member: discord.Member, display_name=False) -> str:
-    """ Gets the name of a member, or the nick, if nick is True and a nick
-        exists
-
-    :param member: The member to get the name of.
-    :type member: discord.Member
-
-    :param display_name: Whether it should return the nickname of the member, if
-        available. Defaults to False.
-    :type display_name: bool
-
-    :return: The name, or nickname.
-    """
-    return member.display_name if display_name else member.name
-
-
-def author_has_role(context: commands.Context, role_id: str) -> bool:
-    """ Checks within a command's authors roles for one that has a matching ID
-        to the one given.
-
-    :param context: The context in which the command was sent.
-    :type context: discord.ext.commands.Context
-
-    :param role_id: The ID of a role to check for.
-    :type role_id: str
-
-    :return: True if the author has a role with the given ID, false otherwise.
-    """
-
-    return has_role(context.author, role_id)
-
-
 def has_role(member: discord.Member, role_id: str):
     """ Checks if a member has a role with a specified ID.
 
@@ -188,18 +64,6 @@ def has_role(member: discord.Member, role_id: str):
     :return: True if the member has a role with the given ID, false otherwise
     """
     return role_id in [role.id for role in member.roles]
-
-
-def as_object(obj_id: str) -> discord.Object:
-    """ Creates a basic Discord Object given an ID.
-
-    :param obj_id: The ID of the object being created
-    :type obj_id: str
-
-    :return: The new object with the specified ID.
-    """
-
-    return discord.Object(obj_id)
 
 
 def to_boolean(value) -> bool:
@@ -230,7 +94,7 @@ def to_boolean(value) -> bool:
         raise TypeError("Could not parse {} to boolean".format(value))
 
 
-def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
+def log(message: str, channel_id: int = -1, level=logging.INFO):
     """ Logs a message with a given format, specifying the channel originating
         the message, or if its a global message.
 
@@ -238,16 +102,19 @@ def log(message: str, channel_id="Global".center(18, '='), level=logging.INFO):
     :type message: str
 
     :param channel_id: The ID of the channel in which the message was generated,
-        or None if it's a global message (defaults to None).
-    :type channel_id: str
+        or -1 if it's a global message (defaults to -1).
+    :type channel_id: int
 
     :param level: The logging level. Defaults to logging.INFO
     """
+
+    ch_id = "Global".center(18, '=') if channel_id == -1 else channel_id
+
     if not _logger.ready:
         init_logger()
 
     for line in message.split('\n'):
-        _logger.logger.log(level, '[{}] {}'.format(channel_id, line))
+        _logger.logger.log(level, '[{}] {}'.format(ch_id, line))
 
 
 def log_cmd_stacktrace(err: commands.CommandInvokeError):

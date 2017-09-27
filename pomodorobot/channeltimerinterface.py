@@ -37,20 +37,27 @@ class ChannelTimerInterface:
         # The timer has been inactive (no subs) for
         self._inactivity = None
 
-    def get_server_name(self) -> str:
+    def get_guild_name(self) -> str:
         return self._channel.guild.name
 
     def get_channel_name(self) -> str:
         return self._channel.name
 
-    def add_sub(self, user, time, refresh=False):
+    def add_sub(self, user: discord.Member, time: datetime,
+                refresh: bool=False):
         """ Adds a user to the subscribed list, with a timestamp.
 
         :param user: The user to add to the list.
+        :type user: discord.Member
+
         :param time: The time at which the user subscribed at.
+        :type time: datetime
+
         :param refresh: Whether the user should be
             un-subscribed and re-subscribed if he's already subscribed.
+        :type refresh: bool
         """
+
         if user in self.subbed:
             if not refresh:
                 return None
@@ -63,17 +70,24 @@ class ChannelTimerInterface:
 
         db_manager.set_user_attendance(user, time)
 
-    def remove_sub(self, user):
+    def remove_sub(self, user: discord.Member) -> int:
         """ Removes a user from the subscribed list, with a timestamp.
-            Returns the status of the timer
+            Returns the status (as an integer) of the timer after
+            accounting for the amount of subs remaining.
 
         :param user: The user to remove from the list.
-        :return: 0 if the timer is active, -1 if it's inactive, -2 if it was
-            stopped due to inactivity or -3 if there's no timer
+        :type user: discord.Member
+
+        :return: 1: The user was not subscribed, thus not removed.
+                 0: The timer is still active.
+                -1: The timer is now inactive.
+                -2: The timer was stopped.
+                -3: There is no timer.
         """
         from pomodorobot.timer import State  # Just for my IDE to be happy...
+
         if user not in self.subbed:
-            return
+            return 1
 
         db_manager.set_user_last_session(user, self.subbed[user]['time'])
         del self.subbed[user]
@@ -89,19 +103,22 @@ class ChannelTimerInterface:
         elif self.timer.get_state() == State.RUNNING:
             return -1 if self.restart_inactivity() else 0
 
-    def add_sub_time(self, time):
+    def add_sub_time(self, time: int):
         """ Adds time to all subscribed people's counter.
 
         :param time: The time to add to people's counters
+        :type time: int
         """
+
         for user, records in self.subbed.items():
             records['time'] += time
 
-    def restart_inactivity(self):
+    def restart_inactivity(self) -> bool:
         """ Checks whether a timer has entered inactivity (no subs)
 
         :return: True if inactive, False otherwise
         """
+
         self._inactivity = datetime.now() if len(self.subbed) == 0 else None
 
         return self._inactivity is not None
@@ -110,11 +127,16 @@ class ChannelTimerInterface:
         """ Checks whether the timer or subscribed users are inactive.
 
         :param timer_time: The time the timer is allowed to be inactive for.
+        :type timer_time: int
+
         :param user_time: The time users are allowed to be inactive for while
             subscribed.
+        :type user_time: int
+
         :return: True if the timer is inactive, else gives a list of people that
             have been removed due to inactivity (can be empty).
         """
+
         if self._inactivity is None:
             return self.check_inactive_subs(user_time)
 
@@ -124,20 +146,21 @@ class ChannelTimerInterface:
             print('success')
             return True
 
-    def check_inactive_subs(self, time: int):
+    def check_inactive_subs(self, time: int) -> list:
         """ Checks for subscribed users that might be inactive.
 
         :param time: The time users are allowed to be inactive for while
             subscribed.
+        :type time: int
+
         :return: A list of users that have been forcibly un-subscribed due to
             inactivity (can be empty).
         """
+
         unsubbed = []
         allowed_time = datetime.now() - timedelta(minutes=time)
 
         for sub, times in self.subbed.items():
-            # print(sub.name + ": " + str(last_activity) + "\n" +
-            #       str(allowed_time))
             if times['last'] <= allowed_time:
                 unsubbed.append(sub)
         for sub in unsubbed:

@@ -112,27 +112,6 @@ class PomodoroBot(commands.Bot):
         for channel, timer in self.valid_timers().items():
             timer.step = cfg.get_int('timer.time_step')
 
-    @asyncio.coroutine
-    async def safe_send(self, dest, content: str, **kwargs):
-        """ Sends a message and then deletes it after a certain time has passed.
-
-        :param dest: Where the message will be sent.
-        :param content: The content of the message to send.
-        """
-        tts = kwargs.pop('tts', False)
-        delete_after = kwargs.pop('delete_after', 0)
-
-        destination = lib.as_object(dest) if isinstance(dest, str) else dest
-        message = await destination.send(content, tts=tts)
-
-        if message and delete_after > 0:
-            @asyncio.coroutine
-            def delete():
-                yield from asyncio.sleep(delete_after)
-                yield from message.delete()
-
-            asyncio.ensure_future(delete(), loop=self.loop)
-
     def is_admin(self, member: discord.Member) -> bool:
         """ Checks if a member is the administrator of the bot or not.
 
@@ -312,7 +291,7 @@ class PomodoroBot(commands.Bot):
         self.timers_running += 1
         await self.update_status()
 
-        while not self.is_closed:
+        while not self.is_closed():
             iter_start = datetime.now()
             start_micro = iter_start.second * 1000000 + iter_start.microsecond
 
@@ -345,7 +324,8 @@ class PomodoroBot(commands.Bot):
                 lib.log(say, channel_id=channel.id)
                 try:
                     await channel.send(say, tts=interface.tts)
-                    await interface.list_message.edit(timer.list_periods())
+                    await interface.list_message\
+                        .edit(content=timer.list_periods())
                 except d_err.HTTPException:
                     lib.log("Skipped updating periods due to HTTPException",
                             channel_id=channel.id, level=logging.WARN)
@@ -395,7 +375,7 @@ class PomodoroBot(commands.Bot):
 
             try:
                 if interface.time_message is not None:
-                    await interface.time_message.edit(timer.time())
+                    await interface.time_message.edit(content=timer.time())
             except d_err.NotFound:
                 pass
             except d_err.HTTPException:

@@ -1,7 +1,8 @@
+import asyncio
 import re
+from datetime import datetime
 from enum import Enum
 
-import pomodorobot.lib as lib
 import pomodorobot.config as config
 from pomodorobot.channeltimerinterface import ChannelTimerInterface
 
@@ -344,6 +345,23 @@ class PomodoroTimer:
 
             return False
 
+    async def tick(self, start: int):
+        """ Makes the timer tick.
+
+        :param start: The time at which the last tick happened
+        :type start: int
+        """
+
+        iter_end = datetime.now()
+        end_micro = iter_end.second * 1000000 + iter_end.microsecond
+
+        end_micro -= start
+        end_micro %= 1000000.0
+        sleep_time = ((self.step * 1000000.0) - end_micro)
+
+        await asyncio.sleep(sleep_time / 1000000.0)
+        self.curr_time += self.step
+
     def goto(self, idx: int, reset=True):
         """ Skips to the n-th period, assuming the periods are counted 1 -> n
             (Thus it actually jumps to [idx-1]).
@@ -560,6 +578,21 @@ class PomodoroTimer:
         :return: The list of members.
         """
         return self._interface.subbed
+
+    def running(self) -> bool:
+        """ Shortcut to check if the timer is running.
+        """
+        return self._state == State.RUNNING
+
+    def paused(self) -> bool:
+        """ Shortcut to check if the timer is paused.
+        """
+        return self._state == State.PAUSED
+
+    def stopped(self) -> bool:
+        """ Shortcut to check if the timer is stopped.
+        """
+        return self._state == State.STOPPED
 
     @staticmethod
     def parse_format(periods_format: str):

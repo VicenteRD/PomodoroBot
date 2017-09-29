@@ -37,6 +37,9 @@ class ChannelTimerInterface:
         # The timer has been inactive (no subs) for
         self._inactivity = None
 
+    def get_channel(self):
+        return self._channel
+
     def get_guild_name(self) -> str:
         return self._channel.guild.name
 

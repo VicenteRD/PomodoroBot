@@ -187,14 +187,13 @@ class PomodoroBot(commands.Bot):
             await self.change_presence(game=game, status=Status.online)
 
     async def _generate_messages(self, channel: discord.TextChannel):
-        """ Generates and pins the messages for the given channel.
+        """ Generates and pins the messages for the given channel. If
+            the bot doesn't have the necessary permissions, it will generate
+            a message asking for them.
 
         :param channel: The channel in which the messages will be
             generated and pinned.
         :type channel: discord.TextChannel
-
-        :raises: discord.errors.Forbidden: if the client doesn't have
-            permissions to pin messages.
         """
 
         interface = self.get_interface(channel)
@@ -202,12 +201,17 @@ class PomodoroBot(commands.Bot):
             return
 
         interface.time_message = await channel.send("Generating status...")
-        interface.list_message = await channel.send(interface
-                                                    .timer.list_periods())
+        interface.list_message = await channel\
+            .send(interface.timer.list_periods())
 
-        # The last message pinned ends up in the top
-        await interface.time_message.pin()
-        await interface.list_message.pin()
+        try:
+            await interface.time_message.pin()
+            await interface.list_message.pin()
+        except discord.Forbidden:
+            lib.log("No permission to pin.", channel_id=channel.id)
+            await channel.send("I tried to pin a message and failed."
+                               " Can I haz permission to pin messages?"
+                               " https://goo.gl/tYYD7s")
 
     async def remove_messages(self, channel: discord.TextChannel):
         """ Deletes the time and periods list messages
@@ -295,40 +299,11 @@ class PomodoroBot(commands.Bot):
             iter_start = datetime.now()
             start_micro = iter_start.second * 1000000 + iter_start.microsecond
 
-            if timer.get_state() == State.RUNNING and \
-                    timer.curr_time >= timer.periods[timer.get_period()]\
-                    .time * 60:
-
-                say = "'{}' period over!" \
-                    .format(timer.periods[timer.get_period()].name)
-
-                timer.curr_time = 0
-
-                if timer.get_period() + 1 >= len(timer.periods) and \
-                        not timer.repeat:
-                    say += "\nI have ran out of periods, and looping is off."
-                    lib.log(say, channel_id=channel.id)
-                    await channel.send(say, tts=interface.tts)
-
+            if timer.curr_time >= timer.periods[timer.get_period()].time * 60 \
+                    and timer.running():
+                if not self._change_period(interface):
+                    # Looping off, no more periods to run through
                     break
-
-                timer.set_period((timer.get_period() + 1) % len(timer.periods))
-
-                if timer.action == Action.NONE:
-                    period_time = timer.periods[timer.get_period()].time
-                    say += " '{}' period now starting ({} {})." \
-                        .format(timer.periods[timer.get_period()].name,
-                                period_time,
-                                "minute" if period_time == 1 else "minutes")
-
-                lib.log(say, channel_id=channel.id)
-                try:
-                    await channel.send(say, tts=interface.tts)
-                    await interface.list_message\
-                        .edit(content=timer.list_periods())
-                except d_err.HTTPException:
-                    lib.log("Skipped updating periods due to HTTPException",
-                            channel_id=channel.id, level=logging.WARN)
 
             if timer.action == Action.STOP:
                 timer.action = Action.NONE
@@ -348,14 +323,10 @@ class PomodoroBot(commands.Bot):
             elif timer.action == Action.RUN:
                 timer.action = Action.NONE
 
-                prev_state = timer.get_state()
-                timer.set_state(State.RUNNING)
-
-                if prev_state == State.STOPPED:
+                say_action = "Starting" if timer.stopped() else "Resuming"
+                if timer.stopped():
                     timer.set_period(start_idx)
-                    say_action = "Starting"
-                else:
-                    say_action = "Resuming"
+                timer.set_state(State.RUNNING)
 
                 if start_idx != 0:
                     say_action += " (from period n." + str(start_idx + 1) + ")"
@@ -364,14 +335,7 @@ class PomodoroBot(commands.Bot):
                 await channel.send(say_action)
 
                 if interface.time_message is None:
-                    try:
-                        await self._generate_messages(channel)
-                    except discord.Forbidden:
-                        lib.log("No permission to pin.", channel_id=channel.id)
-                        kitty = ("I tried to pin a message and failed." +
-                                 " Can I haz permission to pin messages?" +
-                                 " https://goo.gl/tYYD7s")
-                        await channel.send(kitty)
+                    await self._generate_messages(channel)
 
             try:
                 if interface.time_message is not None:
@@ -382,56 +346,98 @@ class PomodoroBot(commands.Bot):
                 lib.log("Skipped editing the time message due to HTTPException",
                         channel_id=channel.id, level=logging.WARN)
 
-            if timer.get_state() == State.RUNNING:
-                iter_end = datetime.now()
-                end_micro = iter_end.second * 1000000 + iter_end.microsecond
-
-                end_micro -= start_micro
-                end_micro %= 1000000.0
-                sleep_time = ((timer.step * 1000000.0) - end_micro)
-
-                await asyncio.sleep(sleep_time / 1000000.0)
-                timer.curr_time += timer.step
-
-                inactive = interface.check_inactivity(
-                    self.timer_inactivity_allowed,
-                    self.user_inactivity_allowed)
-
-                if isinstance(inactive, bool) and inactive:
-                    send = "Timer will stop due to inactivity."
-                    lib.log(send, channel_id=channel.id, level=logging.INFO)
-                    await channel.send(send, delete_after=self.ans_lifespan)
-                elif isinstance(inactive, list):
-                    for user in inactive:
-                        notice = ("ou have been un-subscribed due to"
-                                  " inactivity!")
-                        # Yes, there's a typo, but there's also a hacky solution
-                        await channel.send("{}, y{}"
-                                           .format(user.mention, notice),
-                                           delete_after=self.ans_lifespan)
-                        await user.send("Y" + notice)
-                        if interface.restart_inactivity():
-                            send = ("Timer has no subs. Will stop after {} "
-                                    "minutes unless someone subscribes!")\
-                                .format(self.timer_inactivity_allowed)
-                            await channel.send(send,
-                                               delete_after=self.ans_lifespan)
-                interface.add_sub_time(timer.step)
+            if interface.timer is not None and timer.running():
+                # When timers are superreset, this can keep running unless
+                # there's a check for interface.timer's existence
+                await timer.tick(start_micro)
+                await self._check_inactivity(interface)
             else:
                 break
+        # end while
 
         if timer.get_state() != State.PAUSED:
-            timer.curr_time = 0
-            timer.set_period(-1)
-            timer.set_state(State.STOPPED)
-
-            if len(timer.periods) == 0:
-                timer.set_state(None)
-                interface.timer = None
-                await channel.send("Timer has been reset.",
-                                   delete_after=self.ans_lifespan)
-
+            await self._stop_timer(interface)
             await self.remove_messages(channel)
 
         self.timers_running -= 1
         await self.update_status()
+
+    # --- run_timer sub-methods --- #
+
+    async def _change_period(self, interface):
+        period_idx = interface.timer.get_period()
+        period = interface.timer.periods[interface.timer.get_period()]
+
+        say = "'{}' period over!".format(period.name)
+
+        interface.timer.curr_time = 0
+
+        if period_idx + 1 >= len(interface.timer.periods) \
+                and not interface.timer.repeat:
+            say += "\nI have ran out of periods, and looping is off."
+
+            lib.log(say, channel_id=interface.get_channel().id)
+            await interface.get_channel().send(say, tts=interface.tts)
+
+            return False
+
+        interface.timer\
+            .set_period((period_idx + 1) % len(interface.timer.periods))
+        period = interface.timer.periods[interface.timer.get_period()]
+
+        if interface.timer.action == Action.NONE:
+            say += " '{}' period now starting ({} {})." \
+                .format(period.name,
+                        period.time,
+                        "minute" if period.time == 1 else "minutes")
+
+        lib.log(say, channel_id=interface.get_channel().id)
+        try:
+            await interface.get_channel().send(say, tts=interface.tts)
+            await interface.list_message \
+                .edit(content=interface.timer.list_periods())
+        except d_err.HTTPException:
+            lib.log("Skipped updating periods due to HTTPException",
+                    channel_id=interface.get_channel().id, level=logging.WARN)
+
+        return True
+
+    async def _check_inactivity(self, interface):
+        inactive = interface.check_inactivity(self.timer_inactivity_allowed,
+                                              self.user_inactivity_allowed)
+
+        if isinstance(inactive, bool) and inactive:
+            send = "Timer will stop due to inactivity."
+            lib.log(send, channel_id=interface.get_channel().id)
+            await interface.get_channel() \
+                .send(send, delete_after=self.ans_lifespan)
+        elif isinstance(inactive, list):
+            for user in inactive:
+                notice = "ou have been un-subscribed due to inactivity!"
+                # Yes, there's a typo, but there's also a hacky solution
+                await interface.get_channel() \
+                    .send("{}, y{}".format(user.mention, notice),
+                          delete_after=self.ans_lifespan)
+                await user.send("Y" + notice)
+                if interface.restart_inactivity():
+                    send = ("Timer has no subs. Will stop after {} "
+                            "minutes unless someone subscribes!") \
+                        .format(self.timer_inactivity_allowed)
+                    await interface.get_channel() \
+                        .send(send, delete_after=self.ans_lifespan)
+        interface.add_sub_time(interface.timer.step)
+
+    async def _stop_timer(self, interface):
+        # First check if there's a timer (superreset can make this happen).
+        if interface.timer is None:
+            return
+
+        interface.timer.curr_time = 0
+        interface.timer.set_period(-1)
+        interface.timer.set_state(State.STOPPED)
+
+        if len(interface.timer.periods) == 0:
+            interface.timer.set_state(None)
+            interface.timer = None
+            await interface.get_channel().send("Timer has been reset.",
+                                               delete_after=self.ans_lifespan)

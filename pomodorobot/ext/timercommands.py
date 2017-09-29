@@ -30,17 +30,17 @@ class TimerCommands:
             first.
         """
 
-        if ctx.invoked_subcommand is None:
-            sect = ctx.message.content.split(' ')
-            if len(sect) < 2 or sect[1] is None:
-                log = "{} invoked an incomplete timer command."
-
-                send = "Timers are allowed here. Now what?"
-            else:
-                log = "{} invoked an invalid timer command."
-                send = "Invalid timer sub-command."
-        else:
+        if ctx.invoked_subcommand is not None:
             return
+
+        sect = ctx.message.content.split(' ')
+        if len(sect) < 2 or sect[1] is None:
+            log = "{} invoked an incomplete timer command."
+
+            send = "Timers are allowed here. Now what?"
+        else:
+            log = "{} invoked an invalid timer command."
+            send = "Invalid timer sub-command."
 
         lib.log(log.format(ctx.author.display_name),
                 channel_id=ctx.channel.id)

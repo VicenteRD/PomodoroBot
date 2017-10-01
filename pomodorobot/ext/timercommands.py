@@ -324,6 +324,7 @@ class TimerCommands:
                                .format(self.bot.timer_inactivity_allowed),
                                delete_after=self.bot.ans_lifespan)
         elif result == -2:
+            await self.bot.remove_messages(channel)
             await self.bot.say("Timer has stopped since it was paused and "
                                "everyone un-subscribed")
 

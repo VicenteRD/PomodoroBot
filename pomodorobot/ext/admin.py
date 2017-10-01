@@ -89,16 +89,14 @@ class Admin:
         author_name = ctx.author.display_name
         member_name = user.display_name
         if interface is None:
-            lib.log("{} tried to subscribe {} to {}, "
-                    "but the channel was not found or had no interface"
-                    .format(author_name, member_name,  "this channel" if
-                            channel_id is None else "channel with id=" +
-                                                    str(channel_id)),
+            lib.log("{} tried to subscribe {} to this channel, "
+                    "but the channel was not found or had no interface."
+                    .format(author_name, member_name),
                     channel_id=channel_id)
             await ctx.send("Channel not found or invalid.",
                            delete_after=self.bot.ans_lifespan)
         elif user is None:
-            lib.log("{} tried to forcefully subscribe an invalid member"
+            lib.log("{} tried to forcefully subscribe an invalid member."
                     .format(author_name), channel_id=channel_id)
             await ctx.send("User is invalid. Are you sure its his ID?",
                            delete_after=self.bot.ans_lifespan)
@@ -106,19 +104,14 @@ class Admin:
             if user in interface.subbed:
                 await ctx.send("User is already subscribed!",
                                delete_after=self.bot.ans_lifespan)
-                lib.log("{} tried to subscribe {} to {}, but user is already "
-                        "subscribed".format(author_name, member_name,
-                                            "this channel" if channel_id is None
-                                            else "channel with id=" +
-                                                 str(channel_id)),
+                lib.log("{} tried to subscribe {} to this channel, but user is "
+                        "already subscribed.".format(author_name, member_name),
                         channel_id=channel_id)
                 return
 
             interface.add_sub(user, datetime.now())
-            lib.log("{} forcefully subscribed {} to {}."
-                    .format(author_name, member_name, "this channel" if
-                            channel_id is None else "channel with id=" +
-                                                    str(channel_id)),
+            lib.log("{} forcefully subscribed {} to this channel."
+                    .format(author_name, member_name),
                     channel_id=channel_id)
             await ctx.send("Member subscribed!",
                            delete_after=self.bot.ans_lifespan)
@@ -154,25 +147,21 @@ class Admin:
         author_name = ctx.author.display_name
         member_name = user.display_name
         if interface is None:
-            lib.log("{} tried to unsubscribe {} from {}, "
-                    "but the channel was not found or had no interface"
-                    .format(author_name, member_name,  "this channel" if
-                            channel_id is None else "channel with id=" +
-                                                    str(channel_id)),
+            lib.log("{} tried to unsubscribe {} from this channel, "
+                    "but the channel was not found or had no interface."
+                    .format(author_name, member_name),
                     channel_id=channel_id)
             await ctx.send("Channel not found or invalid.",
                            delete_after=self.bot.ans_lifespan)
         elif user is None:
-            lib.log("{} tried to forcefully unsubscribe an invalid member"
+            lib.log("{} tried to forcefully unsubscribe an invalid member."
                     .format(author_name), channel_id=channel_id)
             await ctx.send("User is invalid. Are you sure its his ID?",
                            delete_after=self.bot.ans_lifespan)
         else:
             interface.remove_sub(user)
-            lib.log("{} forcefully unsubscribed {} from {}."
-                    .format(author_name, member_name, "this channel" if
-                            channel_id is None else "channel with id=" +
-                                                    str(channel_id)),
+            lib.log("{} forcefully unsubscribed {} from this channel."
+                    .format(author_name, member_name),
                     channel_id=channel_id)
             await ctx.send("Member unsubscribed!",
                            delete_after=self.bot.ans_lifespan)

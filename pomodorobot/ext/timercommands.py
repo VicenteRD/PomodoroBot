@@ -76,56 +76,35 @@ class TimerCommands:
                 remaining (True) or elapsed (False) time. Defaults to True.
         """
 
-        channel = self.bot.spoof(ctx.author, ctx.channel)
+        self._setup(ctx, timer_format, repeat, count_back)
 
-        timer_format = await self._translate_keyword(timer_format,
-                                                     ctx.guild.id,
-                                                     channel.id, ctx)
-        if timer_format is None:
-            return
+    @timer.command(name="pomodoro")
+    @commands.check(checks.whitelisted)
+    @commands.check(checks.unlocked_or_allowed)
+    async def pomodoro(self, ctx: commands.Context, x, y, z):
+        """ Sets the timer up with a typical Pomodoro Timer configuration
+            consisting of x minutes of productivity, y minutes of break,
+            and a long break of z minutes
 
-        # Parse the countdown and looping arguments with the custom function.
-        try:
-            loop = config.get_config().get_boolean('timer.looping_default') if \
-                repeat is None else lib.to_boolean(repeat)
+        :param x: The length of productivity periods, in minutes.
+        :type x: numerical (int or float)
 
-            countdown = config.get_config() \
-                .get_boolean('timer.countdown_default') if count_back is None \
-                else lib.to_boolean(count_back)
+        :param y: The length of break periods, in minutes.
+        :type y: numerical (int or float)
 
-        except TypeError:
-            lib.log("Could not parse boolean arguments '{!s}' and '{!s}'"
-                    .format(repeat, count_back), channel_id=channel.id)
-            await ctx.send("Invalid arguments received, please try again.",
-                           delete_after=self.bot.ans_lifespan)
-            return
+        :param z: The length of long break periods, in minutes.
+        :type z: numerical (int or float)
 
-        interface = self.bot.get_interface(channel)
-        if interface.timer is None:
-            interface.timer = PomodoroTimer(interface)
-            times = interface.timer.setup(timer_format, loop, countdown)
+        .. see:: setup
+        """
 
-            if times is not None:
-                log = ("Correctly set up timer config: {}."
-                       "\nLooping is **{}**\nCountdown is **{}**") \
-                    .format(times, "ON" if loop else "OFF",
-                            "ON" if countdown else "OFF")
-                send = log
-            else:
-                interface.timer = None
-                log = ("Could not set the periods correctly, "
-                       "command 'setup' failed.")
-                send = ("I did not understand what you wanted, "
-                        "please try again!")
-
-        else:  # channel_id is in p_timers.keys()
-            log = ("Rejecting setup command, there is a period set already "
-                   "established.")
-            send = ("I'm already set and ready to go, please use the reset "
-                    "command if you want to change the timer configuration.")
-
-        lib.log(log, channel_id=channel.id)
-        await ctx.send(send, delete_after=self.bot.ans_lifespan)
+        if x is None or x <= 0 or y is None or y <= 0 or z is None or z <= 0:
+            ctx.send("One of the values provided is invalid",
+                     delete_after=self.bot.ans_lifespan)
+            lib.log("Invalid pomodoro command was given.",
+                    channel_id=ctx.channel.id)
+            
+        self._setup(ctx, _pomodoro_config(x, y, z), True, True)
 
     @timer.command(name="add")
     @commands.check(checks.channel_has_timer)
@@ -610,6 +589,59 @@ class TimerCommands:
             await ctx.send("No timers set up.",
                            delete_after=self.bot.ans_lifespan)
 
+    async def _setup(self, ctx, timer_format, repeat, count_back):
+
+        channel = self.bot.spoof(ctx.author, ctx.channel)
+
+        timer_format = await self._translate_keyword(timer_format,
+                                                     ctx.guild.id,
+                                                     channel.id, ctx)
+        if timer_format is None:
+            return
+
+        # Parse the countdown and looping arguments with the custom function.
+        try:
+            loop = config.get_config().get_boolean('timer.looping_default') if \
+                repeat is None else lib.to_boolean(repeat)
+
+            countdown = config.get_config() \
+                .get_boolean('timer.countdown_default') if count_back is None \
+                else lib.to_boolean(count_back)
+
+        except TypeError:
+            lib.log("Could not parse boolean arguments '{!s}' and '{!s}'"
+                    .format(repeat, count_back), channel_id=channel.id)
+            await ctx.send("Invalid arguments received, please try again.",
+                           delete_after=self.bot.ans_lifespan)
+            return
+
+        interface = self.bot.get_interface(channel)
+        if interface.timer is None:
+            interface.timer = PomodoroTimer(interface)
+            times = interface.timer.setup(timer_format, loop, countdown)
+
+            if times is not None:
+                log = ("Correctly set up timer config: {}."
+                       "\nLooping is **{}**\nCountdown is **{}**") \
+                    .format(times, "ON" if loop else "OFF",
+                            "ON" if countdown else "OFF")
+                send = log
+            else:
+                interface.timer = None
+                log = ("Could not set the periods correctly, "
+                       "command 'setup' failed.")
+                send = ("I did not understand what you wanted, "
+                        "please try again!")
+
+        else:  # channel_id is in p_timers.keys()
+            log = ("Rejecting setup command, there is a period set already "
+                   "established.")
+            send = ("I'm already set and ready to go, please use the reset "
+                    "command if you want to change the timer configuration.")
+
+        lib.log(log, channel_id=channel.id)
+        await ctx.send(send, delete_after=self.bot.ans_lifespan)
+
     async def _translate_keyword(self, keyword: str, server_id: int,
                                  channel_id: int, ctx):
         if keyword == "help":
@@ -643,16 +675,20 @@ class TimerCommands:
         keys = keyword.split(':', 1)
         if len(keys) < 2:
             return keyword
-        if keys[0] == 'typical':
+        if keys[0] == 'pomodoro':
             durations = keys[1].split(',', 2)
-            return "(2xStudy/Work:{x},Break:{y}),Study/Work:{x},Long_Break:{z}"\
-                .format(x=durations[0], y=durations[1], z=durations[2])
+            return _pomodoro_config(durations[0], durations[1], durations[2])
 
         if keys[0] == 'saved':
             translation = config.get_config().get_str(
                 'timer.saved_formats.' + keys[1])
             return translation
         return keyword
+
+
+def _pomodoro_config(productivity_t, break_t, long_break_t):
+    return "(2xStudy/Work:{x},Break:{y}),Study/Work:{x},Long_Break:{z}" \
+        .format(x=productivity_t, y=break_t, z=long_break_t)
 
 
 def setup(bot: PomodoroBot):

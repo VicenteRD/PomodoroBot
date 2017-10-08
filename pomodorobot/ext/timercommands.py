@@ -76,12 +76,13 @@ class TimerCommands:
                 remaining (True) or elapsed (False) time. Defaults to True.
         """
 
-        self._setup(ctx, timer_format, repeat, count_back)
+        await self._setup(ctx, timer_format, repeat, count_back)
 
     @timer.command(name="pomodoro")
     @commands.check(checks.whitelisted)
     @commands.check(checks.unlocked_or_allowed)
-    async def pomodoro(self, ctx: commands.Context, x, y, z):
+    async def pomodoro(self, ctx: commands.Context,
+                       x: float, y: float, z: float):
         """ Sets the timer up with a typical Pomodoro Timer configuration
             consisting of x minutes of productivity, y minutes of break,
             and a long break of z minutes
@@ -103,8 +104,8 @@ class TimerCommands:
                      delete_after=self.bot.ans_lifespan)
             lib.log("Invalid pomodoro command was given.",
                     channel_id=ctx.channel.id)
-            
-        self._setup(ctx, _pomodoro_config(x, y, z), True, True)
+
+        await self._setup(ctx, _pomodoro_config(x, y, z), True, True)
 
     @timer.command(name="add")
     @commands.check(checks.channel_has_timer)

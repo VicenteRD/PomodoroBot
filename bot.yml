@@ -58,15 +58,15 @@ timer:
   channel_whitelist:
 
     # Study Group
-    231989318363774976:
+    "231989318363774976":
       # 1_study_session
-      254352302352236544: (2xStudy:32,Break:8),Study:32,Long_Break:15
+      "254352302352236544": (2xStudy:32,Break:8),Study:32,Long_Break:15
       # 2_study_session
-      247545704971632641: (2xStudy:45,Break:15),Study:45,Long_Break:20
+      "247545704971632641": (2xStudy:45,Break:15),Study:45,Long_Break:20
       # 3_study_session
-      308312741251121173: (2xStudy:25,Break:5),Study:25,Long_Break:15
+      "308312741251121173": (2xStudy:25,Break:5),Study:25,Long_Break:15
       # 4_unmuted_study
-      251780383484411904: (2xStudy:32,Break:8),Study:32,Long_Break:15
+      "251780383484411904": (2xStudy:32,Break:8),Study:32,Long_Break:15
 
     # Sherpa's Dev Realm
     "248116963140829195":

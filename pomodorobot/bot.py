@@ -301,7 +301,8 @@ class PomodoroBot(commands.Bot):
 
             if timer.curr_time >= timer.periods[timer.get_period()].time * 60 \
                     and timer.running():
-                if not self._change_period(interface):
+                cont = await self._change_period(interface)
+                if not cont:
                     # Looping off, no more periods to run through
                     break
 

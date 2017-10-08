@@ -444,12 +444,12 @@ class TimerCommands:
             log = send = "Moved to period number {!s} ({})".format(idx, label)
 
             if interface.timer.get_state() != State.STOPPED:
-                await ctx.send(interface.list_message,
-                               interface.timer.list_periods())
+                await interface.list_message.edit(content=interface.timer
+                                                  .list_periods())
 
                 if interface.timer.get_state() == State.PAUSED:
-                    await ctx.send(interface.time_message,
-                                   interface.timer.time())
+                    await interface.time_message.edit(content=interface.timer
+                                                      .time())
         else:
             log = "Invalid period number entered when trying goto command."
             send = "Invalid period number."

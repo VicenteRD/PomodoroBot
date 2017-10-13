@@ -82,7 +82,7 @@ class Config:
                     channel_1:
                         person_A:
                             name: 'John'
-                            last: 'Doe"
+                            last: 'Doe'
 
             You can get person_A's section by using the path
             'server.channel_1.person_A'.

@@ -58,11 +58,13 @@ class TimerEvent:
     def add_listener(cls, listener):
         """ Adds a listener to the list.
             Listeners must be valid, callable functions (not messages),
-            and should only take 1 argument (aside from self if it's a method).
+            and should only take the event object as argument
+            (aside from `self` if it's a method).
 
         :param listener: The listener function.
         :type listener: function
         """
+
         cls.listeners.append(listener)
 
 
@@ -468,19 +470,20 @@ class PomodoroTimer:
         if compact:
             return ', '.join(str(period.time) for period in self.periods)
 
-        p_list = "**Period list (Loop is {}):**".format("ON" if self.repeat
-                                                        else "OFF")
+        p_list = "**Period list (Loop is {}):**\n```".format("ON" if self.repeat
+                                                             else "OFF")
+
         for i in range(0, len(self.periods)):
             period = self.periods[i]
-            p_list += ("\n`{}` {}: {} {}"
+            p_list += ("\n{}| {}: {} {}"
                        .format(str(i + 1), period.name,
                                period.time,
                                "minute" if period.time == 1 else "minutes"))
 
             if i == self._current_period:
-                p_list += "\t-> _You are here!_"
+                p_list += "\t-> You are here!"
 
-        return p_list
+        return p_list + '```'
 
     def show_status(self) -> str:
         """ Show the timer's status, including the setup, time, and users

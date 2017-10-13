@@ -286,7 +286,7 @@ class TimerCommands:
                 .format(ctx.author.display_name)
         else:
             log = (ctx.author.display_name + " tried to un-subscribe "
-                   "to this timer, but he was not in the list")
+                                             "to this timer, but he was not in the list")
             send = "You're not subscribed to this timer... "
 
         lib.log(log, channel_id=channel.id)
@@ -663,7 +663,7 @@ class TimerCommands:
             # or fallback to "Safe Default"
             translation = config.get_config().get_str(
                 'timer.channel_whitelist.{}.{}'
-                .format(str(server_id), str(channel_id)))
+                    .format(str(server_id), str(channel_id)))
             if translation is None:
                 lib.log("No setup configured for this channel. Using the "
                         "safe default option", channel_id=channel_id)

@@ -156,7 +156,7 @@ class Events:
         embed = discord.Embed(url=url).set_image(url=url)
         welcome = "Welcome, {}!".format(member.mention)
 
-        await guild.text_channels[0].send(member.server, embed=embed)
+        await guild.text_channels[0].send(embed=embed)
         await guild.text_channels[0].send(welcome)
 
         channels = config.get_config().get_section(

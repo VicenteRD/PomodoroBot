@@ -85,9 +85,8 @@ class Events:
             .format(config.get_config().get_str('version'),
                     config.get_config().get_str('startup_msg'))
         for guild in self.bot.guilds:
-            channel = guild.get_channel(config.get_config().get_section(
-                'bot.new_member_channels.' + str(guild.id))['default'])
-
+            channel = guild.get_channel(config.get_config().get_int(
+                'bot.new_member_channels.{}.default'.format(guild.id)))
             if channel is None:
                 continue
             await channel.send(message)

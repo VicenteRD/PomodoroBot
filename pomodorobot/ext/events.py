@@ -86,7 +86,7 @@ class Events:
                     config.get_config().get_str('startup_msg'))
         for guild in self.bot.guilds:
             channel = guild.get_channel(config.get_config().get_section(
-                'bot.new_member_channels.' + guild.id)['default'])
+                'bot.new_member_channels.' + str(guild.id))['default'])
 
             if channel is None:
                 continue
@@ -160,7 +160,7 @@ class Events:
         welcome = "Welcome, {}!".format(member.mention)
 
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + guild.id
+            'bot.new_member_channels.' + str(guild.id)
         )
 
         if not channels:

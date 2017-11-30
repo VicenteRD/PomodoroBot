@@ -145,6 +145,20 @@ class Other:
         await ctx.send(embed=embed, delete_after=min(time_out, 60))
 
     @commands.command(hidden=True)
+    async def nok(self, ctx: commands.Context, time_out=15):
+        """ Really not OK.
+
+            :param time_out: The time you want the message to stay for.
+            :type time_out: int; 0 <= timeout <= 60
+        """
+
+        url = "https://i.imgur.com/ZWZKq5a.png"
+        embed = discord.Embed(title="Really not...",
+                              url=url).set_image(url=url)
+
+        await ctx.send(embed=embed, delete_after=min(time_out, 60))
+
+    @commands.command(hidden=True)
     async def skillz(self, ctx: commands.Context, time_out=15):
         """ For when you've been programming your sanity off.
 

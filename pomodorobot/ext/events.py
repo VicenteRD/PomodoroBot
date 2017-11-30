@@ -169,7 +169,7 @@ class Events:
         await default_channel.send(embed=embed)
         await default_channel.send(welcome)
 
-        guild.get_channel(channels['log']).send(welcome)
+        await guild.get_channel(channels['log']).send(welcome)
 
         instructions = "\nPlease read and follow the instructions on {}, " \
                        "as well as introducing yourself in {} :smiley:" \
@@ -182,7 +182,7 @@ class Events:
         guild = member.server
 
         channels = config.get_config().get_section(
-            'bot.new_member_channels.' + guild.id
+            'bot.new_member_channels.' + str(guild.id)
         )
         if not channels:
             return
